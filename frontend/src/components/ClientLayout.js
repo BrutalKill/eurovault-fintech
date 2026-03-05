@@ -6,7 +6,7 @@ import { useUser } from '../context/UserContext';
 const navItems = [
   { to: '/app/trade', icon: BarChart2, label: 'Negociar' },
   { to: '/app/deposit', icon: CreditCard, label: 'Depósito' },
-  { to: '/app/withdrawal', icon: ArrowDownToLine, label: 'Retirada' },
+  { to: '/app/withdrawal', icon: ArrowDownToLine, label: 'Levantamento' },
   { to: '/app/news', icon: Newspaper, label: 'Notícias' },
   { to: '/app/profile', icon: User, label: 'Perfil' },
 ];
