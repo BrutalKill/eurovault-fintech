@@ -54,14 +54,19 @@ export default function Login() {
         <style>{`.hide-mobile { display: flex; } @media (max-width: 900px) { .hide-mobile { display: none !important; } }`}</style>
         <div style={{ maxWidth: 480 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 48 }}>
-            <div style={{ width: 44, height: 44, background: 'hsl(214,100%,60%)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <TrendingUp size={22} color="#fff" />
+            <img
+              src="https://customer-assets.emergentagent.com/job_trading-eu-hub/artifacts/t2zcbb7n_file_000000005510720a8f958a17bdf723cd.png"
+              alt="EuroVault Investments"
+              style={{ width: 52, height: 52, objectFit: 'contain' }}
+            />
+            <div>
+              <div style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#f3f5ff' }}>EuroVault</div>
+              <div style={{ fontSize: 13, color: 'hsl(46,100%,52%)', fontWeight: 600, letterSpacing: '0.05em' }}>Investments</div>
             </div>
-            <span style={{ fontFamily: 'var(--font-heading)', fontSize: 22, fontWeight: 700, color: '#f3f5ff' }}>BrokerEurope</span>
           </div>
 
           <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 40, fontWeight: 700, color: '#f3f5ff', marginBottom: 16, lineHeight: 1.2 }}>
-            Invista com<br />confiança no futuro
+            Invista com<br />EuroVault
           </h1>
           <p style={{ fontSize: 16, color: 'hsl(215,16%,70%)', marginBottom: 40, lineHeight: 1.6 }}>
             Aceda a mercados europeus e globais com uma plataforma segura, regulamentada e focada nos seus objetivos financeiros.
@@ -99,10 +104,15 @@ export default function Login() {
         }}>
           {/* Mobile logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32 }}>
-            <div style={{ width: 36, height: 36, background: 'hsl(214,100%,60%)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <TrendingUp size={18} color="#fff" />
+            <img
+              src="https://customer-assets.emergentagent.com/job_trading-eu-hub/artifacts/t2zcbb7n_file_000000005510720a8f958a17bdf723cd.png"
+              alt="EuroVault Investments"
+              style={{ width: 44, height: 44, objectFit: 'contain' }}
+            />
+            <div>
+              <div style={{ fontFamily: 'var(--font-heading)', fontSize: 16, fontWeight: 700, color: '#f3f5ff' }}>EuroVault</div>
+              <div style={{ fontSize: 11, color: 'hsl(46,100%,52%)', fontWeight: 600 }}>Investments</div>
             </div>
-            <span style={{ fontFamily: 'var(--font-heading)', fontSize: 18, fontWeight: 700, color: '#f3f5ff' }}>BrokerEurope</span>
           </div>
 
           <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 22, fontWeight: 700, color: '#f3f5ff', marginBottom: 6 }}>Entrar na conta</h2>

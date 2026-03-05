@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TrendingUp, Lock, Eye, EyeOff, ShieldAlert } from 'lucide-react';
+import { Lock, Eye, EyeOff, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
@@ -48,12 +48,14 @@ export default function AdminLogin() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
-          <div style={{ width: 36, height: 36, background: 'hsl(46,100%,52%)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <TrendingUp size={18} color="#000" />
-          </div>
+          <img
+            src="https://customer-assets.emergentagent.com/job_trading-eu-hub/artifacts/t2zcbb7n_file_000000005510720a8f958a17bdf723cd.png"
+            alt="EuroVault Investments"
+            style={{ width: 44, height: 44, objectFit: 'contain' }}
+          />
           <div>
-            <div style={{ fontFamily: 'var(--font-heading)', fontSize: 16, fontWeight: 700, color: '#f3f5ff' }}>BrokerEurope</div>
-            <div style={{ fontSize: 10, color: 'hsl(46,100%,52%)', fontWeight: 700, letterSpacing: '0.1em' }}>PAINEL ADM</div>
+            <div style={{ fontFamily: 'var(--font-heading)', fontSize: 16, fontWeight: 700, color: '#f3f5ff' }}>EuroVault</div>
+            <div style={{ fontSize: 10, color: 'hsl(46,100%,52%)', fontWeight: 700, letterSpacing: '0.1em' }}>INVESTMENTS</div>
           </div>
         </div>
 

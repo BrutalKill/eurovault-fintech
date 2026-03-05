@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { TrendingUp, CreditCard, ArrowDownToLine, Newspaper, User, LogOut, Menu, X, ChevronRight } from 'lucide-react';
+import { BarChart2, CreditCard, ArrowDownToLine, Newspaper, User, LogOut, Menu } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 
 const navItems = [
-  { to: '/app/trade', icon: TrendingUp, label: 'Negociar' },
+  { to: '/app/trade', icon: BarChart2, label: 'Negociar' },
   { to: '/app/deposit', icon: CreditCard, label: 'Depósito' },
   { to: '/app/withdrawal', icon: ArrowDownToLine, label: 'Retirada' },
   { to: '/app/news', icon: Newspaper, label: 'Notícias' },
@@ -51,19 +51,16 @@ export default function ClientLayout() {
         transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
       }} className="lg-sidebar">
         {/* Logo */}
-        <div style={{ padding: '24px 20px', borderBottom: '1px solid hsl(240,16%,18%)' }}>
+        <div style={{ padding: '20px 20px', borderBottom: '1px solid hsl(240,16%,18%)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{
-              width: 36, height: 36,
-              background: 'hsl(214,100%,60%)',
-              borderRadius: 8,
-              display: 'flex', alignItems: 'center', justifyContent: 'center'
-            }}>
-              <TrendingUp size={18} color="#fff" />
-            </div>
+            <img
+              src="https://customer-assets.emergentagent.com/job_trading-eu-hub/artifacts/t2zcbb7n_file_000000005510720a8f958a17bdf723cd.png"
+              alt="EuroVault Investments"
+              style={{ width: 40, height: 40, objectFit: 'contain', borderRadius: 6 }}
+            />
             <div>
-              <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 16, color: '#f3f5ff', letterSpacing: '-0.02em' }}>BrokerEurope</div>
-              <div style={{ fontSize: 11, color: 'hsl(215,16%,70%)' }}>Plataforma de Investimento</div>
+              <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 14, color: '#f3f5ff', letterSpacing: '-0.02em' }}>EuroVault</div>
+              <div style={{ fontSize: 11, color: 'hsl(46,100%,52%)' }}>Investments</div>
             </div>
           </div>
         </div>

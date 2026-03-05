@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { Users, CreditCard, LogOut, TrendingUp, Bell, BellOff } from 'lucide-react';
+import { Users, CreditCard, LogOut, Bell, BellOff } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
@@ -98,14 +98,16 @@ export default function AdminLayout() {
         position: 'fixed', top: 0, bottom: 0, left: 0, zIndex: 50,
       }}>
         {/* Logo */}
-        <div style={{ padding: '20px 16px', borderBottom: '1px solid hsl(240,16%,18%)' }}>
+        <div style={{ padding: '16px 14px', borderBottom: '1px solid hsl(240,16%,18%)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 32, height: 32, background: 'hsl(214,100%,60%)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <TrendingUp size={16} color="#fff" />
-            </div>
+            <img
+              src="https://customer-assets.emergentagent.com/job_trading-eu-hub/artifacts/t2zcbb7n_file_000000005510720a8f958a17bdf723cd.png"
+              alt="EuroVault Investments"
+              style={{ width: 36, height: 36, objectFit: 'contain', borderRadius: 6 }}
+            />
             <div>
-              <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 14, color: '#f3f5ff' }}>BrokerEurope</div>
-              <div style={{ fontSize: 10, color: 'hsl(215,16%,70%)', background: 'hsl(46,100%,52%,0.15)', padding: '1px 6px', borderRadius: 4, display: 'inline-block', marginTop: 2, color: 'hsl(46,100%,52%)' }}>ADMIN CRM</div>
+              <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 13, color: '#f3f5ff' }}>EuroVault</div>
+              <div style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, display: 'inline-block', marginTop: 2, color: 'hsl(46,100%,52%)', background: 'hsl(46,100%,52%,0.12)', border: '1px solid hsl(46,100%,52%,0.25)', fontWeight: 700 }}>ADMIN CRM</div>
             </div>
           </div>
         </div>
@@ -157,7 +159,7 @@ export default function AdminLayout() {
           position: 'sticky', top: 0, zIndex: 30,
         }}>
           <div style={{ flex: 1 }}>
-            <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 15, color: '#f3f5ff' }}>Painel de Administração</span>
+            <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 15, color: '#f3f5ff' }}>EuroVault — CRM</span>
           </div>
 
           {/* Notification count */}
