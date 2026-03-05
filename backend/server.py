@@ -139,6 +139,13 @@ class UpdateBalanceRequest(BaseModel):
     balance: float
     profit: float
 
+    # Garantir que profit nunca é negativo
+    def model_post_init(self, __context):
+        if self.profit < 0:
+            self.profit = 0.0
+        if self.balance < 0:
+            self.balance = 0.0
+
 class UpdateStatusRequest(BaseModel):
     status: str
 

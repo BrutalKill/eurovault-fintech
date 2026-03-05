@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 const UserContext = createContext(null);
@@ -15,10 +15,35 @@ export function UserProvider({ children }) {
       });
       if (res.ok) {
         const data = await res.json();
+        // Garantir que profit nunca é negativo no frontend
+        data.profit = Math.max(0, parseFloat(data.profit) || 0);
+        data.balance = Math.max(0, parseFloat(data.balance) || 0);
         setUser(data);
+      } else if (res.status === 401) {
+        localStorage.removeItem('token');
+        setUser(null);
       }
     } catch (e) {}
   }, []);
+
+  // Polling automático a cada 15 segundos para sincronizar com o painel ADM
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    fetchUser(); // Chamada inicial
+
+    const interval = setInterval(fetchUser, 15000);
+
+    // Sincronizar ao voltar ao separador
+    const onFocus = () => fetchUser();
+    document.addEventListener('visibilitychange', onFocus);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onFocus);
+    };
+  }, [fetchUser]);
 
   return (
     <UserContext.Provider value={{ user, setUser, fetchUser }}>

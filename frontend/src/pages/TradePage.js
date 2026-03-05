@@ -116,8 +116,9 @@ export default function TradePage() {
 
   React.useEffect(() => { fetchUser(); }, []); // eslint-disable-line
 
+  const safeProfit  = Math.max(0, parseFloat(user?.profit)  || 0);
+  const safeBalance = Math.max(0, parseFloat(user?.balance) || 0);
   const fmt = (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v || 0);
-  const profitPos = (user?.profit || 0) >= 0;
 
   const cat = ASSETS[activeCat];
   const col = CAT_COLORS[activeCat];
@@ -187,12 +188,12 @@ export default function TradePage() {
         <div style={{ display: 'flex', gap: 8 }}>
           <div style={{ background: '#111118', border: '1px solid #26263a', borderRadius: 10, padding: '7px 14px' }}>
             <span style={{ fontSize: 11, color: '#7a8299' }}>Saldo </span>
-            <span data-testid="trade-balance-eur" className="numeric" style={{ fontSize: 14, fontWeight: 700, color: '#f3f5ff' }}>{fmt(user?.balance)}</span>
+            <span data-testid="trade-balance-eur" className="numeric" style={{ fontSize: 14, fontWeight: 700, color: '#f3f5ff' }}>{fmt(safeBalance)}</span>
           </div>
           <div style={{ background: '#111118', border: '1px solid #26263a', borderRadius: 10, padding: '7px 14px' }}>
-            <span style={{ fontSize: 11, color: '#7a8299' }}>P/L </span>
-            <span data-testid="trade-profit-eur" className="numeric" style={{ fontSize: 14, fontWeight: 700, color: profitPos ? '#22c58b' : '#ef4444' }}>
-              {profitPos ? '+' : ''}{fmt(user?.profit)}
+            <span style={{ fontSize: 11, color: '#7a8299' }}>Lucro </span>
+            <span data-testid="trade-profit-eur" className="numeric" style={{ fontSize: 14, fontWeight: 700, color: '#22c58b' }}>
+              +{fmt(safeProfit)}
             </span>
           </div>
         </div>

@@ -1,65 +1,56 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { BarChart2, CreditCard, ArrowDownToLine, Newspaper, User, LogOut, Menu } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 
 const navItems = [
-  { to: '/app/trade', icon: BarChart2, label: 'Negociar' },
-  { to: '/app/deposit', icon: CreditCard, label: 'Depósito' },
-  { to: '/app/withdrawal', icon: ArrowDownToLine, label: 'Levantamento' },
-  { to: '/app/news', icon: Newspaper, label: 'Notícias' },
-  { to: '/app/profile', icon: User, label: 'Perfil' },
+  { to: '/app/trade',      icon: BarChart2,        label: 'Negociar' },
+  { to: '/app/deposit',    icon: CreditCard,       label: 'Depósito' },
+  { to: '/app/withdrawal', icon: ArrowDownToLine,  label: 'Levantamento' },
+  { to: '/app/news',       icon: Newspaper,        label: 'Notícias' },
+  { to: '/app/profile',    icon: User,             label: 'Perfil' },
 ];
 
 export default function ClientLayout() {
   const navigate = useNavigate();
-  const { user, fetchUser } = useUser();
+  const { user } = useUser();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { fetchUser(); }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/login');
   };
 
-  const formatEur = (val) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(val || 0);
-  const profitPositive = (user?.profit || 0) >= 0;
+  // Profit nunca negativo (dupla segurança no frontend)
+  const safeProfit  = Math.max(0, parseFloat(user?.profit)  || 0);
+  const safeBalance = Math.max(0, parseFloat(user?.balance) || 0);
+  const formatEur = (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'hsl(240,33%,5%)' }}>
-      {/* Mobile overlay */}
+      {/* Overlay móvel */}
       {sidebarOpen && (
-        <div
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 40 }}
-          onClick={() => setSidebarOpen(false)}
-        />
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 40 }}
+          onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* Sidebar */}
       <aside style={{
-        width: 260,
-        background: 'hsl(240,26%,8%)',
+        width: 260, background: 'hsl(240,26%,8%)',
         borderRight: '1px solid hsl(240,16%,18%)',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'fixed',
-        top: 0, bottom: 0, left: 0,
-        zIndex: 50,
+        display: 'flex', flexDirection: 'column',
+        position: 'fixed', top: 0, bottom: 0, left: 0, zIndex: 50,
         transition: 'transform 0.3s ease',
         transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
       }} className="lg-sidebar">
+
         {/* Logo */}
         <div style={{ padding: '20px 20px', borderBottom: '1px solid hsl(240,16%,18%)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img
-              src="/logo-eurovault.png"
-              alt="EuroVault Investments"
-              style={{ width: 54, height: 54, objectFit: 'contain' }}
-            />
+            <img src="/logo-eurovault.png" alt="EuroVault Investments"
+              style={{ width: 54, height: 54, objectFit: 'contain' }} />
             <div>
-              <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 14, color: '#f3f5ff', letterSpacing: '-0.02em' }}>EuroVault</div>
+              <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 14, color: '#f3f5ff' }}>EuroVault</div>
               <div style={{ fontSize: 11, color: 'hsl(46,100%,52%)' }}>Investments</div>
             </div>
           </div>
@@ -68,108 +59,86 @@ export default function ClientLayout() {
         {/* Nav */}
         <nav style={{ flex: 1, padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
           {navItems.map(({ to, icon: Icon, label }) => (
-            <NavLink
-              key={to}
-              to={to}
-              onClick={() => setSidebarOpen(false)}
+            <NavLink key={to} to={to} onClick={() => setSidebarOpen(false)}
               style={({ isActive }) => ({
                 display: 'flex', alignItems: 'center', gap: 12,
                 padding: '10px 12px', borderRadius: 10,
-                textDecoration: 'none',
-                fontSize: 14, fontWeight: 500,
+                textDecoration: 'none', fontSize: 14, fontWeight: 500,
                 color: isActive ? '#f3f5ff' : 'hsl(215,16%,70%)',
-                background: isActive ? 'hsl(214,100%,60%,0.15)' : 'transparent',
-                border: isActive ? '1px solid hsl(214,100%,60%,0.25)' : '1px solid transparent',
+                background: isActive ? 'rgba(58,134,255,0.12)' : 'transparent',
+                border: isActive ? '1px solid rgba(58,134,255,0.25)' : '1px solid transparent',
                 transition: 'background 0.2s, color 0.2s',
-              })}
-            >
-              <Icon size={18} />
-              {label}
+              })}>
+              <Icon size={18} />{label}
             </NavLink>
           ))}
         </nav>
 
-        {/* Balance card */}
+        {/* Cartão de saldo */}
         <div style={{ margin: '0 12px 12px', padding: '16px', background: 'hsl(240,18%,14%)', borderRadius: 12, border: '1px solid hsl(240,16%,18%)' }}>
           <div style={{ fontSize: 11, color: 'hsl(215,16%,70%)', marginBottom: 4 }}>Saldo Total</div>
           <div className="numeric" style={{ fontSize: 22, fontWeight: 700, color: '#f3f5ff', fontFamily: 'var(--font-heading)', letterSpacing: '-0.02em' }}>
-            {formatEur(user?.balance)}
+            {formatEur(safeBalance)}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
-            <span style={{ fontSize: 11, color: 'hsl(215,16%,70%)' }}>P/L</span>
-            <span className="numeric" style={{ fontSize: 13, fontWeight: 600, color: profitPositive ? 'hsl(155,72%,45%)' : 'hsl(0,78%,54%)' }}>
-              {profitPositive ? '+' : ''}{formatEur(user?.profit)}
+            <span style={{ fontSize: 11, color: 'hsl(215,16%,70%)' }}>Lucro:</span>
+            <span className="numeric" style={{ fontSize: 13, fontWeight: 600, color: 'hsl(155,72%,45%)' }}>
+              +{formatEur(safeProfit)}
             </span>
           </div>
         </div>
 
-        {/* Logout */}
+        {/* Sair */}
         <div style={{ padding: '12px', borderTop: '1px solid hsl(240,16%,18%)' }}>
-          <button
-            onClick={handleLogout}
-            style={{
-              width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-              padding: '10px 12px', borderRadius: 10, border: 'none',
-              background: 'transparent', cursor: 'pointer',
-              color: 'hsl(215,16%,70%)', fontSize: 14, fontWeight: 500,
-            }}
-          >
-            <LogOut size={16} />
-            Sair
+          <button onClick={handleLogout}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: 'none', background: 'transparent', cursor: 'pointer', color: 'hsl(215,16%,70%)', fontSize: 14, fontWeight: 500 }}>
+            <LogOut size={16} />Sair
           </button>
         </div>
       </aside>
 
-      {/* Desktop sidebar always visible */}
       <style>{`
-        @media (min-width: 1024px) {
-          .lg-sidebar { transform: translateX(0) !important; position: fixed !important; }
-          .main-content { margin-left: 260px; }
-        }
-        @media (max-width: 1023px) {
-          .main-content { margin-left: 0; }
-        }
+        @media (min-width: 1024px) { .lg-sidebar { transform: translateX(0) !important; position: fixed !important; } .main-content { margin-left: 260px; } }
+        @media (max-width: 1023px) { .main-content { margin-left: 0; } }
+        .lg-hidden { display: flex; } @media (min-width: 1024px) { .lg-hidden { display: none; } }
       `}</style>
 
-      {/* Main content */}
+      {/* Conteúdo principal */}
       <div className="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-        {/* Top bar */}
+        {/* Topbar */}
         <header style={{
           height: 60, background: 'hsl(240,26%,8%)',
           borderBottom: '1px solid hsl(240,16%,18%)',
-          display: 'flex', alignItems: 'center',
-          padding: '0 20px', gap: 16,
+          display: 'flex', alignItems: 'center', padding: '0 20px', gap: 16,
           position: 'sticky', top: 0, zIndex: 30,
         }}>
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'hsl(215,16%,70%)', padding: 4 }}
-            className="lg-hidden"
-          >
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg-hidden"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'hsl(215,16%,70%)', padding: 4 }}>
             <Menu size={22} />
           </button>
-          <style>{`.lg-hidden { display: flex; } @media (min-width: 1024px) { .lg-hidden { display: none; } }`}</style>
-
           <div style={{ flex: 1 }} />
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: '50%',
-              background: 'hsl(214,100%,60%)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 13, fontWeight: 700, color: '#fff'
-            }}>
-              {user?.full_name?.[0]?.toUpperCase() || 'U'}
+          {/* Saldo no topbar (desktop) */}
+          <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ background: 'hsl(240,18%,14%)', border: '1px solid hsl(240,16%,22%)', borderRadius: 9, padding: '5px 12px', textAlign: 'right' }}>
+              <div style={{ fontSize: 10, color: 'hsl(215,16%,60%)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Saldo</div>
+              <div className="numeric" style={{ fontSize: 13, fontWeight: 700, color: '#f3f5ff' }}>{formatEur(safeBalance)}</div>
             </div>
-            <div style={{ display: 'none' }} className="sm-show">
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#f3f5ff' }}>{user?.full_name || 'Utilizador'}</div>
-              <div style={{ fontSize: 11, color: 'hsl(215,16%,70%)' }}>{user?.email}</div>
+            <div style={{ background: 'hsl(240,18%,14%)', border: '1px solid hsl(240,16%,22%)', borderRadius: 9, padding: '5px 12px', textAlign: 'right' }}>
+              <div style={{ fontSize: 10, color: 'hsl(215,16%,60%)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Lucro</div>
+              <div className="numeric" style={{ fontSize: 13, fontWeight: 700, color: 'hsl(155,72%,45%)' }}>+{formatEur(safeProfit)}</div>
+            </div>
+          </div>
+
+          {/* Avatar */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'hsl(214,100%,60%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff' }}>
+              {user?.full_name?.[0]?.toUpperCase() || 'U'}
             </div>
           </div>
         </header>
 
-        {/* Page content */}
-        <main style={{ flex: 1, padding: '24px 24px' }}>
+        <main style={{ flex: 1, padding: '24px' }}>
           <Outlet />
         </main>
       </div>
