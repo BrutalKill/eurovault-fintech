@@ -1,46 +1,14 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TrendingUp, TrendingDown, CreditCard, ArrowDownToLine, BarChart2, Activity } from 'lucide-react';
+import { TrendingUp, TrendingDown, CreditCard, ArrowDownToLine } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 
 export default function TradePage() {
   const { user, fetchUser } = useUser();
   const navigate = useNavigate();
-  const chartRef = useRef(null);
-  const [chartLoaded, setChartLoaded] = useState(false);
+  const containerRef = useRef(null);
 
-  useEffect(() => { fetchUser(); }, []);
-
-  useEffect(() => {
-    if (!chartRef.current) return;
-    const container = chartRef.current;
-    container.innerHTML = '';
-
-    const script = document.createElement('script');
-    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-    script.type = 'text/javascript';
-    script.async = true;
-    script.innerHTML = JSON.stringify({
-      autosize: true,
-      symbol: 'FX:EURUSD',
-      interval: 'D',
-      timezone: 'Europe/Lisbon',
-      theme: 'dark',
-      style: '1',
-      locale: 'pt',
-      enable_publishing: false,
-      backgroundColor: 'rgba(10, 10, 15, 0)',
-      gridColor: 'rgba(255, 255, 255, 0.04)',
-      hide_top_toolbar: false,
-      hide_legend: false,
-      save_image: false,
-      hide_volume: false,
-      support_host: 'https://www.tradingview.com'
-    });
-
-    container.appendChild(script);
-    setTimeout(() => setChartLoaded(true), 1500);
-  }, []);
+  useEffect(() => { fetchUser(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const formatEur = (val) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(val || 0);
   const profitPositive = (user?.profit || 0) >= 0;
@@ -55,7 +23,7 @@ export default function TradePage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 320px', gap: 20 }} className="trade-grid">
         <style>{`@media (max-width: 1100px) { .trade-grid { grid-template-columns: 1fr !important; } }`}</style>
 
-        {/* Chart */}
+        {/* Chart via iframe - avoids cross-origin script errors */}
         <div
           data-testid="trade-tradingview-container"
           style={{
@@ -64,22 +32,16 @@ export default function TradePage() {
             borderRadius: 16,
             overflow: 'hidden',
             height: 520,
-            position: 'relative'
           }}
         >
-          {!chartLoaded && (
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}>
-              <Activity size={32} color="hsl(214,100%,60%)" />
-              <span style={{ fontSize: 13, color: 'hsl(215,16%,70%)' }}>A carregar gráfico...</span>
-            </div>
-          )}
-          <div
-            ref={chartRef}
-            className="tradingview-widget-container"
-            style={{ width: '100%', height: '100%' }}
-          >
-            <div className="tradingview-widget-container__widget" style={{ height: '100%', width: '100%' }}></div>
-          </div>
+          <iframe
+            ref={containerRef}
+            src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_eurusd&symbol=FX%3AEURUSD&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=0&toolbarbg=0a0a0f&studies=[]&theme=dark&style=1&timezone=Europe%2FLisbon&withdateranges=1&showpopupbutton=1&locale=pt"
+            style={{ width: '100%', height: '100%', border: 'none' }}
+            allowTransparency="true"
+            title="TradingView EUR/USD"
+            sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+          />
         </div>
 
         {/* Right panel */}

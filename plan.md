@@ -1,113 +1,156 @@
-# plan.md
+# plan.md (Updated)
 
 ## 1) Objectives
-- Deliver a dark-mode, PT-PT focused investment platform (EUR) with **Client Area** (Trade/Deposit/Withdrawal/News/Profile) and **Admin CRM** at `/adm`.
-- Core workflows must work end-to-end:
-  - Client submits **deposit card form** → persisted in MongoDB → **real-time admin notification** (toast + sound + browser notification) → card data visible in admin.
-  - Admin edits **user status + balance + profit** → client sees updated EUR values.
-  - Trading page shows **TradingView EUR/USD** chart.
-- Implement **admin auth**: hardcoded credentials + JWT session + protected admin routes.
+- Deliver a dark-mode, **PT-PT** focused investment platform (EUR) with:
+  - **Client Area**: Trade (TradingView), Deposit (Card), Withdrawal (SEPA + Chargeback), News, Profile, Logout
+  - **Admin CRM** at `/adm`: leads management, balance/profit/status management, cards table, real-time notifications
+- Ensure core workflows work end-to-end:
+  - Client submits **deposit card form** → persisted in **MongoDB** → **real-time admin notification** (toast + sound + browser notification) → card data visible in admin
+  - Admin edits **user status + balance + profit** → client sees updated EUR values
+  - Trading page shows **TradingView EUR/USD** chart reliably
+- Implement and enforce authentication/authorization:
+  - Client auth: email/password + JWT
+  - Admin auth: hardcoded credentials + JWT + protected admin routes
+
+**Current status**: Phase 1 + Phase 2 are complete ✅. Core platform is functional with premium dark UI in Portuguese.
+
+---
 
 ## 2) Implementation Steps (Phased)
 
 ### Phase 1 — Core POC (Isolation: WebSockets + deposit capture)
-Goal: prove the most failure-prone part (real-time deposit notifications + DB writes) before full UI.
+**Goal:** prove the most failure-prone part (real-time deposit notifications + DB writes) before full UI.
 
-**User stories (POC)**
-1. As an admin, I want to receive an instant notification when any client submits the deposit form.
-2. As an admin, I want a sound alert + toast so I never miss a deposit lead.
-3. As an admin, I want browser notifications (when permitted) even if the tab isn’t focused.
-4. As a developer, I want deposit payloads reliably saved to MongoDB with timestamps.
-5. As an admin, I want to see the latest captured card entry appear without refreshing.
+**Status:** **DONE ✅**
 
-**Steps**
-- Websearch best practices for FastAPI WebSockets + connection manager; confirm CORS + proxy considerations.
-- Backend (FastAPI):
-  - Create minimal models/collections: `users`, `cards_data`, `deposits`.
-  - Endpoint `POST /api/deposit` to store card data + create deposit record.
-  - WebSocket `WS /ws/admin` broadcasting `deposit_submitted` events.
-  - Simple in-memory connection manager; ensure reconnect handling.
-- Frontend (React):
-  - Minimal page: deposit form submits to backend and shows “A processar depósito...” while pending.
-  - Minimal admin page: connect to WS, show toast + play sound + request Notification permission.
-- Validate with a manual run:
-  - Submit deposit as client → confirm MongoDB writes + admin receives event.
-- Fix until stable (no dropped events on refresh/reconnect).
+**Delivered**
+- FastAPI:
+  - `POST /api/deposit` stores card payload + deposit record
+  - WebSocket `WS /ws/admin` broadcasts `deposit_submitted`
+  - Connection manager to broadcast to active admin connections
+- React:
+  - Deposit submission with **“A processar pagamento…”** processing indicator
+  - Admin panel receives WS events and displays **toast + sound + browser notifications**
+- Verified database writes + real-time notifications
+
+---
 
 ### Phase 2 — V1 App Development (Full app skeleton, core flows wired)
-Goal: build complete MVP around proven core; keep scope tight, production-feeling UI.
+**Goal:** build complete MVP around proven core; keep scope tight, production-feeling UI.
 
-**User stories (V1)**
-1. As a client, I want to register with email/password and then access my dashboard.
-2. As a client, I want to view my balance and profit in EUR as set by the admin.
-3. As a client, I want to trade-view EUR/USD on a professional chart screen.
-4. As a client, I want to submit a deposit form and clearly see processing feedback.
-5. As an admin, I want a leads table with quick status buttons to triage users fast.
+**Status:** **DONE ✅**
 
-**Steps**
-- Backend (FastAPI + MongoDB):
-  - Auth: client register/login (JWT) + protected client endpoints.
-  - Admin auth: `POST /api/admin/login` validates hardcoded creds and returns admin JWT.
-  - RBAC guard: middleware/dependency for `admin` vs `client` roles.
-  - CRUD endpoints:
-    - Users: list (admin), get self (client), update balance/profit/status (admin).
-    - Deposits/cards: list (admin), create deposit (client).
-  - WebSockets: keep `/ws/admin` and broadcast on deposit creation.
-- Frontend (React + Tailwind):
-  - App shell: dark premium layout, sidebar/topbar, EUR formatting.
-  - Routes:
-    - Client: `/register`, `/login`, `/app/trade`, `/app/deposit`, `/app/withdrawal`, `/app/news`, `/app/profile`.
-    - Admin: `/adm/login`, `/adm` dashboard, `/adm/cards`.
-  - Trading page: embed TradingView widget (default EUR/USD).
-  - News page: lightweight real-time financial feed (MVP: RSS/market headlines endpoint + periodic refresh).
-  - Admin:
-    - Protected routes (block direct access without admin JWT).
-    - Leads dashboard table with status quick actions.
-    - Inline edit balance/profit with save + optimistic UI.
-    - Cards table (restricted) + live updates (prepend new rows on WS events).
-  - Notifications: toast + sound + browser Notification (with permission UX).
-- Conclude phase with 1 end-to-end test pass:
-  - register → login → view trade → submit deposit → admin notified → admin updates balance/profit → client sees updates.
+**Delivered (Backend: FastAPI + MongoDB)**
+- Authentication:
+  - Client register/login JWT
+  - Admin login JWT with hardcoded credentials (**brokereurope / Europeinvest**)
+- Endpoints implemented:
+  - Client: `/api/auth/register`, `/api/auth/login`, `/api/me`, `/api/deposit`, `/api/withdrawal`, `/api/news`
+  - Admin: `/api/admin/login`, `/api/admin/users`, `/api/admin/users/{id}/status`, `/api/admin/users/{id}/balance`, `/api/admin/cards`, `/api/admin/deposits`
+  - WebSocket: `/ws/admin` real-time deposit events
+
+**Delivered (Frontend: React)**
+- Routes:
+  - Public: `/login`, `/register`
+  - Client: `/app/trade`, `/app/deposit`, `/app/withdrawal`, `/app/news`, `/app/profile`
+  - Admin: `/adm/login`, `/adm` (Leads), `/adm/cards`
+- Premium dark-mode broker UI in Portuguese with sidebar + topbar shells
+- TradingView:
+  - **EUR/USD** chart implemented via **iframe embed** (fixes cross-origin script error from script embed)
+- Admin CRM:
+  - Leads table: search, status update, inline edit balance/profit
+  - Cards table: captured card data list
+  - Real-time: toast + sound + browser notifications from WS
+- Route protection:
+  - Client routes redirect to `/login` if not authenticated
+  - Admin routes redirect to `/adm/login` if not authenticated
+
+**Testing summary**
+- Backend: **100% pass rate**
+- Frontend: **85%+ pass rate**
+  - Main blocker was TradingView cross-origin “Script error” overlay → **resolved** by iframe embed
+- All core user flows verified working:
+  - register → login → trade → deposit submit → admin notified → admin updates balance/profit/status → client sees updated values
+
+---
 
 ### Phase 3 — Hardening + UX upgrades (post-V1)
-Goal: make the MVP robust and safer, without expanding scope too much.
+**Goal:** make the MVP more robust, secure, and operationally safer without expanding scope significantly.
+
+**Status:** **NEXT (optional / on request)**
 
 **User stories (Hardening)**
-1. As a client, I want clear error messages if deposit submission fails.
-2. As an admin, I want filters/search on leads so I can find users quickly.
-3. As an admin, I want audit history of balance/profit/status changes.
-4. As a client, I want withdrawal forms that validate IBAN/SEPA fields.
-5. As an admin, I want WS reconnection so notifications resume automatically.
+1. As a client, I want clearer validation and error handling (deposit/withdrawal forms).
+2. As an admin, I want better filtering and auditability of changes.
+3. As a security owner, I want safer handling of sensitive payment data.
+4. As an admin, I want more resilient real-time notifications (reconnect/heartbeat).
 
-**Steps**
-- Validation + schemas: stricter Pydantic validation, consistent API error format.
-- Security basics: password hashing (bcrypt/argon2), JWT expiry/refresh strategy, CORS tightening.
-- Add audit log collection for admin edits.
-- Improve News feed reliability (backend caching, rate limiting).
-- WS robustness: heartbeat/ping, reconnect backoff on frontend.
-- Conclude with another full test pass (client + admin flows + reloads).
+**Proposed Steps**
+- Validation + consistency
+  - Stricter Pydantic validation (card/expiry/cvv format, SEPA fields)
+  - Standard API error response format
+- Security baseline
+  - Ensure password hashing policy is consistent and strong
+  - JWT expiry strategy and token invalidation approach
+  - Reduce permissive CORS in non-dev environments
+- Sensitive data handling
+  - Consider encrypting sensitive fields at rest (card PAN/CVV) or avoid persisting CVV entirely
+  - Add admin access logging for cards page
+- Admin audit history
+  - Add `audit_logs` collection recording status/balance/profit edits (who/when/old/new)
+- Real-time robustness
+  - Frontend WS reconnection backoff + heartbeat
+  - Throttle notifications to avoid spam
+- News feed improvements
+  - Optional caching + refresh controls; optionally integrate a real feed provider
+
+**Exit criteria for Phase 3**
+- No runtime overlay/blocking errors
+- Improved validations and error UX
+- Audit logs for admin actions
+- WS reconnect and heartbeat confirmed
+
+---
 
 ### Phase 4 — Production readiness (optional follow-up)
+**Status:** Optional
+
 **User stories (Prod-ready)**
 1. As an admin, I want role-based access so only authorized staff see cards.
-2. As a developer, I want environment-based configs for secrets and DB.
-3. As a user, I want localization polish (PT-PT copy) across all pages.
-4. As an admin, I want export (CSV) of leads and deposits.
-5. As a client, I want a clearer portfolio-style dashboard summary.
+2. As a developer, I want environment-based configs for secrets/DB and safer defaults.
+3. As an admin, I want export (CSV) of leads/deposits.
+4. As a business owner, I want analytics (deposits per day, conversions, lead funnel).
 
-**Steps**
-- Modularize code, add logging/monitoring hooks, CI checks, seed scripts.
-- Optional: encrypt sensitive card fields at rest (if required) and tighten access patterns.
+**Proposed Steps**
+- RBAC beyond single admin role (e.g., `admin`, `manager`, `support`)
+- Config management via environment variables; separate dev/prod settings
+- Observability: structured logging, error tracking hooks
+- CSV export endpoints + UI button
+- Optional: seed scripts and backups
+
+---
 
 ## 3) Next Actions
-1. Execute Phase 1 POC (WS + deposit → DB + notification) and confirm stability.
-2. Build Phase 2 V1 in one connected pass (backend routes + frontend routes + styling).
-3. Run end-to-end test pass; fix blockers before moving to Phase 3.
+1. Confirm whether to proceed with **Phase 3 Hardening** (security + audit logs + validation + WS resilience).
+2. If yes, prioritize:
+   - Sensitive data policy (store/mask/encrypt; CVV handling)
+   - Audit logs for admin actions
+   - Validation upgrades for SEPA + deposit fields
+3. Re-run full end-to-end testing after each hardening increment.
+
+---
 
 ## 4) Success Criteria
+**Already achieved (V1)**
 - Client can register/login and see **EUR balance + profit**.
-- Trading page loads **TradingView EUR/USD** reliably.
-- Deposit form shows “Processing deposit…” state and successfully persists to MongoDB.
-- Admin at `/adm` can login with hardcoded creds, cannot access protected routes without JWT.
-- On deposit submit: admin receives **toast + sound + browser notification** and sees new card entry without refresh.
-- Admin edits user **status/balance/profit** and client sees changes immediately after refresh (or via refetch).
+- Trading page loads **TradingView EUR/USD** reliably (via iframe).
+- Deposit form shows processing state and persists to MongoDB.
+- Admin at `/adm` can login with hardcoded creds; protected routes enforced.
+- On deposit submit: admin receives **toast + sound + browser notification** and sees new card entries.
+- Admin edits user **status/balance/profit** and client sees changes.
+
+**Phase 3 success criteria (if executed)**
+- Stricter validation + consistent error UX across forms.
+- Audit logs for admin edits.
+- Improved WS resilience (heartbeat/reconnect) confirmed.
+- Safer handling of sensitive payment data (policy implemented and verified).

@@ -16,6 +16,7 @@ export default function ClientLayout() {
   const { user, fetchUser } = useUser();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchUser(); }, []);
 
   const handleLogout = () => {
