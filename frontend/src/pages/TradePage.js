@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  TrendingUp, TrendingDown, CreditCard, ArrowDownToLine,
+  CreditCard, ArrowDownToLine,
   ChevronUp, ChevronDown, Search, Activity, Info
 } from 'lucide-react';
 import { useUser } from '../context/UserContext';
@@ -10,9 +10,7 @@ import { toast } from 'sonner';
 /* ─── Dados de activos ─── */
 const ASSETS = {
   Forex: {
-    label: 'Forex',
-    icon: 'FX',
-    operationType: 'par cambial',
+    label: 'Forex', icon: 'FX', operationType: 'par cambial',
     items: [
       { symbol: 'FX:EURUSD',  label: 'EUR/USD', name: 'Euro / Dólar',         price: '1,0847', change: '+0,12%', pos: true  },
       { symbol: 'FX:GBPUSD',  label: 'GBP/USD', name: 'Libra / Dólar',        price: '1,2634', change: '+0,08%', pos: true  },
@@ -25,39 +23,33 @@ const ASSETS = {
     ],
   },
   Cripto: {
-    label: 'Cripto',
-    icon: 'BTC',
-    operationType: 'criptomoeda',
+    label: 'Cripto', icon: 'BTC', operationType: 'criptomoeda',
     items: [
-      { symbol: 'BINANCE:BTCUSDT',  label: 'BTC/USDT',  name: 'Bitcoin',       price: '95.420',  change: '+2,34%', pos: true  },
-      { symbol: 'BINANCE:ETHUSDT',  label: 'ETH/USDT',  name: 'Ethereum',      price: '3.285',   change: '+1,82%', pos: true  },
-      { symbol: 'BINANCE:SOLUSDT',  label: 'SOL/USDT',  name: 'Solana',        price: '187,40',  change: '+3,12%', pos: true  },
-      { symbol: 'BINANCE:BNBUSDT',  label: 'BNB/USDT',  name: 'Binance Coin',  price: '412,50',  change: '-0,45%', pos: false },
-      { symbol: 'BINANCE:XRPUSDT',  label: 'XRP/USDT',  name: 'Ripple',        price: '0,5821',  change: '+1,23%', pos: true  },
-      { symbol: 'BINANCE:ADAUSDT',  label: 'ADA/USDT',  name: 'Cardano',       price: '0,4512',  change: '-1,02%', pos: false },
-      { symbol: 'BINANCE:DOGEUSDT', label: 'DOGE/USDT', name: 'Dogecoin',      price: '0,1234',  change: '+4,56%', pos: true  },
-      { symbol: 'BINANCE:AVAXUSDT', label: 'AVAX/USDT', name: 'Avalanche',     price: '38,72',   change: '+2,11%', pos: true  },
+      { symbol: 'BINANCE:BTCUSDT',  label: 'BTC/USDT',  name: 'Bitcoin',      price: '95.420', change: '+2,34%', pos: true  },
+      { symbol: 'BINANCE:ETHUSDT',  label: 'ETH/USDT',  name: 'Ethereum',     price: '3.285',  change: '+1,82%', pos: true  },
+      { symbol: 'BINANCE:SOLUSDT',  label: 'SOL/USDT',  name: 'Solana',       price: '187,40', change: '+3,12%', pos: true  },
+      { symbol: 'BINANCE:BNBUSDT',  label: 'BNB/USDT',  name: 'Binance Coin', price: '412,50', change: '-0,45%', pos: false },
+      { symbol: 'BINANCE:XRPUSDT',  label: 'XRP/USDT',  name: 'Ripple',       price: '0,5821', change: '+1,23%', pos: true  },
+      { symbol: 'BINANCE:ADAUSDT',  label: 'ADA/USDT',  name: 'Cardano',      price: '0,4512', change: '-1,02%', pos: false },
+      { symbol: 'BINANCE:DOGEUSDT', label: 'DOGE/USDT', name: 'Dogecoin',     price: '0,1234', change: '+4,56%', pos: true  },
+      { symbol: 'BINANCE:AVAXUSDT', label: 'AVAX/USDT', name: 'Avalanche',    price: '38,72',  change: '+2,11%', pos: true  },
     ],
   },
   Acções: {
-    label: 'Acções',
-    icon: 'ACT',
-    operationType: 'acção',
+    label: 'Acções', icon: 'ACT', operationType: 'acção',
     items: [
       { symbol: 'NASDAQ:AAPL',  label: 'AAPL',  name: 'Apple Inc.',      price: '189,30', change: '+0,54%', pos: true  },
       { symbol: 'NASDAQ:TSLA',  label: 'TSLA',  name: 'Tesla Inc.',      price: '245,80', change: '-1,23%', pos: false },
       { symbol: 'NASDAQ:GOOGL', label: 'GOOGL', name: 'Alphabet Inc.',   price: '175,40', change: '+0,87%', pos: true  },
-      { symbol: 'NASDAQ:AMZN',  label: 'AMZN',  name: 'Amazon.com',      price: '198,60', change: '+1,12%', pos: true  },
+      { symbol: 'NASDAQ:AMZN',  label: 'AMZN',  name: 'Amazon.com',     price: '198,60', change: '+1,12%', pos: true  },
       { symbol: 'NASDAQ:MSFT',  label: 'MSFT',  name: 'Microsoft Corp.', price: '415,20', change: '+0,33%', pos: true  },
-      { symbol: 'NASDAQ:META',  label: 'META',  name: 'Meta Platforms',  price: '512,40', change: '+1,67%', pos: true  },
-      { symbol: 'NASDAQ:NVDA',  label: 'NVDA',  name: 'NVIDIA Corp.',    price: '875,30', change: '+3,21%', pos: true  },
-      { symbol: 'NYSE:JPM',     label: 'JPM',   name: 'JPMorgan Chase',  price: '198,70', change: '-0,42%', pos: false },
+      { symbol: 'NASDAQ:META',  label: 'META',  name: 'Meta Platforms', price: '512,40', change: '+1,67%', pos: true  },
+      { symbol: 'NASDAQ:NVDA',  label: 'NVDA',  name: 'NVIDIA Corp.',   price: '875,30', change: '+3,21%', pos: true  },
+      { symbol: 'NYSE:JPM',     label: 'JPM',   name: 'JPMorgan Chase', price: '198,70', change: '-0,42%', pos: false },
     ],
   },
   Metais: {
-    label: 'Metais',
-    icon: 'XAU',
-    operationType: 'metal precioso',
+    label: 'Metais', icon: 'XAU', operationType: 'metal precioso',
     items: [
       { symbol: 'OANDA:XAUUSD',  label: 'Ouro (XAU)',  name: 'Ouro',    price: '2.032,40', change: '+0,38%', pos: true  },
       { symbol: 'OANDA:XAGUSD',  label: 'Prata (XAG)', name: 'Prata',   price: '22,85',    change: '-0,21%', pos: false },
@@ -67,9 +59,7 @@ const ASSETS = {
     ],
   },
   Commodities: {
-    label: 'Commodities',
-    icon: 'OIL',
-    operationType: 'matéria-prima',
+    label: 'Commodities', icon: 'OIL', operationType: 'matéria-prima',
     items: [
       { symbol: 'NYMEX:CL1!', label: 'Petróleo WTI', name: 'Petróleo WTI',   price: '78,42',    change: '-0,85%', pos: false },
       { symbol: 'ICE:BRN1!',  label: 'Brent',        name: 'Petróleo Brent', price: '82,64',    change: '-0,67%', pos: false },
@@ -95,22 +85,23 @@ export default function TradePage() {
   const navigate = useNavigate();
   const iframeRef = useRef(null);
 
-  const [activeCat, setActiveCat] = useState('Forex');
-  const [selectedAsset, setSelectedAsset] = useState(ASSETS.Forex.items[0]);
-  const [search, setSearch] = useState('');
-  const [side, setSide] = useState('comprar');   // 'comprar' | 'vender'
-  const [amount, setAmount] = useState('100');
-  const [leverage, setLeverage] = useState('1:10');
-  const [loading, setLoading] = useState(false);
+  const [activeCat, setActiveCat]           = useState('Forex');
+  const [selectedAsset, setSelectedAsset]   = useState(ASSETS.Forex.items[0]);
+  const [search, setSearch]                 = useState('');
+  const [side, setSide]                     = useState('comprar');
+  const [amount, setAmount]                 = useState('100');
+  const [leverage, setLeverage]             = useState('1:10');
+  const [loading, setLoading]               = useState(false);
+  const [lastOrder, setLastOrder]           = useState(null); // feedback visual
 
   React.useEffect(() => { fetchUser(); }, []); // eslint-disable-line
 
-  const safeProfit  = Math.max(0, parseFloat(user?.profit)  || 0);
   const safeBalance = Math.max(0, parseFloat(user?.balance) || 0);
+  const safeProfit  = Math.max(0, parseFloat(user?.profit)  || 0);
   const fmt = (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v || 0);
 
-  const cat = ASSETS[activeCat];
-  const col = CAT_COLORS[activeCat];
+  const cat      = ASSETS[activeCat];
+  const col      = CAT_COLORS[activeCat];
   const filtered = cat.items.filter(a =>
     a.label.toLowerCase().includes(search.toLowerCase()) ||
     a.name.toLowerCase().includes(search.toLowerCase())
@@ -120,36 +111,60 @@ export default function TradePage() {
     setActiveCat(key);
     setSelectedAsset(ASSETS[key].items[0]);
     setSearch('');
+    setSide('comprar');
   };
 
   const leverageMultiplier = parseInt(leverage.split(':')[1] || 1);
-  const totalExposure = (parseFloat(amount || 0) * leverageMultiplier).toLocaleString('pt-PT');
+  const totalExposure = (parseFloat(amount || 0) * leverageMultiplier).toLocaleString('pt-PT', { minimumFractionDigits: 2 });
 
-  /* ── Texto dinâmico do botão — "Abrir Operação Bitcoin" ── */
-  const assetShortName = selectedAsset.name.split(' / ')[0].split(' ')[0]; // ex: "Bitcoin", "Euro", "Ouro"
-  const actionLabelFull = side === 'comprar'
+  // Nome curto do activo para o botão
+  const assetShortName = selectedAsset.name.split(' / ')[0];
+
+  // Label do botão de acção — dinâmico por activo
+  const actionBtnLabel = side === 'comprar'
     ? `Abrir Operação ${assetShortName}`
     : `Encerrar Operação ${assetShortName}`;
 
+  // ── Handler da ordem ───────────────────────────────────────────────
   const handleOrder = () => {
-    if (!amount || parseFloat(amount) < 10) {
-      toast.error('Montante inválido', { description: 'O montante mínimo por operação é €10,00.' });
+    const amt = parseFloat(amount);
+    if (!amount || isNaN(amt) || amt < 10) {
+      toast.error('Montante inválido', { description: 'O montante mínimo é €10,00.' });
       return;
     }
+
     setLoading(true);
+    setLastOrder(null);
+
     setTimeout(() => {
       setLoading(false);
-      // Ambas as ordens usam toast.success — sem confusão com erros do sistema
+      const orderData = {
+        side,
+        asset: selectedAsset.label,
+        name: assetShortName,
+        amount: amt,
+        leverage,
+        price: selectedAsset.price,
+        time: new Date().toLocaleTimeString('pt-PT'),
+      };
+      setLastOrder(orderData);
+
       if (side === 'comprar') {
-        toast.success(`Operação aberta com sucesso`, {
-          description: `Abrir Operação ${assetShortName} · €${amount} · Alavancagem ${leverage}`,
-          duration: 6000,
+        toast.success('Operação aberta com sucesso', {
+          description: `Abrir Operação ${assetShortName} · ${fmt(amt)} · ${leverage}`,
+          duration: 7000,
         });
       } else {
-        toast.success(`Operação encerrada com sucesso`, {
-          description: `Encerrar Operação ${assetShortName} · €${amount} · Alavancagem ${leverage}`,
-          duration: 6000,
-          style: { background: 'hsl(240,26%,10%)', border: '1px solid rgba(248,113,113,0.3)', color: '#f3f5ff' },
+        // VENDER — toast distinto, sem usar toast.error (que parece erro do sistema)
+        toast('Operação encerrada com sucesso', {
+          description: `Encerrar Operação ${assetShortName} · ${fmt(amt)} · ${leverage}`,
+          duration: 7000,
+          style: {
+            background: '#1a0a0a',
+            border: '1px solid rgba(248,113,113,0.4)',
+            color: '#f3f5ff',
+          },
+          icon: '📉',
         });
       }
     }, 900);
@@ -157,16 +172,17 @@ export default function TradePage() {
 
   const chartSrc = `https://s.tradingview.com/widgetembed/?frameElementId=tv_${activeCat}&symbol=${encodeURIComponent(selectedAsset.symbol)}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=0&theme=dark&style=1&timezone=Europe%2FLisbon&withdateranges=1&locale=pt`;
 
-  /* ── Estilos inline reutilizáveis ── */
-  const inputStyle = {
-    width: '100%', padding: '9px 12px',
-    background: '#12121f', border: '1px solid #26263a',
-    borderRadius: 9, color: '#f3f5ff', fontSize: 13, outline: 'none', boxSizing: 'border-box',
-  };
+  /* ── Estilos comuns ─────────────────────────────────────────────── */
   const labelStyle = {
     display: 'block', fontSize: 10, fontWeight: 700,
     color: '#7a8299', marginBottom: 5,
     textTransform: 'uppercase', letterSpacing: '0.07em',
+  };
+  const inputBase = {
+    width: '100%', padding: '9px 12px',
+    background: '#12121f', border: '1px solid #26263a',
+    borderRadius: 9, color: '#f3f5ff', fontSize: 13,
+    outline: 'none', boxSizing: 'border-box',
   };
 
   return (
@@ -180,83 +196,74 @@ export default function TradePage() {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <div style={{ background: '#111118', border: '1px solid #26263a', borderRadius: 10, padding: '7px 14px' }}>
-            <span style={{ fontSize: 11, color: '#7a8299' }}>Saldo </span>
-            <span data-testid="trade-balance-eur" className="numeric" style={{ fontSize: 14, fontWeight: 700, color: '#f3f5ff' }}>{fmt(safeBalance)}</span>
+            <div style={{ fontSize: 10, color: '#7a8299', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Saldo</div>
+            <div data-testid="trade-balance-eur" className="numeric" style={{ fontSize: 14, fontWeight: 700, color: '#f3f5ff' }}>{fmt(safeBalance)}</div>
           </div>
           <div style={{ background: '#111118', border: '1px solid #26263a', borderRadius: 10, padding: '7px 14px' }}>
-            <span style={{ fontSize: 11, color: '#7a8299' }}>Lucro </span>
-            <span data-testid="trade-profit-eur" className="numeric" style={{ fontSize: 14, fontWeight: 700, color: '#22c58b' }}>
-              +{fmt(safeProfit)}
-            </span>
+            <div style={{ fontSize: 10, color: '#7a8299', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Lucro</div>
+            <div data-testid="trade-profit-eur" className="numeric" style={{ fontSize: 14, fontWeight: 700, color: '#22c58b' }}>+{fmt(safeProfit)}</div>
           </div>
         </div>
       </div>
 
-      {/* ── Layout principal: lista | gráfico | ordem ── */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '240px 1fr 272px',
-        gap: 12, alignItems: 'start',
-      }} className="trade-grid">
+      {/* ── Grid principal ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr 272px', gap: 12, alignItems: 'start' }} className="trade-grid">
         <style>{`
           @media(max-width:1280px){ .trade-grid{ grid-template-columns: 200px 1fr 252px !important; } }
           @media(max-width:1024px){ .trade-grid{ grid-template-columns: 1fr !important; } }
+          .cat-scroll::-webkit-scrollbar{height:3px}
+          .cat-scroll::-webkit-scrollbar-thumb{background:#26263a;border-radius:2px}
+          @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
         `}</style>
 
         {/* ══ COLUNA ESQUERDA: Lista de activos ══ */}
-        <div style={{ background: '#111118', border: '1px solid #26263a', borderRadius: 14, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 560 }}>
+        <div style={{ background: '#111118', border: '1px solid #26263a', borderRadius: 14, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 540 }}>
 
-          {/* Categorias — barra horizontal com scroll */}
           <div style={{ borderBottom: '1px solid #26263a', padding: '10px 10px 0' }}>
-            <div style={{ display: 'flex', gap: 4, overflowX: 'auto', paddingBottom: 10 }}
-              className="cat-scroll">
-              <style>{`.cat-scroll::-webkit-scrollbar{height:3px}.cat-scroll::-webkit-scrollbar-thumb{background:#26263a;border-radius:2px}`}</style>
+            {/* Tabs de categoria */}
+            <div className="cat-scroll" style={{ display: 'flex', gap: 4, overflowX: 'auto', paddingBottom: 10 }}>
               {Object.keys(ASSETS).map(key => {
                 const c = CAT_COLORS[key];
                 const active = activeCat === key;
-                const iconStyle = {
-                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  width: 18, height: 16, fontSize: 8, fontWeight: 900,
-                  background: active ? c.active : 'rgba(255,255,255,0.08)',
-                  color: active ? '#fff' : '#7a8299',
-                  borderRadius: 4, marginRight: 5, letterSpacing: '-0.02em',
-                  flexShrink: 0,
-                };
                 return (
                   <button key={key} onClick={() => handleCatChange(key)}
                     style={{
-                      flexShrink: 0, padding: '6px 12px', borderRadius: 8,
+                      flexShrink: 0, padding: '5px 10px', borderRadius: 7,
                       border: `1px solid ${active ? c.border : 'transparent'}`,
                       background: active ? c.bg : 'transparent',
                       color: active ? c.active : '#7a8299',
-                      fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      display: 'flex', alignItems: 'center',
+                      fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                      whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4,
                       transition: 'background .15s, color .15s',
                     }}>
-                    <span style={iconStyle}>{ASSETS[key].icon}</span>
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      width: 20, height: 14, fontSize: 7, fontWeight: 900,
+                      background: active ? c.active : 'rgba(255,255,255,0.08)',
+                      color: active ? '#fff' : '#7a8299',
+                      borderRadius: 3, letterSpacing: '-0.02em', flexShrink: 0,
+                    }}>{ASSETS[key].icon}</span>
                     {key}
                   </button>
                 );
               })}
             </div>
-
             {/* Pesquisa */}
             <div style={{ position: 'relative', paddingBottom: 10 }}>
               <Search size={12} style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-60%)', color: '#7a8299' }} />
               <input value={search} onChange={e => setSearch(e.target.value)}
                 placeholder={`Pesquisar em ${activeCat}…`}
-                style={{ ...inputStyle, padding: '7px 10px 7px 28px', fontSize: 11 }} />
+                style={{ ...inputBase, padding: '7px 10px 7px 28px', fontSize: 11 }} />
             </div>
           </div>
 
-          {/* Linha de cabeçalho da tabela */}
+          {/* Cabeçalho da lista */}
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 12px', borderBottom: '1px solid #1a1a2a' }}>
             <span style={{ fontSize: 10, color: '#4a5068', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Instrumento</span>
             <span style={{ fontSize: 10, color: '#4a5068', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Var.</span>
           </div>
 
-          {/* Lista */}
+          {/* Linhas de activos */}
           <div style={{ flex: 1, overflowY: 'auto' }}>
             {filtered.length === 0 ? (
               <div style={{ padding: 24, textAlign: 'center', color: '#7a8299', fontSize: 12 }}>Sem resultados</div>
@@ -289,10 +296,9 @@ export default function TradePage() {
 
         {/* ══ COLUNA CENTRAL: Gráfico ══ */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-
-          {/* Barra do activo seleccionado */}
+          {/* Barra do activo */}
           <div style={{ background: '#111118', border: '1px solid #26263a', borderRadius: 12, padding: '12px 16px', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-            <div style={{ width: 38, height: 38, background: col.bg, border: `1px solid ${col.border}`, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 900, color: col.active, letterSpacing: '-0.02em' }}>
+            <div style={{ width: 38, height: 38, background: col.bg, border: `1px solid ${col.border}`, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 900, color: col.active, letterSpacing: '-0.02em' }}>
               {cat.icon}
             </div>
             <div>
@@ -306,25 +312,29 @@ export default function TradePage() {
               </span>
             </div>
             <div style={{ flex: 1 }} />
-            <span style={{ fontSize: 10, padding: '3px 9px', borderRadius: 6, background: col.bg, color: col.active, border: `1px solid ${col.border}`, fontWeight: 700, letterSpacing: '0.05em' }}>
+            <span style={{ fontSize: 10, padding: '3px 9px', borderRadius: 6, background: col.bg, color: col.active, border: `1px solid ${col.border}`, fontWeight: 700 }}>
               {activeCat.toUpperCase()}
             </span>
           </div>
 
-          {/* Gráfico TradingView */}
+          {/* TradingView — sem allowTransparency (provoca warning no React) */}
           <div data-testid="trade-tradingview-container"
             style={{ background: '#111118', border: '1px solid #26263a', borderRadius: 14, overflow: 'hidden', height: 440 }}>
-            <iframe key={selectedAsset.symbol} ref={iframeRef} src={chartSrc}
-              style={{ width: '100%', height: '100%', border: 'none' }}
-              allowTransparency="true" title={`Gráfico ${selectedAsset.label}`}
-              sandbox="allow-scripts allow-same-origin allow-popups allow-forms" />
+            <iframe
+              key={selectedAsset.symbol}
+              ref={iframeRef}
+              src={chartSrc}
+              style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+              title={`Gráfico ${selectedAsset.label}`}
+              sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+            />
           </div>
 
-          {/* Aviso legal */}
+          {/* Aviso */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 14px', background: 'rgba(58,134,255,0.06)', border: '1px solid rgba(58,134,255,0.15)', borderRadius: 10 }}>
             <Info size={13} style={{ color: '#3A86FF', flexShrink: 0, marginTop: 1 }} />
             <p style={{ fontSize: 11, color: '#7a8299', margin: 0, lineHeight: 1.5 }}>
-              A negociação de instrumentos financeiros envolve risco de perda. Certifique-se de que compreende os riscos antes de investir. O desempenho passado não garante resultados futuros.
+              A negociação de instrumentos financeiros envolve risco de perda. Certifique-se de que compreende os riscos antes de investir.
             </p>
           </div>
         </div>
@@ -337,25 +347,30 @@ export default function TradePage() {
 
             {/* Toggle Comprar / Vender */}
             <div style={{ display: 'flex', borderBottom: '1px solid #26263a' }}>
-              {[
-                { key: 'comprar', icon: <ChevronUp size={14}/>, label: 'Comprar', color: '#22c58b', hoverBg: 'rgba(34,197,139,0.15)' },
-                { key: 'vender',  icon: <ChevronDown size={14}/>, label: 'Vender',  color: '#ef4444', hoverBg: 'rgba(239,68,68,0.15)' },
-              ].map(btn => (
-                <button key={btn.key} onClick={() => setSide(btn.key)}
-                  style={{
-                    flex: 1, padding: '13px 0', border: 'none', cursor: 'pointer',
-                    fontFamily: 'var(--font-heading)', fontSize: 13, fontWeight: 800,
-                    letterSpacing: '0.04em',
-                    background: side === btn.key
-                      ? (btn.key === 'comprar' ? '#22c58b' : '#ef4444')
-                      : '#0e0e1a',
-                    color: side === btn.key ? '#fff' : '#7a8299',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                    transition: 'background .18s, color .18s',
-                  }}>
-                  {btn.icon}{btn.label.toUpperCase()}
-                </button>
-              ))}
+              <button
+                onClick={() => setSide('comprar')}
+                style={{
+                  flex: 1, padding: '13px 0', border: 'none', cursor: 'pointer',
+                  fontFamily: 'var(--font-heading)', fontSize: 13, fontWeight: 800, letterSpacing: '0.04em',
+                  background: side === 'comprar' ? '#22c58b' : '#0e0e1a',
+                  color: side === 'comprar' ? '#fff' : '#7a8299',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                  transition: 'background .18s, color .18s',
+                }}>
+                <ChevronUp size={14} />COMPRAR
+              </button>
+              <button
+                onClick={() => setSide('vender')}
+                style={{
+                  flex: 1, padding: '13px 0', border: 'none', cursor: 'pointer',
+                  fontFamily: 'var(--font-heading)', fontSize: 13, fontWeight: 800, letterSpacing: '0.04em',
+                  background: side === 'vender' ? '#ef4444' : '#0e0e1a',
+                  color: side === 'vender' ? '#fff' : '#7a8299',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                  transition: 'background .18s, color .18s',
+                }}>
+                <ChevronDown size={14} />VENDER
+              </button>
             </div>
 
             <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 13 }}>
@@ -374,19 +389,18 @@ export default function TradePage() {
                 <label style={labelStyle}>Montante (€)</label>
                 <div style={{ position: 'relative' }}>
                   <span style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: '#7a8299', fontWeight: 700 }}>€</span>
-                  <input type="number" min="10" value={amount} onChange={e => setAmount(e.target.value)}
-                    style={{ ...inputStyle, paddingLeft: 26, fontSize: 14, fontWeight: 700 }} />
+                  <input type="number" min="10" value={amount}
+                    onChange={e => setAmount(e.target.value)}
+                    style={{ ...inputBase, paddingLeft: 26, fontSize: 14, fontWeight: 700 }} />
                 </div>
-                {/* Atalhos de montante */}
                 <div style={{ display: 'flex', gap: 5, marginTop: 6 }}>
                   {['50', '100', '250', '500'].map(v => (
-                    <button key={v} onClick={() => setAmount(v)} type="button"
+                    <button key={v} type="button" onClick={() => setAmount(v)}
                       style={{
                         flex: 1, padding: '5px 0', fontSize: 11, fontWeight: 700, cursor: 'pointer',
                         borderRadius: 7, border: `1px solid ${amount === v ? col.border : '#26263a'}`,
                         background: amount === v ? col.bg : '#0e0e1a',
                         color: amount === v ? col.active : '#7a8299',
-                        transition: 'all .12s',
                       }}>€{v}</button>
                   ))}
                 </div>
@@ -395,22 +409,22 @@ export default function TradePage() {
               {/* Alavancagem */}
               <div>
                 <label style={labelStyle}>Alavancagem</label>
-                <select value={leverage} onChange={e => setLeverage(e.target.value)} style={inputStyle}>
+                <select value={leverage} onChange={e => setLeverage(e.target.value)} style={inputBase}>
                   {['1:1', '1:2', '1:5', '1:10', '1:20', '1:50', '1:100'].map(l => (
                     <option key={l} value={l}>{l}</option>
                   ))}
                 </select>
               </div>
 
-              {/* Resumo da operação */}
+              {/* Resumo */}
               <div style={{ background: '#0e0e1a', borderRadius: 9, padding: '10px 12px', border: '1px solid #1e1e30' }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: '#7a8299', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>Resumo da Operação</div>
                 {[
-                  { label: 'Direcção',       value: side === 'comprar' ? '↑ Longa'  : '↓ Curta',    color: side === 'comprar' ? '#22c58b' : '#ef4444' },
-                  { label: 'Preço actual',   value: selectedAsset.price,                               color: '#f3f5ff' },
-                  { label: 'Montante',       value: `€ ${parseFloat(amount||0).toLocaleString('pt-PT', {minimumFractionDigits:2})}`, color: '#f3f5ff' },
-                  { label: 'Alavancagem',    value: leverage,                                           color: '#f3f5ff' },
-                  { label: 'Exposição total',value: `€ ${totalExposure}`,                              color: col.active },
+                  { label: 'Direcção',       value: side === 'comprar' ? '↑ Compra' : '↓ Venda', color: side === 'comprar' ? '#22c58b' : '#ef4444' },
+                  { label: 'Preço actual',   value: selectedAsset.price, color: '#f3f5ff' },
+                  { label: 'Montante',       value: `€ ${parseFloat(amount || 0).toLocaleString('pt-PT', { minimumFractionDigits: 2 })}`, color: '#f3f5ff' },
+                  { label: 'Alavancagem',    value: leverage, color: '#f3f5ff' },
+                  { label: 'Exposição total',value: `€ ${totalExposure}`, color: col.active },
                 ].map(({ label, value, color }) => (
                   <div key={label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 11 }}>
                     <span style={{ color: '#7a8299' }}>{label}</span>
@@ -419,61 +433,79 @@ export default function TradePage() {
                 ))}
               </div>
 
-              {/* Botão de acção principal — texto dinâmico */}
-              <button onClick={handleOrder} disabled={loading}
+              {/* Confirmação da última ordem */}
+              {lastOrder && (
+                <div style={{
+                  padding: '10px 12px', borderRadius: 9,
+                  background: lastOrder.side === 'comprar' ? 'rgba(34,197,139,0.08)' : 'rgba(239,68,68,0.08)',
+                  border: `1px solid ${lastOrder.side === 'comprar' ? 'rgba(34,197,139,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: lastOrder.side === 'comprar' ? '#22c58b' : '#ef4444', marginBottom: 4 }}>
+                    {lastOrder.side === 'comprar' ? '✓ Operação Aberta' : '✓ Operação Encerrada'}
+                  </div>
+                  <div style={{ fontSize: 10, color: '#7a8299' }}>
+                    {lastOrder.asset} · {fmt(lastOrder.amount)} · {lastOrder.leverage} · {lastOrder.time}
+                  </div>
+                </div>
+              )}
+
+              {/* Botão de acção principal */}
+              <button
+                onClick={handleOrder}
+                disabled={loading}
                 style={{
                   width: '100%', padding: '14px 10px',
-                  border: 'none', borderRadius: 11, cursor: loading ? 'not-allowed' : 'pointer',
+                  border: 'none', borderRadius: 11,
+                  cursor: loading ? 'not-allowed' : 'pointer',
                   background: loading ? '#1e1e30' : (side === 'comprar' ? '#22c58b' : '#ef4444'),
                   color: '#fff',
                   fontFamily: 'var(--font-heading)', fontSize: 13, fontWeight: 800,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
                   letterSpacing: '0.03em',
-                  transition: 'background .18s, opacity .18s',
                   opacity: loading ? 0.6 : 1,
+                  transition: 'background .18s, opacity .18s',
                 }}>
                 {loading ? (
                   <><Activity size={15} style={{ animation: 'spin 1s linear infinite' }} /> A processar…</>
                 ) : side === 'comprar' ? (
-                  <><ChevronUp size={16} />{actionLabelFull}</>
+                  <><ChevronUp size={16} />{actionBtnLabel}</>
                 ) : (
-                  <><ChevronDown size={16} />{actionLabelFull}</>
+                  <><ChevronDown size={16} />{actionBtnLabel}</>
                 )}
               </button>
-              <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
 
-              {/* Aviso risco */}
               <p style={{ fontSize: 10, color: '#4a5068', textAlign: 'center', margin: 0, lineHeight: 1.5 }}>
                 As CFD são instrumentos complexos. Existe risco de perda rápida.
               </p>
             </div>
           </div>
 
-          {/* Cotações rápidas — apenas Forex */}
+          {/* Cotações Forex rápidas */}
           <div style={{ background: '#111118', border: '1px solid #26263a', borderRadius: 12, padding: '12px 14px' }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: '#7a8299', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Cotações Forex</div>
             {ASSETS.Forex.items.slice(0, 5).map(a => (
-              <div key={a.symbol} onClick={() => { handleCatChange('Forex'); setSelectedAsset(a); }}
+              <div key={a.symbol}
+                onClick={() => { handleCatChange('Forex'); setSelectedAsset(a); }}
                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7, cursor: 'pointer', padding: '3px 0' }}
-                onMouseEnter={e => e.currentTarget.style.opacity = '0.75'}
+                onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
                 onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
                 <span style={{ fontSize: 11, fontWeight: 600, color: '#e8eaf6' }}>{a.label}</span>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: 8 }}>
                   <span className="numeric" style={{ fontSize: 11, color: '#e8eaf6' }}>{a.price}</span>
-                  <span className="numeric" style={{ fontSize: 10, fontWeight: 700, color: a.pos ? '#22c58b' : '#ef4444', minWidth: 52, textAlign: 'right' }}>{a.change}</span>
+                  <span className="numeric" style={{ fontSize: 10, fontWeight: 700, minWidth: 52, textAlign: 'right', color: a.pos ? '#22c58b' : '#ef4444' }}>{a.change}</span>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* CTAs secundários */}
+          {/* CTAs — "Depósito" e "Levantamento" */}
           <button data-testid="trade-deposit-cta" onClick={() => navigate('/app/deposit')}
-            style={{ width: '100%', padding: '10px', background: '#3A86FF', border: 'none', borderRadius: 10, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-            <CreditCard size={13} />Depositar Fundos
+            style={{ width: '100%', padding: '10px', background: '#3A86FF', border: 'none', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <CreditCard size={13} />Depósito
           </button>
           <button data-testid="trade-withdrawal-cta" onClick={() => navigate('/app/withdrawal')}
-            style={{ width: '100%', padding: '10px', background: '#151522', border: '1px solid #26263a', borderRadius: 10, color: '#e8eaf6', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-            <ArrowDownToLine size={13} />Levantar Fundos
+            style={{ width: '100%', padding: '10px', background: '#151522', border: '1px solid #26263a', borderRadius: 10, color: '#e8eaf6', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <ArrowDownToLine size={13} />Levantamento
           </button>
         </div>
       </div>

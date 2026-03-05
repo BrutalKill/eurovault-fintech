@@ -54,7 +54,7 @@ export default function WithdrawalPage() {
   return (
     <div>
       <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 22, fontWeight: 700, color: '#f3f5ff', marginBottom: 4 }}>Retirar Fundos</h1>
+        <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 22, fontWeight: 700, color: '#f3f5ff', marginBottom: 4 }}>Levantamento de Fundos</h1>
         <p style={{ fontSize: 13, color: 'hsl(215,16%,70%)' }}>Escolha o método de levantamento</p>
       </div>
 
