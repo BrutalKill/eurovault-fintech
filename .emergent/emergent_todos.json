@@ -1,0 +1,26 @@
+[
+  {
+    "content": "Phase 1: WebSocket + Deposit capture POC",
+    "status": "in_progress"
+  },
+  {
+    "content": "Phase 2: Get design guidelines from design agent",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2: Backend - Auth, Users, Cards, Deposits, WebSocket endpoints",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2: Frontend - Client area (Trade, Deposit, Withdrawal, News, Profile)",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2: Frontend - Admin CRM (/adm) with leads, cards, balance manipulation",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2: End-to-end testing with testing agent",
+    "status": "pending"
+  }
+]
