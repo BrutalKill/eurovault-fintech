@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { BarChart2, CreditCard, ArrowDownToLine, Newspaper, User, LogOut, Menu } from 'lucide-react';
 import { useUser } from '../context/UserContext';
+import Footer from './Footer';
 
 const navItems = [
-  { to: '/app/trade',      icon: BarChart2,        label: 'Negociar' },
-  { to: '/app/deposit',    icon: CreditCard,       label: 'Depósito' },
-  { to: '/app/withdrawal', icon: ArrowDownToLine,  label: 'Levantamento' },
-  { to: '/app/news',       icon: Newspaper,        label: 'Notícias' },
-  { to: '/app/profile',    icon: User,             label: 'Perfil' },
+  { to: '/app/trade',      icon: BarChart2,       label: 'Negociar'      },
+  { to: '/app/deposit',    icon: CreditCard,      label: 'Depósito'      },
+  { to: '/app/withdrawal', icon: ArrowDownToLine, label: 'Levantamento'  },
+  { to: '/app/news',       icon: Newspaper,       label: 'Notícias'      },
+  { to: '/app/profile',    icon: User,            label: 'Perfil'        },
 ];
 
 export default function ClientLayout() {
@@ -21,13 +22,13 @@ export default function ClientLayout() {
     navigate('/login');
   };
 
-  // Profit nunca negativo (dupla segurança no frontend)
-  const safeProfit  = Math.max(0, parseFloat(user?.profit)  || 0);
   const safeBalance = Math.max(0, parseFloat(user?.balance) || 0);
-  const formatEur = (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+  const safeProfit  = Math.max(0, parseFloat(user?.profit)  || 0);
+  const formatEur   = (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'hsl(240,33%,5%)' }}>
+
       {/* Overlay móvel */}
       {sidebarOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 40 }}
@@ -45,7 +46,7 @@ export default function ClientLayout() {
       }} className="lg-sidebar">
 
         {/* Logo */}
-        <div style={{ padding: '20px 20px', borderBottom: '1px solid hsl(240,16%,18%)' }}>
+        <div style={{ padding: '20px', borderBottom: '1px solid hsl(240,16%,18%)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <img src="/logo-eurovault.png" alt="EuroVault Investments"
               style={{ width: 54, height: 54, objectFit: 'contain' }} />
@@ -98,13 +99,18 @@ export default function ClientLayout() {
       </aside>
 
       <style>{`
-        @media (min-width: 1024px) { .lg-sidebar { transform: translateX(0) !important; position: fixed !important; } .main-content { margin-left: 260px; } }
+        @media (min-width: 1024px) {
+          .lg-sidebar { transform: translateX(0) !important; position: fixed !important; }
+          .main-content { margin-left: 260px; }
+        }
         @media (max-width: 1023px) { .main-content { margin-left: 0; } }
-        .lg-hidden { display: flex; } @media (min-width: 1024px) { .lg-hidden { display: none; } }
+        .lg-hidden { display: flex; }
+        @media (min-width: 1024px) { .lg-hidden { display: none; } }
       `}</style>
 
       {/* Conteúdo principal */}
       <div className="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+
         {/* Topbar */}
         <header style={{
           height: 60, background: 'hsl(240,26%,8%)',
@@ -118,7 +124,7 @@ export default function ClientLayout() {
           </button>
           <div style={{ flex: 1 }} />
 
-          {/* Saldo no topbar (desktop) */}
+          {/* Saldo no topbar */}
           <div style={{ display: 'flex', gap: 10 }}>
             <div style={{ background: 'hsl(240,18%,14%)', border: '1px solid hsl(240,16%,22%)', borderRadius: 9, padding: '5px 12px', textAlign: 'right' }}>
               <div style={{ fontSize: 10, color: 'hsl(215,16%,60%)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Saldo</div>
@@ -131,16 +137,18 @@ export default function ClientLayout() {
           </div>
 
           {/* Avatar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'hsl(214,100%,60%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff' }}>
-              {user?.full_name?.[0]?.toUpperCase() || 'U'}
-            </div>
+          <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'hsl(214,100%,60%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff' }}>
+            {user?.full_name?.[0]?.toUpperCase() || 'U'}
           </div>
         </header>
 
+        {/* Página */}
         <main style={{ flex: 1, padding: '24px' }}>
           <Outlet />
         </main>
+
+        {/* Rodapé */}
+        <Footer />
       </div>
     </div>
   );
