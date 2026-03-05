@@ -91,7 +91,7 @@ export default function Register() {
         </div>
         <div style={{ marginTop: 16, padding: '10px 14px', background: 'hsl(240,18%,12%)', borderRadius: 10, border: '1px solid hsl(240,16%,22%)', display: 'flex', alignItems: 'center', gap: 8 }}>
           <Lock size={12} color="hsl(155,72%,45%)" />
-          <span style={{ fontSize: 11, color: 'hsl(215,16%,70%)' }}>Os seus dados pessoais estão encriptados e protegidos. Não partilhamos informações com terceiros.</span>
+          <span style={{ fontSize: 11, color: 'hsl(215,16%,70%)' }}>Os seus dados pessoais estão encriptados e protegidos ao abrigo do RGPD.</span>
         </div>
       </div>
     </div>

@@ -40,6 +40,11 @@ export default function DepositPage() {
   const [progress, setProgress]     = useState(0);
   const [success, setSuccess]        = useState(false);
 
+  // Helpers de formatação
+  const amountNum   = parseFloat(form.amount) || 0;
+  const amountFmt   = new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(amountNum);
+  const setAmount   = (val) => setForm(prev => ({ ...prev, amount: val }));
+
   const simulateProgress = () => {
     let p = 0;
     return setInterval(() => {
@@ -152,7 +157,7 @@ export default function DepositPage() {
             <Lock size={16} color="#22c58b" />
             <div>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#22c58b' }}>Pagamento 100% Seguro</div>
-              <div style={{ fontSize: 11, color: '#4a5068', marginTop: 1 }}>Os seus dados são encriptados e protegidos. Nunca partilhamos informações com terceiros.</div>
+              <div style={{ fontSize: 11, color: '#4a5068', marginTop: 1 }}>Os seus dados são encriptados com tecnologia SSL 256-bit.</div>
             </div>
           </div>
 

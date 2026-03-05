@@ -89,7 +89,6 @@ export default function Footer() {
               'Termos e Condições',
               'Política de Privacidade',
               'Política de Cookies',
-              'Divulgação de Riscos',
               'Política AML/KYC',
               'Conflitos de Interesse',
             ].map(label => (
@@ -131,12 +130,12 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Aviso de risco */}
-        <div style={{ margin: '28px 0 20px', padding: '14px 18px', background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 10 }}>
+        {/* Informação legal */}
+        <div style={{ margin: '28px 0 20px', padding: '14px 18px', background: 'rgba(58,134,255,0.05)', border: '1px solid rgba(58,134,255,0.12)', borderRadius: 10 }}>
           <p style={{ fontSize: 11, color: '#4a5068', lineHeight: 1.7, margin: 0 }}>
-            <strong style={{ color: '#7a8299' }}>Aviso de Risco:</strong> A negociação de CFDs e outros instrumentos financeiros envolve risco elevado e pode resultar na perda de todo o capital investido.
-            Não deverá investir capital que não possa perder. Certifique-se de que compreende os riscos associados à negociação e, se necessário, procure aconselhamento financeiro independente.
-            Os resultados passados não constituem garantia de resultados futuros. A EuroVault Investments é regulamentada ao abrigo da Diretiva MiFID II.
+            <strong style={{ color: '#7a8299' }}>Informação Legal:</strong> A EuroVault Investments é regulamentada ao abrigo da Diretiva MiFID II e supervisionada pela CySEC.
+            Todos os fundos dos clientes são mantidos em contas segregadas e protegidos pelo Fundo de Compensação dos Investidores (ICF).
+            A EuroVault Investments cumpre integralmente o Regulamento Geral sobre a Proteção de Dados (RGPD).
           </p>
         </div>
 
@@ -146,7 +145,7 @@ export default function Footer() {
             &copy; {currentYear} EuroVault Investments. Todos os direitos reservados.
           </div>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-            {['Termos', 'Privacidade', 'Cookies', 'Risco'].map(t => (
+            {['Termos', 'Privacidade', 'Cookies', 'Legal'].map(t => (
               <a key={t} href="#" style={{ fontSize: 11, color: '#4a5068', textDecoration: 'none' }}
                 onMouseEnter={e => e.target.style.color = '#3A86FF'}
                 onMouseLeave={e => e.target.style.color = '#4a5068'}>
