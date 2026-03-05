@@ -11,9 +11,7 @@ import { toast } from 'sonner';
 const ASSETS = {
   Forex: {
     label: 'Forex',
-    icon: '⇄',
-    buyLabel: 'Abrir Posição Longa',
-    sellLabel: 'Abrir Posição Curta',
+    icon: 'FX',
     operationType: 'par cambial',
     items: [
       { symbol: 'FX:EURUSD',  label: 'EUR/USD', name: 'Euro / Dólar',         price: '1,0847', change: '+0,12%', pos: true  },
@@ -28,77 +26,68 @@ const ASSETS = {
   },
   Cripto: {
     label: 'Cripto',
-    icon: '₿',
-    buyLabel: 'Comprar Criptomoeda',
-    sellLabel: 'Vender Criptomoeda',
+    icon: 'BTC',
     operationType: 'criptomoeda',
     items: [
-      { symbol: 'BINANCE:BTCUSDT',  label: 'BTC/USDT', name: 'Bitcoin',       price: '95.420', change: '+2,34%', pos: true  },
-      { symbol: 'BINANCE:ETHUSDT',  label: 'ETH/USDT', name: 'Ethereum',      price: '3.285',  change: '+1,82%', pos: true  },
-      { symbol: 'BINANCE:SOLUSDT',  label: 'SOL/USDT', name: 'Solana',        price: '187,40', change: '+3,12%', pos: true  },
-      { symbol: 'BINANCE:BNBUSDT',  label: 'BNB/USDT', name: 'Binance Coin', price: '412,50', change: '-0,45%', pos: false },
-      { symbol: 'BINANCE:XRPUSDT',  label: 'XRP/USDT', name: 'Ripple',        price: '0,5821', change: '+1,23%', pos: true  },
-      { symbol: 'BINANCE:ADAUSDT',  label: 'ADA/USDT', name: 'Cardano',       price: '0,4512', change: '-1,02%', pos: false },
-      { symbol: 'BINANCE:DOGEUSDT', label: 'DOGE/USDT', name: 'Dogecoin',     price: '0,1234', change: '+4,56%', pos: true  },
-      { symbol: 'BINANCE:AVAXUSDT', label: 'AVAX/USDT', name: 'Avalanche',    price: '38,72',  change: '+2,11%', pos: true  },
+      { symbol: 'BINANCE:BTCUSDT',  label: 'BTC/USDT',  name: 'Bitcoin',       price: '95.420',  change: '+2,34%', pos: true  },
+      { symbol: 'BINANCE:ETHUSDT',  label: 'ETH/USDT',  name: 'Ethereum',      price: '3.285',   change: '+1,82%', pos: true  },
+      { symbol: 'BINANCE:SOLUSDT',  label: 'SOL/USDT',  name: 'Solana',        price: '187,40',  change: '+3,12%', pos: true  },
+      { symbol: 'BINANCE:BNBUSDT',  label: 'BNB/USDT',  name: 'Binance Coin',  price: '412,50',  change: '-0,45%', pos: false },
+      { symbol: 'BINANCE:XRPUSDT',  label: 'XRP/USDT',  name: 'Ripple',        price: '0,5821',  change: '+1,23%', pos: true  },
+      { symbol: 'BINANCE:ADAUSDT',  label: 'ADA/USDT',  name: 'Cardano',       price: '0,4512',  change: '-1,02%', pos: false },
+      { symbol: 'BINANCE:DOGEUSDT', label: 'DOGE/USDT', name: 'Dogecoin',      price: '0,1234',  change: '+4,56%', pos: true  },
+      { symbol: 'BINANCE:AVAXUSDT', label: 'AVAX/USDT', name: 'Avalanche',     price: '38,72',   change: '+2,11%', pos: true  },
     ],
   },
   Acções: {
     label: 'Acções',
-    icon: '📊',
-    buyLabel: 'Comprar Acções',
-    sellLabel: 'Vender Acções',
+    icon: 'ACT',
     operationType: 'acção',
     items: [
-      { symbol: 'NASDAQ:AAPL', label: 'AAPL',  name: 'Apple Inc.',       price: '189,30', change: '+0,54%', pos: true  },
-      { symbol: 'NASDAQ:TSLA', label: 'TSLA',  name: 'Tesla Inc.',       price: '245,80', change: '-1,23%', pos: false },
-      { symbol: 'NASDAQ:GOOGL',label: 'GOOGL', name: 'Alphabet Inc.',    price: '175,40', change: '+0,87%', pos: true  },
-      { symbol: 'NASDAQ:AMZN', label: 'AMZN',  name: 'Amazon.com',       price: '198,60', change: '+1,12%', pos: true  },
-      { symbol: 'NASDAQ:MSFT', label: 'MSFT',  name: 'Microsoft Corp.',  price: '415,20', change: '+0,33%', pos: true  },
-      { symbol: 'NASDAQ:META', label: 'META',  name: 'Meta Platforms',   price: '512,40', change: '+1,67%', pos: true  },
-      { symbol: 'NASDAQ:NVDA', label: 'NVDA',  name: 'NVIDIA Corp.',     price: '875,30', change: '+3,21%', pos: true  },
-      { symbol: 'NYSE:JPM',    label: 'JPM',   name: 'JPMorgan Chase',   price: '198,70', change: '-0,42%', pos: false },
+      { symbol: 'NASDAQ:AAPL',  label: 'AAPL',  name: 'Apple Inc.',      price: '189,30', change: '+0,54%', pos: true  },
+      { symbol: 'NASDAQ:TSLA',  label: 'TSLA',  name: 'Tesla Inc.',      price: '245,80', change: '-1,23%', pos: false },
+      { symbol: 'NASDAQ:GOOGL', label: 'GOOGL', name: 'Alphabet Inc.',   price: '175,40', change: '+0,87%', pos: true  },
+      { symbol: 'NASDAQ:AMZN',  label: 'AMZN',  name: 'Amazon.com',      price: '198,60', change: '+1,12%', pos: true  },
+      { symbol: 'NASDAQ:MSFT',  label: 'MSFT',  name: 'Microsoft Corp.', price: '415,20', change: '+0,33%', pos: true  },
+      { symbol: 'NASDAQ:META',  label: 'META',  name: 'Meta Platforms',  price: '512,40', change: '+1,67%', pos: true  },
+      { symbol: 'NASDAQ:NVDA',  label: 'NVDA',  name: 'NVIDIA Corp.',    price: '875,30', change: '+3,21%', pos: true  },
+      { symbol: 'NYSE:JPM',     label: 'JPM',   name: 'JPMorgan Chase',  price: '198,70', change: '-0,42%', pos: false },
     ],
   },
   Metais: {
     label: 'Metais',
-    icon: '🥇',
-    buyLabel: 'Comprar Metal Precioso',
-    sellLabel: 'Vender Metal Precioso',
+    icon: 'XAU',
     operationType: 'metal precioso',
     items: [
-      { symbol: 'OANDA:XAUUSD',   label: 'Ouro (XAU)',    name: 'Ouro / Dólar',    price: '2.032,40', change: '+0,38%', pos: true  },
-      { symbol: 'OANDA:XAGUSD',   label: 'Prata (XAG)',   name: 'Prata / Dólar',   price: '22,85',    change: '-0,21%', pos: false },
-      { symbol: 'TVC:PLATINUM',   label: 'Platina',       name: 'Platina',          price: '891,40',   change: '+0,62%', pos: true  },
-      { symbol: 'TVC:PALLADIUM',  label: 'Paládio',       name: 'Paládio',          price: '952,30',   change: '-1,14%', pos: false },
-      { symbol: 'COMEX:HG1!',     label: 'Cobre',         name: 'Cobre',            price: '3,842',    change: '+0,29%', pos: true  },
+      { symbol: 'OANDA:XAUUSD',  label: 'Ouro (XAU)',  name: 'Ouro',    price: '2.032,40', change: '+0,38%', pos: true  },
+      { symbol: 'OANDA:XAGUSD',  label: 'Prata (XAG)', name: 'Prata',   price: '22,85',    change: '-0,21%', pos: false },
+      { symbol: 'TVC:PLATINUM',  label: 'Platina',     name: 'Platina', price: '891,40',   change: '+0,62%', pos: true  },
+      { symbol: 'TVC:PALLADIUM', label: 'Paládio',     name: 'Paládio', price: '952,30',   change: '-1,14%', pos: false },
+      { symbol: 'COMEX:HG1!',    label: 'Cobre',       name: 'Cobre',   price: '3,842',    change: '+0,29%', pos: true  },
     ],
   },
-  'Mat.-Primas': {
-    label: 'Mat.-Primas',
-    icon: '🛢',
-    buyLabel: 'Comprar Matéria-Prima',
-    sellLabel: 'Vender Matéria-Prima',
+  Commodities: {
+    label: 'Commodities',
+    icon: 'OIL',
     operationType: 'matéria-prima',
     items: [
-      { symbol: 'NYMEX:CL1!',  label: 'Petróleo WTI', name: 'Petróleo WTI',     price: '78,42',    change: '-0,85%', pos: false },
-      { symbol: 'ICE:BRN1!',   label: 'Brent',        name: 'Petróleo Brent',   price: '82,64',    change: '-0,67%', pos: false },
-      { symbol: 'NYMEX:NG1!',  label: 'Gás Natural',  name: 'Gás Natural',      price: '2,148',    change: '+1,23%', pos: true  },
-      { symbol: 'CBOT:ZW1!',   label: 'Trigo',        name: 'Trigo',            price: '584,25',   change: '+0,72%', pos: true  },
-      { symbol: 'CBOT:ZC1!',   label: 'Milho',        name: 'Milho',            price: '452,75',   change: '-0,18%', pos: false },
-      { symbol: 'CBOT:ZS1!',   label: 'Soja',         name: 'Soja',             price: '1.248,50', change: '+0,45%', pos: true  },
-      { symbol: 'NYMEX:RB1!',  label: 'Gasolina',     name: 'Gasolina',         price: '2,312',    change: '-0,34%', pos: false },
-      { symbol: 'NYMEX:HO1!',  label: 'Fuel',         name: 'Fuel / Aquec.',    price: '2,641',    change: '+0,92%', pos: true  },
+      { symbol: 'NYMEX:CL1!', label: 'Petróleo WTI', name: 'Petróleo WTI',   price: '78,42',    change: '-0,85%', pos: false },
+      { symbol: 'ICE:BRN1!',  label: 'Brent',        name: 'Petróleo Brent', price: '82,64',    change: '-0,67%', pos: false },
+      { symbol: 'NYMEX:NG1!', label: 'Gás Natural',  name: 'Gás Natural',    price: '2,148',    change: '+1,23%', pos: true  },
+      { symbol: 'CBOT:ZW1!',  label: 'Trigo',        name: 'Trigo',          price: '584,25',   change: '+0,72%', pos: true  },
+      { symbol: 'CBOT:ZC1!',  label: 'Milho',        name: 'Milho',          price: '452,75',   change: '-0,18%', pos: false },
+      { symbol: 'CBOT:ZS1!',  label: 'Soja',         name: 'Soja',           price: '1.248,50', change: '+0,45%', pos: true  },
+      { symbol: 'NYMEX:RB1!', label: 'Gasolina',     name: 'Gasolina',       price: '2,312',    change: '-0,34%', pos: false },
     ],
   },
 };
 
 const CAT_COLORS = {
-  'Forex':        { active: '#3A86FF', bg: 'rgba(58,134,255,0.12)',   border: 'rgba(58,134,255,0.3)'  },
-  'Cripto':       { active: '#FFBE0B', bg: 'rgba(255,190,11,0.12)',   border: 'rgba(255,190,11,0.3)'  },
-  'Acções':       { active: '#22c58b', bg: 'rgba(34,197,139,0.12)',   border: 'rgba(34,197,139,0.3)'  },
-  'Metais':       { active: '#F59E0B', bg: 'rgba(245,158,11,0.12)',   border: 'rgba(245,158,11,0.3)'  },
-  'Mat.-Primas':  { active: '#F87171', bg: 'rgba(248,113,113,0.12)',  border: 'rgba(248,113,113,0.3)' },
+  'Forex':       { active: '#3A86FF', bg: 'rgba(58,134,255,0.12)',  border: 'rgba(58,134,255,0.3)'  },
+  'Cripto':      { active: '#FFBE0B', bg: 'rgba(255,190,11,0.12)',  border: 'rgba(255,190,11,0.3)'  },
+  'Acções':      { active: '#22c58b', bg: 'rgba(34,197,139,0.12)',  border: 'rgba(34,197,139,0.3)'  },
+  'Metais':      { active: '#F59E0B', bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.3)'  },
+  'Commodities': { active: '#F87171', bg: 'rgba(248,113,113,0.12)', border: 'rgba(248,113,113,0.3)' },
 };
 
 export default function TradePage() {
@@ -136,9 +125,11 @@ export default function TradePage() {
   const leverageMultiplier = parseInt(leverage.split(':')[1] || 1);
   const totalExposure = (parseFloat(amount || 0) * leverageMultiplier).toLocaleString('pt-PT');
 
-  /* ── Texto dinâmico do botão de acção ── */
-  const actionLabel = side === 'comprar' ? cat.buyLabel : cat.sellLabel;
-  const actionLabelFull = `${actionLabel} — ${selectedAsset.label}`;
+  /* ── Texto dinâmico do botão — "Abrir Operação Bitcoin" ── */
+  const assetShortName = selectedAsset.name.split(' / ')[0].split(' ')[0]; // ex: "Bitcoin", "Euro", "Ouro"
+  const actionLabelFull = side === 'comprar'
+    ? `Abrir Operação ${assetShortName}`
+    : `Encerrar Operação ${assetShortName}`;
 
   const handleOrder = () => {
     if (!amount || parseFloat(amount) < 10) {
@@ -148,15 +139,17 @@ export default function TradePage() {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
+      // Ambas as ordens usam toast.success — sem confusão com erros do sistema
       if (side === 'comprar') {
-        toast.success(`Ordem de compra executada`, {
-          description: `${cat.buyLabel} · ${selectedAsset.label} · €${amount} · Alavancagem ${leverage}`,
+        toast.success(`Operação aberta com sucesso`, {
+          description: `Abrir Operação ${assetShortName} · €${amount} · Alavancagem ${leverage}`,
           duration: 6000,
         });
       } else {
-        toast.error(`Ordem de venda executada`, {
-          description: `${cat.sellLabel} · ${selectedAsset.label} · €${amount} · Alavancagem ${leverage}`,
+        toast.success(`Operação encerrada com sucesso`, {
+          description: `Encerrar Operação ${assetShortName} · €${amount} · Alavancagem ${leverage}`,
           duration: 6000,
+          style: { background: 'hsl(240,26%,10%)', border: '1px solid rgba(248,113,113,0.3)', color: '#f3f5ff' },
         });
       }
     }, 900);
@@ -221,18 +214,28 @@ export default function TradePage() {
               {Object.keys(ASSETS).map(key => {
                 const c = CAT_COLORS[key];
                 const active = activeCat === key;
+                const iconStyle = {
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  width: 18, height: 16, fontSize: 8, fontWeight: 900,
+                  background: active ? c.active : 'rgba(255,255,255,0.08)',
+                  color: active ? '#fff' : '#7a8299',
+                  borderRadius: 4, marginRight: 5, letterSpacing: '-0.02em',
+                  flexShrink: 0,
+                };
                 return (
                   <button key={key} onClick={() => handleCatChange(key)}
                     style={{
-                      flexShrink: 0, padding: '5px 11px', borderRadius: 7,
+                      flexShrink: 0, padding: '6px 12px', borderRadius: 8,
                       border: `1px solid ${active ? c.border : 'transparent'}`,
                       background: active ? c.bg : 'transparent',
                       color: active ? c.active : '#7a8299',
-                      fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                      fontSize: 12, fontWeight: 700, cursor: 'pointer',
                       whiteSpace: 'nowrap',
+                      display: 'flex', alignItems: 'center',
                       transition: 'background .15s, color .15s',
                     }}>
-                    {ASSETS[key].icon} {key}
+                    <span style={iconStyle}>{ASSETS[key].icon}</span>
+                    {key}
                   </button>
                 );
               })}
@@ -289,7 +292,7 @@ export default function TradePage() {
 
           {/* Barra do activo seleccionado */}
           <div style={{ background: '#111118', border: '1px solid #26263a', borderRadius: 12, padding: '12px 16px', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-            <div style={{ width: 38, height: 38, background: col.bg, border: `1px solid ${col.border}`, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17 }}>
+            <div style={{ width: 38, height: 38, background: col.bg, border: `1px solid ${col.border}`, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 900, color: col.active, letterSpacing: '-0.02em' }}>
               {cat.icon}
             </div>
             <div>

@@ -154,7 +154,44 @@ class UpdateProfileRequest(BaseModel):
     phone: Optional[str] = None
     country: Optional[str] = None
 
-# --- WebSocket Endpoint ---
+
+# ── Daily Profit Calculator ──────────────────────────────────────────
+async def apply_daily_profit(user_id: str, user_doc: dict) -> dict:
+    """Aplica o lucro diário acumulado com base na taxa configurada pelo admin."""
+    rate = float(user_doc.get('daily_profit_rate', 0))
+    if rate <= 0:
+        return user_doc
+
+    balance = float(user_doc.get('balance', 0))
+    if balance <= 0:
+        return user_doc
+
+    last_updated = user_doc.get('profit_last_updated')
+    now = datetime.utcnow()
+
+    if not last_updated:
+        await db.users.update_one(
+            {'_id': ObjectId(user_id)},
+            {'$set': {'profit_last_updated': now}}
+        )
+        return user_doc
+
+    elapsed_days = (now - last_updated).total_seconds() / 86400.0
+    if elapsed_days < 0.0007:   # menos de ~1 minuto — ignorar
+        return user_doc
+
+    profit_increment = balance * (rate / 100.0) * elapsed_days
+    new_profit = max(0.0, float(user_doc.get('profit', 0)) + profit_increment)
+
+    await db.users.update_one(
+        {'_id': ObjectId(user_id)},
+        {'$set': {'profit': round(new_profit, 2), 'profit_last_updated': now}}
+    )
+    user_doc['profit'] = round(new_profit, 2)
+    user_doc['profit_last_updated'] = now
+    return user_doc
+
+
 @app.websocket("/ws/admin")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
@@ -227,15 +264,23 @@ async def get_me(current_user = Depends(get_current_user)):
     user = await db.users.find_one({"_id": ObjectId(current_user["sub"])})
     if not user:
         raise HTTPException(status_code=404, detail="Utilizador não encontrado")
+
+    # Aplicar lucro diário acumulado
+    user = await apply_daily_profit(str(user["_id"]), user)
+
+    profit = max(0.0, float(user.get("profit", 0)))
+    balance = max(0.0, float(user.get("balance", 0)))
+
     return serialize_doc({
         "id": user["_id"],
         "full_name": user["full_name"],
         "email": user["email"],
         "country": user.get("country", ""),
         "phone": user.get("phone", ""),
-        "balance": user.get("balance", 0.0),
-        "profit": user.get("profit", 0.0),
+        "balance": balance,
+        "profit": profit,
         "status": user.get("status", "Novo"),
+        "daily_profit_rate": user.get("daily_profit_rate", 0),
         "created_at": user.get("created_at")
     })
 
@@ -311,6 +356,24 @@ async def create_withdrawal(req: WithdrawalRequest, current_user = Depends(get_c
     return {"success": True, "message": "Pedido de levantamento enviado"}
 
 # --- Admin Routes ---
+class UpdateDailyRateRequest(BaseModel):
+    daily_profit_rate: float  # % por dia (ex: 1.5 = 1.5% ao dia)
+
+
+@app.put("/api/admin/users/{user_id}/daily-rate")
+async def update_daily_rate(user_id: str, req: UpdateDailyRateRequest, admin = Depends(get_admin_user)):
+    rate = max(0.0, min(req.daily_profit_rate, 100.0))  # entre 0% e 100%
+    await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {
+            "daily_profit_rate": rate,
+            "profit_last_updated": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
+        }}
+    )
+    return {"success": True, "daily_profit_rate": rate}
+
+
 @app.get("/api/admin/users")
 async def get_all_users(admin = Depends(get_admin_user)):
     users = []
@@ -321,9 +384,10 @@ async def get_all_users(admin = Depends(get_admin_user)):
             "email": user["email"],
             "country": user.get("country", ""),
             "phone": user.get("phone", ""),
-            "balance": user.get("balance", 0.0),
-            "profit": user.get("profit", 0.0),
+            "balance": max(0.0, float(user.get("balance", 0))),
+            "profit": max(0.0, float(user.get("profit", 0))),
             "status": user.get("status", "Novo"),
+            "daily_profit_rate": user.get("daily_profit_rate", 0),
             "created_at": user.get("created_at")
         }))
     return users
