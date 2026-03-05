@@ -54,9 +54,9 @@ export default function ClientLayout() {
         <div style={{ padding: '20px 20px', borderBottom: '1px solid hsl(240,16%,18%)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <img
-              src="https://customer-assets.emergentagent.com/job_trading-eu-hub/artifacts/t2zcbb7n_file_000000005510720a8f958a17bdf723cd.png"
+              src="/logo-eurovault.png"
               alt="EuroVault Investments"
-              style={{ width: 40, height: 40, objectFit: 'contain', borderRadius: 6 }}
+              style={{ width: 54, height: 54, objectFit: 'contain' }}
             />
             <div>
               <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 14, color: '#f3f5ff', letterSpacing: '-0.02em' }}>EuroVault</div>

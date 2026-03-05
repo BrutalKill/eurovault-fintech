@@ -49,9 +49,9 @@ export default function AdminLogin() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
           <img
-            src="https://customer-assets.emergentagent.com/job_trading-eu-hub/artifacts/t2zcbb7n_file_000000005510720a8f958a17bdf723cd.png"
+            src="/logo-eurovault.png"
             alt="EuroVault Investments"
-            style={{ width: 44, height: 44, objectFit: 'contain' }}
+            style={{ width: 56, height: 56, objectFit: 'contain' }}
           />
           <div>
             <div style={{ fontFamily: 'var(--font-heading)', fontSize: 16, fontWeight: 700, color: '#f3f5ff' }}>EuroVault</div>

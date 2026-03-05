@@ -101,9 +101,9 @@ export default function AdminLayout() {
         <div style={{ padding: '16px 14px', borderBottom: '1px solid hsl(240,16%,18%)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <img
-              src="https://customer-assets.emergentagent.com/job_trading-eu-hub/artifacts/t2zcbb7n_file_000000005510720a8f958a17bdf723cd.png"
+              src="/logo-eurovault.png"
               alt="EuroVault Investments"
-              style={{ width: 36, height: 36, objectFit: 'contain', borderRadius: 6 }}
+              style={{ width: 52, height: 52, objectFit: 'contain' }}
             />
             <div>
               <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 13, color: '#f3f5ff' }}>EuroVault</div>

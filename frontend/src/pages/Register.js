@@ -45,7 +45,7 @@ export default function Register() {
       <div style={{ width: '100%', maxWidth: 480, background: 'hsl(240,26%,8%)', border: '1px solid hsl(240,16%,18%)', borderRadius: 20, padding: '40px 36px', boxShadow: '0 18px 48px rgba(0,0,0,0.5)', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32 }}>
           <img
-            src="https://customer-assets.emergentagent.com/job_trading-eu-hub/artifacts/t2zcbb7n_file_000000005510720a8f958a17bdf723cd.png"
+            src="/logo-eurovault.png"
             alt="EuroVault Investments"
             style={{ width: 44, height: 44, objectFit: 'contain' }}
           />
