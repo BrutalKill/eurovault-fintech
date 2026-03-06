@@ -211,9 +211,8 @@ export default function ProfilePage() {
           <div style={card}>
             <div style={{ fontSize: 12, color: 'hsl(215,16%,70%)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16, fontWeight: 700 }}>Resumo da Conta</div>
             {[
-              { label: 'Saldo disponível', value: formatEur(safeBalance), color: '#f3f5ff' },
-              { label: 'Lucro acumulado',  value: `+${formatEur(safeProfit)}`, color: 'hsl(155,72%,45%)' },
-              { label: 'Estado da conta',  value: user?.status || 'Activa', color: 'hsl(214,100%,60%)' },
+              { label: 'Saldo disponível', value: formatEur(safeBalance),       color: '#f3f5ff' },
+              { label: 'Lucro acumulado',  value: `+${formatEur(safeProfit)}`,  color: 'hsl(155,72%,45%)' },
             ].map(({ label, value, color }) => (
               <div key={label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid hsl(240,16%,18%)' }}>
                 <span style={{ fontSize: 13, color: 'hsl(215,16%,70%)' }}>{label}</span>
