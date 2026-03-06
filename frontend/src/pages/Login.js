@@ -23,6 +23,10 @@ export default function Login() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Credenciais inválidas');
       localStorage.setItem('token', data.token);
+      // Pedir permissão para notificações push
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
       toast.success('Sessão iniciada com sucesso!');
       navigate('/app/trade');
     } catch (err) {

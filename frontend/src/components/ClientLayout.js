@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { BarChart2, CreditCard, ArrowDownToLine, Newspaper, User, LogOut, Menu } from 'lucide-react';
+import { BarChart2, CreditCard, ArrowDownToLine, Newspaper, User, Clock, LogOut, Menu } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 import Footer from './Footer';
 import FloatingChat from './FloatingChat';
@@ -9,6 +9,7 @@ const navItems = [
   { to: '/app/trade',      icon: BarChart2,       label: 'Negociar'      },
   { to: '/app/deposit',    icon: CreditCard,      label: 'Depósito'      },
   { to: '/app/withdrawal', icon: ArrowDownToLine, label: 'Levantamento'  },
+  { to: '/app/history',    icon: Clock,           label: 'Histórico'     },
   { to: '/app/news',       icon: Newspaper,       label: 'Notícias'      },
   { to: '/app/profile',    icon: User,            label: 'Perfil'        },
 ];

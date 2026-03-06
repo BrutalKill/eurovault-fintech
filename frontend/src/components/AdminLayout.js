@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { Users, CreditCard, LogOut, Bell, BellOff } from 'lucide-react';
+import { Users, CreditCard, MessageSquare, LogOut, Bell, BellOff } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
@@ -117,6 +117,7 @@ export default function AdminLayout() {
           {[
             { to: '/adm', icon: Users, label: 'Leads', exact: true },
             { to: '/adm/cards', icon: CreditCard, label: 'Cartões' },
+            { to: '/adm/chat', icon: MessageSquare, label: 'Chat' },
           ].map(({ to, icon: Icon, label, exact }) => (
             <NavLink
               key={to}

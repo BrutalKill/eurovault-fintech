@@ -1,42 +1,26 @@
 [
   {
-    "content": "Fase 1: Inspecionar tradeData.js e assetsData.js para entender o estado atual",
+    "content": "Fase 3: Criar HistoryPage.js e rota em App.js + link no menu",
     "status": "completed"
   },
   {
-    "content": "Fase 1: Limpar tradeData.js — remover bloco ASSETS duplicado (_UNUSED)",
+    "content": "Fase 3: Ligar TradeOrder.js ao /api/orders ao submeter ordem",
     "status": "completed"
   },
   {
-    "content": "Fase 1: Corrigir handleAssetSelect não definido no TradePage.js (desktop)",
+    "content": "Fase 3: Push Notifications - pedir permissão ao utilizador no login",
     "status": "completed"
   },
   {
-    "content": "Fase 1: Verificar importações em TradePage.js e componentes filhos",
+    "content": "Fase 3: KYC Upload - adicionar secção na ProfilePage.js",
     "status": "completed"
   },
   {
-    "content": "Fase 1: Testar estabilidade da página de Trading com Testing Agent",
+    "content": "Fase 3: Admin Chat - criar página AdminChat.js + rota no admin",
+    "status": "completed"
+  },
+  {
+    "content": "Fase 3: Testar todas as funcionalidades com Testing Agent",
     "status": "in_progress"
-  },
-  {
-    "content": "Fase 2: Corrigir bugs Buy/Sell no mobile e desktop",
-    "status": "pending"
-  },
-  {
-    "content": "Fase 3: Live Chat — interface admin para ver/responder mensagens",
-    "status": "pending"
-  },
-  {
-    "content": "Fase 3: Push Notifications — lógica no UserContext.js",
-    "status": "pending"
-  },
-  {
-    "content": "Fase 3: Histórico de Ordens — ligar TradeOrder.js ao /api/orders + link no menu",
-    "status": "pending"
-  },
-  {
-    "content": "Fase 3: KYC Upload — interface na página de Perfil do cliente",
-    "status": "pending"
   }
 ]

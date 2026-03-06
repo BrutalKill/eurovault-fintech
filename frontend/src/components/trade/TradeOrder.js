@@ -3,6 +3,8 @@ import { ChevronUp, ChevronDown, Activity } from 'lucide-react';
 import { toast } from 'sonner';
 import { CAT_COLORS } from './tradeData';
 
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
+
 const fmt = (v) =>
   new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v || 0);
 
@@ -28,13 +30,34 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
     ? `Abrir Operação ${assetName}`
     : `Encerrar Operação ${assetName}`;
 
-  const handleOrder = () => {
+  const handleOrder = async () => {
     const amt = parseFloat(amount);
     if (!amt || isNaN(amt) || amt < 10) {
       toast.error('Montante inválido', { description: 'Mínimo €10,00.' });
       return;
     }
     setLoading(true);
+
+    // Registar a ordem no backend
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        await fetch(`${BACKEND_URL}/api/orders`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            asset_label:  asset.label,
+            asset_name:   asset.name,
+            side:         side,
+            amount:       amt,
+            leverage:     leverage,
+            price:        asset.price,
+            category:     activeCat,
+          }),
+        });
+      }
+    } catch (_) {}
+
     setTimeout(() => {
       setLoading(false);
       setLastOrder({

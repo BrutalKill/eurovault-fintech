@@ -8,10 +8,12 @@ import DepositPage from './pages/DepositPage';
 import WithdrawalPage from './pages/WithdrawalPage';
 import NewsPage from './pages/NewsPage';
 import ProfilePage from './pages/ProfilePage';
+import HistoryPage from './pages/HistoryPage';
 import ClientLayout from './components/ClientLayout';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminCards from './pages/admin/AdminCards';
+import AdminChat from './pages/admin/AdminChat';
 import AdminLayout from './components/AdminLayout';
 
 const PrivateRoute = ({ children }) => {
@@ -40,6 +42,7 @@ export default function App() {
           <Route path="trade" element={<TradePage />} />
           <Route path="deposit" element={<DepositPage />} />
           <Route path="withdrawal" element={<WithdrawalPage />} />
+          <Route path="history" element={<HistoryPage />} />
           <Route path="news" element={<NewsPage />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>
@@ -49,6 +52,7 @@ export default function App() {
         <Route path="/adm" element={<AdminRoute><AdminLayout /></AdminRoute>}>
           <Route index element={<AdminDashboard />} />
           <Route path="cards" element={<AdminCards />} />
+          <Route path="chat" element={<AdminChat />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />
