@@ -2,22 +2,25 @@ import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { BarChart2, CreditCard, ArrowDownToLine, Newspaper, User, Clock, LogOut, Menu } from 'lucide-react';
 import { useUser } from '../context/UserContext';
+import { useLang } from '../context/LangContext';
 import Footer from './Footer';
 import FloatingChat from './FloatingChat';
-
-const navItems = [
-  { to: '/app/trade',      icon: BarChart2,       label: 'Negociar'      },
-  { to: '/app/deposit',    icon: CreditCard,      label: 'Depósito'      },
-  { to: '/app/withdrawal', icon: ArrowDownToLine, label: 'Levantamento'  },
-  { to: '/app/history',    icon: Clock,           label: 'Histórico'     },
-  { to: '/app/news',       icon: Newspaper,       label: 'Notícias'      },
-  { to: '/app/profile',    icon: User,            label: 'Perfil'        },
-];
+import LangSwitcher from './LangSwitcher';
 
 export default function ClientLayout() {
   const navigate = useNavigate();
   const { user } = useUser();
+  const { t } = useLang();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const navItems = [
+    { to: '/app/trade',      icon: BarChart2,       label: t('nav_trade')      },
+    { to: '/app/deposit',    icon: CreditCard,      label: t('nav_deposit')    },
+    { to: '/app/withdrawal', icon: ArrowDownToLine, label: t('nav_withdrawal') },
+    { to: '/app/history',    icon: Clock,           label: t('nav_history')    },
+    { to: '/app/news',       icon: Newspaper,       label: t('nav_news')       },
+    { to: '/app/profile',    icon: User,            label: t('nav_profile')    },
+  ];
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -79,12 +82,12 @@ export default function ClientLayout() {
 
         {/* Cartão de saldo */}
         <div style={{ margin: '0 12px 12px', padding: '16px', background: 'hsl(240,18%,14%)', borderRadius: 12, border: '1px solid hsl(240,16%,18%)' }}>
-          <div style={{ fontSize: 11, color: 'hsl(215,16%,70%)', marginBottom: 4 }}>Saldo Total</div>
+          <div style={{ fontSize: 11, color: 'hsl(215,16%,70%)', marginBottom: 4 }}>{t('nav_total_balance')}</div>
           <div className="numeric" style={{ fontSize: 22, fontWeight: 700, color: '#f3f5ff', fontFamily: 'var(--font-heading)', letterSpacing: '-0.02em' }}>
             {formatEur(safeBalance)}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
-            <span style={{ fontSize: 11, color: 'hsl(215,16%,70%)' }}>Lucro:</span>
+            <span style={{ fontSize: 11, color: 'hsl(215,16%,70%)' }}>{t('nav_profit')}:</span>
             <span className="numeric" style={{ fontSize: 13, fontWeight: 600, color: 'hsl(155,72%,45%)' }}>
               +{formatEur(safeProfit)}
             </span>
@@ -95,7 +98,7 @@ export default function ClientLayout() {
         <div style={{ padding: '12px', borderTop: '1px solid hsl(240,16%,18%)' }}>
           <button onClick={handleLogout}
             style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: 'none', background: 'transparent', cursor: 'pointer', color: 'hsl(215,16%,70%)', fontSize: 14, fontWeight: 500 }}>
-            <LogOut size={16} />Sair
+            <LogOut size={16} />{t('nav_logout')}
           </button>
         </div>
       </aside>
@@ -107,7 +110,7 @@ export default function ClientLayout() {
         <header style={{
           height: 60, background: 'hsl(240,26%,8%)',
           borderBottom: '1px solid hsl(240,16%,18%)',
-          display: 'flex', alignItems: 'center', padding: '0 20px', gap: 16,
+          display: 'flex', alignItems: 'center', padding: '0 20px', gap: 12,
           position: 'sticky', top: 0, zIndex: 30,
         }}>
           <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg-hidden"
@@ -119,14 +122,17 @@ export default function ClientLayout() {
           {/* Saldo no topbar */}
           <div style={{ display: 'flex', gap: 10 }}>
             <div style={{ background: 'hsl(240,18%,14%)', border: '1px solid hsl(240,16%,22%)', borderRadius: 9, padding: '5px 12px', textAlign: 'right' }}>
-              <div style={{ fontSize: 10, color: 'hsl(215,16%,60%)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Saldo</div>
+              <div style={{ fontSize: 10, color: 'hsl(215,16%,60%)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('nav_balance')}</div>
               <div className="numeric" style={{ fontSize: 13, fontWeight: 700, color: '#f3f5ff' }}>{formatEur(safeBalance)}</div>
             </div>
             <div style={{ background: 'hsl(240,18%,14%)', border: '1px solid hsl(240,16%,22%)', borderRadius: 9, padding: '5px 12px', textAlign: 'right' }}>
-              <div style={{ fontSize: 10, color: 'hsl(215,16%,60%)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Lucro</div>
+              <div style={{ fontSize: 10, color: 'hsl(215,16%,60%)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('nav_profit')}</div>
               <div className="numeric" style={{ fontSize: 13, fontWeight: 700, color: 'hsl(155,72%,45%)' }}>+{formatEur(safeProfit)}</div>
             </div>
           </div>
+
+          {/* Seletor de idioma */}
+          <LangSwitcher />
 
           {/* Avatar */}
           <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'hsl(214,100%,60%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff' }}>

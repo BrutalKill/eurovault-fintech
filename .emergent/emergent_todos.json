@@ -1,6 +1,22 @@
 [
   {
-    "content": "Fase 3: Testar todas as funcionalidades com Testing Agent",
+    "content": "Corrigir handleOrder - fire-and-forget",
+    "status": "completed"
+  },
+  {
+    "content": "Criar LangContext.js com PT/EN/ES",
+    "status": "completed"
+  },
+  {
+    "content": "LangSwitcher no Login e Topbar do cliente",
+    "status": "completed"
+  },
+  {
+    "content": "Traduzir Login, TradePage, TradeOrder, ClientLayout",
+    "status": "completed"
+  },
+  {
+    "content": "Testar idiomas e buy/sell",
     "status": "completed"
   }
 ]

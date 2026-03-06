@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronUp, ChevronDown, Activity } from 'lucide-react';
 import { toast } from 'sonner';
 import { CAT_COLORS } from './tradeData';
+import { useLang } from '../../context/LangContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -9,6 +10,7 @@ const fmt = (v) =>
   new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v || 0);
 
 export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }) {
+  const { t, lang } = useLang();
   const [side, setSide]           = useState(initialSide);
   const [amount, setAmount]       = useState('100');
   const [leverage, setLeverage]   = useState('1:10');
@@ -27,10 +29,10 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
   const exposure   = (parseFloat(amount || 0) * levMult)
     .toLocaleString('pt-PT', { minimumFractionDigits: 2 });
   const btnLabel   = side === 'comprar'
-    ? `Abrir Operação ${assetName}`
-    : `Encerrar Operação ${assetName}`;
+    ? `${t('trade_open_btn')} ${assetName}`
+    : `${t('trade_close_btn')} ${assetName}`;
 
-  const handleOrder = async () => {
+  const handleOrder = () => {
     const amt = parseFloat(amount);
     if (!amt || isNaN(amt) || amt < 10) {
       toast.error('Montante inválido', { description: 'Mínimo €10,00.' });
@@ -38,25 +40,23 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
     }
     setLoading(true);
 
-    // Registar a ordem no backend
-    try {
-      const token = localStorage.getItem('token');
-      if (token) {
-        await fetch(`${BACKEND_URL}/api/orders`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({
-            asset_label:  asset.label,
-            asset_name:   asset.name,
-            side:         side,
-            amount:       amt,
-            leverage:     leverage,
-            price:        asset.price,
-            category:     activeCat,
-          }),
-        });
-      }
-    } catch (_) {}
+    // Registar a ordem no backend — fire-and-forget (não bloqueia a UI)
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetch(`${BACKEND_URL}/api/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          asset_label: asset.label,
+          asset_name:  asset.name,
+          side,
+          amount:      amt,
+          leverage,
+          price:       asset.price,
+          category:    activeCat,
+        }),
+      }).catch(() => {});
+    }
 
     setTimeout(() => {
       setLoading(false);
@@ -109,11 +109,12 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
       {/* ── Toggle COMPRAR / VENDER ── */}
       <div style={{ display: 'flex' }}>
         {[
-          { key: 'comprar', icon: <ChevronUp size={15} />,   label: 'COMPRAR', color: '#22c58b' },
-          { key: 'vender',  icon: <ChevronDown size={15} />, label: 'VENDER',  color: '#ef4444' },
+          { key: 'comprar', icon: <ChevronUp size={15} />,   label: t('trade_buy'),  color: '#22c58b' },
+          { key: 'vender',  icon: <ChevronDown size={15} />, label: t('trade_sell'), color: '#ef4444' },
         ].map(btn => (
           <button
             key={btn.key}
+            data-testid={`trade-${btn.key}-toggle`}
             onClick={() => { setSide(btn.key); setLastOrder(null); }}
             style={{
               flex: 1, padding: '14px 0',
@@ -136,7 +137,7 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
 
         {/* Instrumento */}
         <div>
-          <label style={lbl}>Instrumento</label>
+          <label style={lbl}>{t('trade_instrument')}</label>
           <div style={{
             ...inp({ display: 'flex', justifyContent: 'space-between',
               alignItems: 'center', border: `1px solid ${col.border}` })
@@ -150,7 +151,7 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
 
         {/* Montante */}
         <div>
-          <label style={lbl}>Montante (€)</label>
+          <label style={lbl}>{t('trade_amount')}</label>
           <div style={{ position: 'relative' }}>
             <span style={{
               position: 'absolute', left: 11, top: '50%',
@@ -186,7 +187,7 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
 
         {/* Alavancagem */}
         <div>
-          <label style={lbl}>Alavancagem</label>
+          <label style={lbl}>{t('trade_leverage')}</label>
           <select
             value={leverage}
             onChange={e => setLeverage(e.target.value)}
@@ -203,10 +204,10 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
           padding: '10px 12px', border: '1px solid #1e1e30',
         }}>
           {[
-            { label: 'Direcção',     value: side === 'comprar' ? '↑ Compra' : '↓ Venda', color: side === 'comprar' ? '#22c58b' : '#ef4444' },
-            { label: 'Preço actual', value: asset.price, color: '#f3f5ff' },
-            { label: 'Montante',     value: `€ ${parseFloat(amount || 0).toLocaleString('pt-PT', { minimumFractionDigits: 2 })}`, color: '#f3f5ff' },
-            { label: 'Exposição',    value: `€ ${exposure}`, color: col.active },
+            { label: t('trade_direction'), value: side === 'comprar' ? `↑ ${t('hist_buy')}` : `↓ ${t('hist_sell')}`, color: side === 'comprar' ? '#22c58b' : '#ef4444' },
+            { label: t('trade_price'),     value: asset.price, color: '#f3f5ff' },
+            { label: t('trade_amount').replace(' (€)',''), value: `€ ${parseFloat(amount || 0).toLocaleString('pt-PT', { minimumFractionDigits: 2 })}`, color: '#f3f5ff' },
+            { label: t('trade_exposure'),  value: `€ ${exposure}`, color: col.active },
           ].map(({ label, value, color }) => (
             <div key={label} style={{
               display: 'flex', justifyContent: 'space-between',
@@ -233,7 +234,7 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
               fontSize: 11, fontWeight: 700, marginBottom: 3,
               color: lastOrder.side === 'comprar' ? '#22c58b' : '#ef4444',
             }}>
-              {lastOrder.side === 'comprar' ? '✓ Operação Aberta' : '✓ Operação Encerrada'}
+              {lastOrder.side === 'comprar' ? t('trade_order_opened') : t('trade_order_closed')}
             </div>
             <div style={{ fontSize: 10, color: '#7a8299' }}>
               {lastOrder.label} · {fmt(lastOrder.amount)} · {lastOrder.leverage} · {lastOrder.time}
@@ -243,6 +244,7 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
 
         {/* Botão principal */}
         <button
+          data-testid="trade-submit-order-btn"
           onClick={handleOrder}
           disabled={loading}
           style={{
@@ -263,7 +265,7 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
           }}
         >
           {loading
-            ? <><Activity size={15} style={{ animation: 'spin 1s linear infinite' }} /> A processar…</>
+            ? <><Activity size={15} style={{ animation: 'spin 1s linear infinite' }} /> {t('trade_processing')}</>
             : side === 'comprar'
               ? <><ChevronUp size={16} />{btnLabel}</>
               : <><ChevronDown size={16} />{btnLabel}</>
@@ -271,7 +273,7 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
         </button>
 
         <p style={{ fontSize: 10, color: '#4a5068', textAlign: 'center', margin: 0 }}>
-          Regulamentado CySEC · Fundos ICF · MiFID II
+          {t('trade_reg_info')}
         </p>
       </div>
     </div>

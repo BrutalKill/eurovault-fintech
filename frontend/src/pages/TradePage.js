@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, ArrowDownToLine, ChevronUp, ChevronDown, Info } from 'lucide-react';
 import { useUser } from '../context/UserContext';
+import { useLang } from '../context/LangContext';
 import { ASSETS, CAT_COLORS } from '../components/trade/tradeData';
 import TradeAssets from '../components/trade/TradeAssets';
 import TradeOrder  from '../components/trade/TradeOrder';
@@ -11,6 +12,7 @@ const fmt = (v) =>
 
 export default function TradePage() {
   const { user }    = useUser();
+  const { t }       = useLang();
   const navigate    = useNavigate();
   const iframeRef   = useRef(null);
 
@@ -95,13 +97,13 @@ export default function TradePage() {
               onClick={handleBuy}
               style={{ padding: '15px 0', background: '#22c58b', border: 'none', borderRadius: 12, color: '#fff', fontSize: 15, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
             >
-              <ChevronUp size={18} />COMPRAR
+              <ChevronUp size={18} />{t('trade_buy')}
             </button>
             <button
               onClick={handleSell}
               style={{ padding: '15px 0', background: '#ef4444', border: 'none', borderRadius: 12, color: '#fff', fontSize: 15, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
             >
-              <ChevronDown size={18} />VENDER
+              <ChevronDown size={18} />{t('trade_sell')}
             </button>
           </div>
         </div>
@@ -139,9 +141,9 @@ export default function TradePage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
         <div>
           <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#f3f5ff', margin: 0 }}>
-            Negociar
+            {t('trade_title')}
           </h1>
-          <p style={{ fontSize: 12, color: '#7a8299', margin: '2px 0 0' }}>Mercados globais em tempo real</p>
+          <p style={{ fontSize: 12, color: '#7a8299', margin: '2px 0 0' }}>{t('trade_subtitle')}</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <div style={{ background: '#111118', border: '1px solid #26263a', borderRadius: 10, padding: '7px 14px' }}>
@@ -224,7 +226,7 @@ export default function TradePage() {
           {/* Cotações rápidas */}
           <div style={{ background: '#111118', border: '1px solid #26263a', borderRadius: 12, padding: '12px 14px' }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: '#7a8299', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-              Cotações Forex
+              {t('trade_forex_quotes')}
             </div>
             {ASSETS.Forex.items.slice(0, 5).map(a => (
               <div key={a.symbol}
@@ -244,11 +246,11 @@ export default function TradePage() {
 
           <button data-testid="trade-deposit-cta" onClick={() => navigate('/app/deposit')}
             style={{ width: '100%', padding: '10px', background: '#3A86FF', border: 'none', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-            <CreditCard size={13} />Depósito
+            <CreditCard size={13} />{t('trade_deposit_btn')}
           </button>
           <button data-testid="trade-withdrawal-cta" onClick={() => navigate('/app/withdrawal')}
             style={{ width: '100%', padding: '10px', background: '#151522', border: '1px solid #26263a', borderRadius: 10, color: '#e8eaf6', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-            <ArrowDownToLine size={13} />Levantamento
+            <ArrowDownToLine size={13} />{t('trade_withdrawal_btn')}
           </button>
         </div>
       </div>
