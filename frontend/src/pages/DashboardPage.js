@@ -29,14 +29,16 @@ function Sparkline({ data, color = '#3A86FF', height = 48 }) {
 export default function DashboardPage() {
   const { user } = useUser();
   const navigate = useNavigate();
-  const [history, setHistory]   = useState([]);
-  const [referral, setReferral] = useState(null);
+  const [history, setHistory]       = useState([]);
+  const [referral, setReferral]     = useState(null);
+  const [activities, setActivities] = useState([]);
 
   const safeBalance = Math.max(0, parseFloat(user?.balance) || 0);
   const safeProfit  = Math.max(0, parseFloat(user?.profit)  || 0);
   const goalAmount  = parseFloat(user?.goal_amount) || 0;
   const goalLabel   = user?.goal_label || '';
   const goalPct     = goalAmount > 0 ? Math.min(100, Math.round(safeBalance / goalAmount * 100)) : 0;
+  const isVerified  = user?.kyc_status === 'approved';
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -46,6 +48,8 @@ export default function DashboardPage() {
       .then(r => r.ok ? r.json() : []).then(setHistory).catch(() => {});
     fetch(`${BACKEND_URL}/api/me/referral`, { headers: h })
       .then(r => r.ok ? r.json() : null).then(setReferral).catch(() => {});
+    fetch(`${BACKEND_URL}/api/me/activity`, { headers: h })
+      .then(r => r.ok ? r.json() : []).then(setActivities).catch(() => {});
   }, []);
 
   const QUICK_ACTIONS = [
@@ -193,6 +197,76 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Últimas actividades + Badge verificado */}
+      <div style={{ display: 'grid', gap: 16 }} className="dash-meta">
+
+        {/* Últimas actividades */}
+        <div style={{ background: 'hsl(240,26%,8%)', border: '1px solid hsl(240,16%,18%)', borderRadius: 16, padding: '20px 22px' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'hsl(215,16%,55%)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>
+            Últimas Actividades
+          </div>
+          {activities.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '16px 0', color: 'hsl(215,16%,40%)', fontSize: 12 }}>
+              Sem actividades recentes.<br />Comece por fazer um depósito.
+            </div>
+          ) : activities.map((act, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: i < activities.length - 1 ? '1px solid hsl(240,16%,14%)' : 'none' }}>
+              <div style={{ width: 32, height: 32, background: act.type === 'deposit' ? 'rgba(58,134,255,0.1)' : act.type === 'kyc' ? 'rgba(34,197,139,0.1)' : 'rgba(255,190,11,0.1)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>
+                {act.icon}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#f3f5ff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{act.label}</div>
+                <div style={{ fontSize: 10, color: 'hsl(215,16%,45%)', marginTop: 1 }}>
+                  {act.created_at ? new Date(act.created_at).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}
+                </div>
+              </div>
+              {act.amount != null && act.amount > 0 && (
+                <div className="numeric" style={{ fontSize: 12, fontWeight: 700, color: '#22c58b', flexShrink: 0 }}>
+                  +{new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(act.amount)}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Estado da conta */}
+        <div style={{ background: 'hsl(240,26%,8%)', border: '1px solid hsl(240,16%,18%)', borderRadius: 16, padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'hsl(215,16%,55%)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Estado da Conta</div>
+
+          {/* KYC */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: isVerified ? 'rgba(34,197,139,0.07)' : 'rgba(255,190,11,0.06)', border: `1px solid ${isVerified ? 'rgba(34,197,139,0.2)' : 'rgba(255,190,11,0.2)'}`, borderRadius: 12 }}>
+            <div style={{ width: 36, height: 36, background: isVerified ? 'rgba(34,197,139,0.15)' : 'rgba(255,190,11,0.12)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <span style={{ fontSize: 18 }}>{isVerified ? '✅' : '📋'}</span>
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: isVerified ? '#22c58b' : '#FFBE0B' }}>
+                {isVerified ? '✓ Identidade Verificada' : 'KYC Pendente'}
+              </div>
+              <div style={{ fontSize: 11, color: 'hsl(215,16%,55%)', marginTop: 2 }}>
+                {isVerified ? 'Acesso completo à plataforma' : 'Envie os seus documentos no Perfil'}
+              </div>
+            </div>
+          </div>
+
+          {/* Saldo */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'hsl(240,18%,10%)', borderRadius: 10 }}>
+            <span style={{ fontSize: 12, color: 'hsl(215,16%,60%)' }}>Saldo disponível</span>
+            <span className="numeric" style={{ fontSize: 14, fontWeight: 800, color: '#f3f5ff', fontFamily: 'var(--font-heading)' }}>
+              {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(safeBalance)}
+            </span>
+          </div>
+
+          {!isVerified && (
+            <button onClick={() => navigate('/app/profile')}
+              style={{ padding: '9px', background: 'rgba(58,134,255,0.12)', border: '1px solid rgba(58,134,255,0.25)', borderRadius: 10, color: '#3A86FF', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(58,134,255,0.2)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(58,134,255,0.12)'}>
+              Verificar Identidade →
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Acesso rápido a Negociar */}

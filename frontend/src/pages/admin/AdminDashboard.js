@@ -875,7 +875,16 @@ export default function AdminDashboard() {
                     <td style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <div>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: '#f3f5ff' }}>{user.full_name}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: '#f3f5ff' }}>{user.full_name}</span>
+                            {/* Indicador online */}
+                            {user.is_online && (
+                              <div title="Online agora" style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '1px 6px', background: 'rgba(34,197,139,0.12)', border: '1px solid rgba(34,197,139,0.3)', borderRadius: 4 }}>
+                                <span style={{ width: 6, height: 6, background: '#22c58b', borderRadius: '50%', display: 'inline-block', animation: 'shimmer 2s ease infinite' }} />
+                                <span style={{ fontSize: 9, fontWeight: 700, color: '#22c58b', letterSpacing: '0.04em' }}>ONLINE</span>
+                              </div>
+                            )}
+                          </div>
                           <div style={{ fontSize: 11, color: '#4a5068' }}>{user.email}</div>
                           <div style={{ fontSize: 10, color: '#26263a', marginTop: 1 }}>{fmtDate(user.created_at)}</div>
                         </div>

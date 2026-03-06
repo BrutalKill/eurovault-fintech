@@ -1,14 +1,26 @@
 [
   {
-    "content": "Backend: endpoint GET /api/admin/users/{id}/kyc-docs (docs por utilizador)",
-    "status": "in_progress"
+    "content": "Favicon + título da aba no index.html",
+    "status": "completed"
   },
   {
-    "content": "ProfilePage: KYC com frente e verso separados + estado individual",
-    "status": "pending"
+    "content": "Página 404 personalizada",
+    "status": "completed"
   },
   {
-    "content": "AdminDashboard Drawer: nova tab KYC com docs + aprovar/rejeitar",
-    "status": "pending"
+    "content": "Badge VERIFICADO no topbar do cliente",
+    "status": "completed"
+  },
+  {
+    "content": "Animação de saldo a subir (counter animado)",
+    "status": "completed"
+  },
+  {
+    "content": "Últimas actividades no Dashboard",
+    "status": "completed"
+  },
+  {
+    "content": "Indicador 'online agora' no admin",
+    "status": "completed"
   }
 ]

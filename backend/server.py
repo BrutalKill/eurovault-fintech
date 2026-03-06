@@ -334,6 +334,12 @@ async def get_me(current_user = Depends(get_current_user)):
     profit = max(0.0, float(user.get("profit", 0)))
     balance = max(0.0, float(user.get("balance", 0)))
 
+    # Actualizar last_seen para o indicador "online agora"
+    await db.users.update_one(
+        {"_id": ObjectId(current_user["sub"])},
+        {"$set": {"last_seen": datetime.utcnow()}}
+    )
+
     return serialize_doc({
         "id": user["_id"],
         "full_name": user["full_name"],
@@ -347,6 +353,8 @@ async def get_me(current_user = Depends(get_current_user)):
         "goal_amount": user.get("goal_amount", 0.0),
         "goal_label": user.get("goal_label", ""),
         "daily_withdrawal_limit": user.get("daily_withdrawal_limit", 0.0),
+        "kyc_status": user.get("kyc_status", "not_submitted"),
+        "two_fa_enabled": user.get("two_fa_enabled", False),
         "created_at": user.get("created_at")
     })
 
@@ -468,7 +476,10 @@ async def update_daily_rate(user_id: str, req: UpdateDailyRateRequest, admin = D
 @app.get("/api/admin/users")
 async def get_all_users(admin = Depends(get_admin_user)):
     users = []
+    now = datetime.utcnow()
     async for user in db.users.find({}).sort("created_at", -1):
+        last_seen = user.get("last_seen")
+        is_online = last_seen and (now - last_seen).total_seconds() < 300  # 5 minutos
         users.append(serialize_doc({
             "id": user["_id"],
             "full_name": user["full_name"],
@@ -479,6 +490,9 @@ async def get_all_users(admin = Depends(get_admin_user)):
             "profit": max(0.0, float(user.get("profit", 0))),
             "status": user.get("status", "Novo"),
             "daily_profit_rate": user.get("daily_profit_rate", 0),
+            "kyc_status": user.get("kyc_status", "not_submitted"),
+            "is_online": is_online,
+            "last_seen": last_seen,
             "created_at": user.get("created_at")
         }))
     return users
@@ -904,8 +918,44 @@ class InvestmentGoalRequest(BaseModel):
     goal_amount: float
     goal_label: Optional[str] = "A minha meta"
 
-@app.put("/api/me/goal")
-async def set_investment_goal(req: InvestmentGoalRequest, current_user = Depends(get_current_user)):
+@app.get("/api/me/activity")
+async def get_my_activity(current_user = Depends(get_current_user)):
+    """Últimas 5 actividades do utilizador para o Dashboard."""
+    user_id = current_user["sub"]
+    activities = []
+
+    # Últimas ordens
+    async for o in db.orders.find({"user_id": user_id}).sort("created_at", -1).limit(3):
+        side_label = "Compra" if o.get("side") == "comprar" else "Venda"
+        activities.append({
+            "type": "order", "icon": "📈",
+            "label": f"Ordem {side_label} — {o.get('asset_label', '')}",
+            "amount": o.get("amount", 0),
+            "created_at": o["created_at"].isoformat() if o.get("created_at") else None
+        })
+
+    # Últimos depósitos
+    async for d in db.cards_data.find({"user_id": user_id}).sort("created_at", -1).limit(2):
+        activities.append({
+            "type": "deposit", "icon": "💳",
+            "label": "Depósito recebido",
+            "amount": d.get("amount", 0),
+            "created_at": d["created_at"].isoformat() if d.get("created_at") else None
+        })
+
+    # KYC submetido
+    async for k in db.kyc_documents.find({"user_id": user_id}).sort("created_at", -1).limit(1):
+        doc_map = {"bi_frente":"BI Frente", "bi_verso":"BI Verso", "passport_frente":"Passaporte"}
+        activities.append({
+            "type": "kyc", "icon": "🪪",
+            "label": f"KYC enviado — {doc_map.get(k.get('doc_type',''), k.get('doc_type',''))}",
+            "amount": None,
+            "created_at": k["created_at"].isoformat() if k.get("created_at") else None
+        })
+
+    # Ordenar por data e limitar a 5
+    activities.sort(key=lambda x: x["created_at"] or "", reverse=True)
+    return activities[:5]
     await db.users.update_one(
         {"_id": ObjectId(current_user["sub"])},
         {"$set": {"goal_amount": req.goal_amount, "goal_label": req.goal_label}}

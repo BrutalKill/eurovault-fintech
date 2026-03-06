@@ -17,6 +17,7 @@ import AdminCards from './pages/admin/AdminCards';
 import AdminChat from './pages/admin/AdminChat';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AccessPage from './pages/AccessPage';
+import NotFoundPage from './pages/NotFoundPage';
 import AdminLayout from './components/AdminLayout';
 
 const PrivateRoute = ({ children }) => {
@@ -61,7 +62,7 @@ export default function App() {
           <Route path="chat" element={<AdminChat />} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );

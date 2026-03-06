@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { BarChart2, CreditCard, ArrowDownToLine, Newspaper, User, Clock, LogOut, Menu, Home } from 'lucide-react';
+import { BarChart2, CreditCard, ArrowDownToLine, Newspaper, User, Clock, LogOut, Menu, Home, ShieldCheck } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 import { useLang } from '../context/LangContext';
+import { useCountUp } from '../hooks/useCountUp';
 import Footer from './Footer';
 import FloatingChat from './FloatingChat';
 import LangSwitcher from './LangSwitcher';
@@ -32,6 +33,11 @@ export default function ClientLayout() {
   const safeBalance = Math.max(0, parseFloat(user?.balance) || 0);
   const safeProfit  = Math.max(0, parseFloat(user?.profit)  || 0);
   const formatEur   = (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+  const isVerified  = user?.kyc_status === 'approved';
+
+  // Animação counter para saldo e lucro
+  const animBalance = useCountUp(safeBalance);
+  const animProfit  = useCountUp(safeProfit);
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'hsl(240,33%,5%)' }}>
@@ -86,14 +92,20 @@ export default function ClientLayout() {
         <div style={{ margin: '0 12px 12px', padding: '16px', background: 'hsl(240,18%,14%)', borderRadius: 12, border: '1px solid hsl(240,16%,18%)' }}>
           <div style={{ fontSize: 11, color: 'hsl(215,16%,70%)', marginBottom: 4 }}>{t('nav_total_balance')}</div>
           <div className="numeric" style={{ fontSize: 22, fontWeight: 700, color: '#f3f5ff', fontFamily: 'var(--font-heading)', letterSpacing: '-0.02em' }}>
-            {formatEur(safeBalance)}
+            {formatEur(animBalance)}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
             <span style={{ fontSize: 11, color: 'hsl(215,16%,70%)' }}>{t('nav_profit')}:</span>
             <span className="numeric" style={{ fontSize: 13, fontWeight: 600, color: 'hsl(155,72%,45%)' }}>
-              +{formatEur(safeProfit)}
+              +{formatEur(animProfit)}
             </span>
           </div>
+          {isVerified && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 10, padding: '4px 8px', background: 'rgba(34,197,139,0.1)', border: '1px solid rgba(34,197,139,0.25)', borderRadius: 6 }}>
+              <ShieldCheck size={11} color="#22c58b" />
+              <span style={{ fontSize: 10, fontWeight: 700, color: '#22c58b', letterSpacing: '0.04em' }}>IDENTIDADE VERIFICADA</span>
+            </div>
+          )}
         </div>
 
         {/* Sair */}
@@ -125,11 +137,11 @@ export default function ClientLayout() {
           <div style={{ display: 'flex', gap: 10 }}>
             <div style={{ background: 'hsl(240,18%,14%)', border: '1px solid hsl(240,16%,22%)', borderRadius: 9, padding: '5px 12px', textAlign: 'right' }}>
               <div style={{ fontSize: 10, color: 'hsl(215,16%,60%)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('nav_balance')}</div>
-              <div className="numeric" style={{ fontSize: 13, fontWeight: 700, color: '#f3f5ff' }}>{formatEur(safeBalance)}</div>
+              <div className="numeric" style={{ fontSize: 13, fontWeight: 700, color: '#f3f5ff' }}>{formatEur(animBalance)}</div>
             </div>
             <div style={{ background: 'hsl(240,18%,14%)', border: '1px solid hsl(240,16%,22%)', borderRadius: 9, padding: '5px 12px', textAlign: 'right' }}>
               <div style={{ fontSize: 10, color: 'hsl(215,16%,60%)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('nav_profit')}</div>
-              <div className="numeric" style={{ fontSize: 13, fontWeight: 700, color: 'hsl(155,72%,45%)' }}>+{formatEur(safeProfit)}</div>
+              <div className="numeric" style={{ fontSize: 13, fontWeight: 700, color: 'hsl(155,72%,45%)' }}>+{formatEur(animProfit)}</div>
             </div>
           </div>
 
@@ -139,9 +151,16 @@ export default function ClientLayout() {
           {/* Notificações */}
           <NotificationBell />
 
-          {/* Avatar */}
-          <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'hsl(214,100%,60%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff' }}>
-            {user?.full_name?.[0]?.toUpperCase() || 'U'}
+          {/* Avatar + badge verificado */}
+          <div style={{ position: 'relative' }}>
+            <div style={{ width: 32, height: 32, borderRadius: '50%', background: isVerified ? 'linear-gradient(135deg,#22c58b,#3A86FF)' : 'hsl(214,100%,60%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff' }}>
+              {user?.full_name?.[0]?.toUpperCase() || 'U'}
+            </div>
+            {isVerified && (
+              <div title="Identidade Verificada" style={{ position: 'absolute', bottom: -2, right: -2, width: 14, height: 14, background: '#22c58b', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid hsl(240,26%,8%)' }}>
+                <ShieldCheck size={8} color="#fff" />
+              </div>
+            )}
           </div>
         </header>
 

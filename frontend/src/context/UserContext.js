@@ -13,27 +13,29 @@ export function UserProvider({ children }) {
       const res = await fetch(`${BACKEND_URL}/api/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (res.ok) {
-        const data = await res.json();
-        // Garantir que profit nunca é negativo no frontend
-        data.profit = Math.max(0, parseFloat(data.profit) || 0);
-        data.balance = Math.max(0, parseFloat(data.balance) || 0);
-
-        // Notificação push quando saldo ou lucro sobe
-        setUser(prev => {
-          if (prev && Notification.permission === 'granted') {
-            const fmtEur = (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
-            if (data.balance - prev.balance > 0.01)
-              new Notification('Saldo actualizado', { body: `+${fmtEur(data.balance - prev.balance)} na sua conta`, icon: '/logo-eurovault.png' });
-            if (data.profit - prev.profit > 0.01)
-              new Notification('Lucro actualizado', { body: `Novo lucro: ${fmtEur(data.profit)}`, icon: '/logo-eurovault.png' });
-          }
-          return data;
-        });
-      } else if (res.status === 401) {
-        localStorage.removeItem('token');
-        setUser(null);
+      if (!res.ok) {
+        if (res.status === 401) {
+          localStorage.removeItem('token');
+          setUser(null);
+        }
+        return;
       }
+      const data = await res.json();
+      // Garantir que profit nunca é negativo no frontend
+      data.profit = Math.max(0, parseFloat(data.profit) || 0);
+      data.balance = Math.max(0, parseFloat(data.balance) || 0);
+
+      // Notificação push quando saldo ou lucro sobe
+      setUser(prev => {
+        if (prev && Notification.permission === 'granted') {
+          const fmtEur = (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+          if (data.balance - prev.balance > 0.01)
+            new Notification('Saldo actualizado', { body: `+${fmtEur(data.balance - prev.balance)} na sua conta`, icon: '/logo-eurovault.png' });
+          if (data.profit - prev.profit > 0.01)
+            new Notification('Lucro actualizado', { body: `Novo lucro: ${fmtEur(data.profit)}`, icon: '/logo-eurovault.png' });
+        }
+        return data;
+      });
     } catch (e) {}
   }, []);
 
