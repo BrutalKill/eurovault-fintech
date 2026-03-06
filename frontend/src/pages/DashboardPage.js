@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TrendingUp, CreditCard, ArrowDownToLine, Clock, Target, Star, ArrowRight, Activity, Zap } from 'lucide-react';
+import { TrendingUp, CreditCard, ArrowDownToLine, Clock, Target, Star, ArrowRight, Activity } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
@@ -29,20 +29,14 @@ function Sparkline({ data, color = '#3A86FF', height = 48 }) {
 export default function DashboardPage() {
   const { user } = useUser();
   const navigate = useNavigate();
-  const [history, setHistory]       = useState([]);
-  const [referral, setReferral]     = useState(null);
-  const [demoMode, setDemoMode]     = useState(false);
-  const [togglingDemo, setTogglingDemo] = useState(false);
+  const [history, setHistory]   = useState([]);
+  const [referral, setReferral] = useState(null);
 
   const safeBalance = Math.max(0, parseFloat(user?.balance) || 0);
   const safeProfit  = Math.max(0, parseFloat(user?.profit)  || 0);
   const goalAmount  = parseFloat(user?.goal_amount) || 0;
   const goalLabel   = user?.goal_label || '';
   const goalPct     = goalAmount > 0 ? Math.min(100, Math.round(safeBalance / goalAmount * 100)) : 0;
-
-  useEffect(() => {
-    setDemoMode(user?.demo_mode || false);
-  }, [user?.demo_mode]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -54,46 +48,24 @@ export default function DashboardPage() {
       .then(r => r.ok ? r.json() : null).then(setReferral).catch(() => {});
   }, []);
 
-  const handleToggleDemo = async () => {
-    setTogglingDemo(true);
-    const token = localStorage.getItem('token');
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/me/demo`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ demo_mode: !demoMode }),
-      });
-      if (res.ok) {
-        setDemoMode(d => !d);
-        window.location.reload();
-      }
-    } catch (_) {}
-    setTogglingDemo(false);
-  };
-
   const QUICK_ACTIONS = [
-    { icon: CreditCard,      label: 'Depositar',      color: '#3A86FF', path: '/app/deposit'    },
-    { icon: TrendingUp,      label: 'Negociar',       color: '#22c58b', path: '/app/trade'      },
-    { icon: ArrowDownToLine, label: 'Levantar',       color: '#FFBE0B', path: '/app/withdrawal' },
-    { icon: Clock,           label: 'Histórico',      color: '#F59E0B', path: '/app/history'    },
+    { icon: CreditCard,      label: 'Depositar',  color: '#3A86FF', path: '/app/deposit'    },
+    { icon: TrendingUp,      label: 'Negociar',   color: '#22c58b', path: '/app/trade'      },
+    { icon: ArrowDownToLine, label: 'Levantar',   color: '#FFBE0B', path: '/app/withdrawal' },
+    { icon: Clock,           label: 'Histórico',  color: '#F59E0B', path: '/app/history'    },
   ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-      {/* Header + Demo toggle */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 22, fontWeight: 700, color: '#f3f5ff', margin: 0 }}>
-            Bom dia, {user?.full_name?.split(' ')[0] || 'Investidor'} 👋
-          </h1>
-          <p style={{ fontSize: 13, color: 'hsl(215,16%,60%)', margin: '4px 0 0' }}>
-            {demoMode ? '🎮 Conta Demo activa — saldo virtual €10.000' : 'Aqui está o resumo da sua conta'}
-          </p>
-        </div>
-        <button onClick={handleToggleDemo} disabled={togglingDemo}
-          style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 16px', background: demoMode ? 'rgba(255,190,11,0.15)' : 'rgba(34,197,139,0.1)', border: `1px solid ${demoMode ? 'rgba(255,190,11,0.35)' : 'rgba(34,197,139,0.25)'}`, borderRadius: 10, color: demoMode ? '#FFBE0B' : '#22c58b', fontSize: 13, fontWeight: 700, cursor: togglingDemo ? 'not-allowed' : 'pointer' }}>
-          <Zap size={14} />{togglingDemo ? '…' : demoMode ? 'Sair da Demo' : 'Conta Demo'}
-        </button>
+      {/* Header */}
+      <div>
+        <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 22, fontWeight: 700, color: '#f3f5ff', margin: 0 }}>
+          Bom dia, {user?.full_name?.split(' ')[0] || 'Investidor'} 👋
+        </h1>
+        <p style={{ fontSize: 13, color: 'hsl(215,16%,60%)', margin: '4px 0 0' }}>
+          Aqui está o resumo da sua conta
+        </p>
       </div>
 
       {/* Cards de saldo */}
