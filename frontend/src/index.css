@@ -63,3 +63,35 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Card number formatting */
 .card-input { letter-spacing: 0.15em; }
+
+/* ── Animações globais ── */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Responsive helpers (removidos inline <style> dos componentes) ── */
+.hide-mobile { display: flex; }
+@media (max-width: 900px) {
+  .hide-mobile { display: none !important; }
+  .withdrawal-grid { grid-template-columns: 1fr !important; }
+  .profile-grid    { grid-template-columns: 1fr !important; }
+  .footer-grid     { grid-template-columns: 1fr 1fr !important; gap: 28px !important; }
+}
+@media (max-width: 960px) {
+  .deposit-grid { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 500px) {
+  .footer-grid { grid-template-columns: 1fr !important; }
+}
+
+/* ── ClientLayout sidebar ── */
+@media (min-width: 1024px) {
+  .lg-sidebar  { transform: translateX(0) !important; position: fixed !important; }
+  .main-content { margin-left: 260px; }
+  .lg-hidden   { display: none !important; }
+}
+@media (max-width: 1023px) {
+  .main-content { margin-left: 0; }
+  .lg-hidden    { display: flex; }
+}

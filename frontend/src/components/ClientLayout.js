@@ -100,16 +100,6 @@ export default function ClientLayout() {
         </div>
       </aside>
 
-      <style>{`
-        @media (min-width: 1024px) {
-          .lg-sidebar { transform: translateX(0) !important; position: fixed !important; }
-          .main-content { margin-left: 260px; }
-        }
-        @media (max-width: 1023px) { .main-content { margin-left: 0; } }
-        .lg-hidden { display: flex; }
-        @media (min-width: 1024px) { .lg-hidden { display: none; } }
-      `}</style>
-
       {/* Conteúdo principal */}
       <div className="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
 

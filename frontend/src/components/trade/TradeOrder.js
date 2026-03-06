@@ -242,7 +242,6 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
         )}
 
         {/* Botão principal */}
-        <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
         <button
           onClick={handleOrder}
           disabled={loading}

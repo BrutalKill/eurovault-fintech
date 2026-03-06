@@ -104,7 +104,6 @@ export default function ProfilePage() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 280px', gap: 20 }} className="profile-grid">
-        <style>{`@media (max-width: 900px) { .profile-grid { grid-template-columns: 1fr !important; } }`}</style>
 
         {/* Formulário */}
         <div style={card}>

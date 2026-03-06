@@ -148,7 +148,6 @@ export default function DepositPage() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 320px', gap: 20 }} className="deposit-grid">
-        <style>{`@media (max-width: 960px) { .deposit-grid { grid-template-columns: 1fr !important; } }`}</style>
 
         {/* ── Formulário ── */}
         <div style={card}>

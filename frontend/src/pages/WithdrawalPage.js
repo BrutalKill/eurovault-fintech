@@ -83,7 +83,6 @@ export default function WithdrawalPage() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 280px', gap: 20 }} className="withdrawal-grid">
-        <style>{`@media (max-width: 900px) { .withdrawal-grid { grid-template-columns: 1fr !important; } }`}</style>
 
         {/* SEPA Tab */}
         {activeTab === 'sepa' && (

@@ -36,7 +36,6 @@ export default function Footer() {
       {/* Conteúdo principal do rodapé */}
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 32px 24px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 40 }} className="footer-grid">
-          <style>{`@media(max-width:900px){ .footer-grid{ grid-template-columns: 1fr 1fr !important; gap: 28px !important; } } @media(max-width:500px){ .footer-grid{ grid-template-columns: 1fr !important; } }`}</style>
 
           {/* Coluna 1 — Marca */}
           <div>

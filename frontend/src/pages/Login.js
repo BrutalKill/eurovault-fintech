@@ -42,7 +42,6 @@ export default function Login() {
 
       {/* Painel esquerdo */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '60px 60px' }} className="hide-mobile">
-        <style>{`.hide-mobile { display: flex; } @media (max-width: 900px) { .hide-mobile { display: none !important; } }`}</style>
         <div style={{ maxWidth: 480 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 48 }}>
             <img src="/logo-eurovault.png" alt="EuroVault Investments" style={{ width: 60, height: 60, objectFit: 'contain' }} />
