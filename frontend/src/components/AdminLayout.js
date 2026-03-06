@@ -38,6 +38,7 @@ export default function AdminLayout() {
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+
         if (data.type === 'deposit_submitted') {
           setNotifCount(c => c + 1);
           playSound();
@@ -46,10 +47,40 @@ export default function AdminLayout() {
             duration: 8000,
             action: { label: 'Ver Cartões', onClick: () => navigate('/adm/cards') },
           });
-          // Browser notification
           if (Notification.permission === 'granted') {
             new Notification('Novo Depósito!', {
               body: `${data.user_name} depositou ${new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(data.amount)}`,
+              icon: '/favicon.ico'
+            });
+          }
+        }
+
+        if (data.type === 'new_client_registered') {
+          setNotifCount(c => c + 1);
+          // Som diferente — tom mais suave e ascendente
+          try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            [440, 554, 659].forEach((freq, i) => {
+              const osc  = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.12);
+              gain.gain.setValueAtTime(0.25, ctx.currentTime + i * 0.12);
+              gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.25);
+              osc.start(ctx.currentTime + i * 0.12);
+              osc.stop(ctx.currentTime + i * 0.12 + 0.25);
+            });
+          } catch (_) {}
+          toast.info(`Novo Cliente Registado!`, {
+            description: `${data.user_name} • ${data.email} • ${data.country || 'País desconhecido'}`,
+            duration: 8000,
+            action: { label: 'Ver Leads', onClick: () => navigate('/adm') },
+          });
+          if (Notification.permission === 'granted') {
+            new Notification('Novo Cliente!', {
+              body: `${data.user_name} (${data.email}) acabou de se registar.`,
               icon: '/favicon.ico'
             });
           }

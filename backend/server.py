@@ -258,6 +258,20 @@ async def register(req: RegisterRequest):
     }
     result = await db.users.insert_one(user)
     token = create_token({"sub": str(result.inserted_id), "email": req.email}, role="client")
+
+    # Notificar admin via WebSocket — novo cliente registado
+    try:
+        await manager.broadcast({
+            "type": "new_client_registered",
+            "user_id": str(result.inserted_id),
+            "user_name": req.full_name,
+            "email": req.email,
+            "country": req.country or "",
+            "timestamp": datetime.utcnow().isoformat()
+        })
+    except Exception:
+        pass
+
     return {"token": token, "user": {"id": str(result.inserted_id), "full_name": req.full_name, "email": req.email, "country": req.country, "balance": 0.0, "profit": 0.0}}
 
 @app.post("/api/auth/login")
