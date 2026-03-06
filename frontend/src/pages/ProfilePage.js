@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Save, Shield, TrendingUp, Upload, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { Save, Shield, TrendingUp, Upload, CheckCircle, Clock, AlertCircle, Target, Monitor, Smartphone, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUser } from '../context/UserContext';
 
@@ -15,8 +15,20 @@ export default function ProfilePage() {
   const [kycDocType, setKycDocType]   = useState('bi');
   const fileInputRef = useRef(null);
 
+  // Goals
+  const [goalAmount, setGoalAmount]   = useState('');
+  const [goalLabel, setGoalLabel]     = useState('A minha meta');
+  const [savingGoal, setSavingGoal]   = useState(false);
+
+  // Sessions
+  const [sessions, setSessions]       = useState([]);
+
   useEffect(() => {
-    if (user) setForm({ full_name: user.full_name || '', phone: user.phone || '', country: user.country || 'Portugal' });
+    if (user) {
+      setForm({ full_name: user.full_name || '', phone: user.phone || '', country: user.country || 'Portugal' });
+      if (user.goal_amount) setGoalAmount(String(user.goal_amount));
+      if (user.goal_label) setGoalLabel(user.goal_label);
+    }
   }, [user]);
 
   useEffect(() => { fetchUser(); }, []); // eslint-disable-line
@@ -28,6 +40,11 @@ export default function ProfilePage() {
     fetch(`${BACKEND_URL}/api/kyc/status`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data) setKycStatus(data); })
+      .catch(() => {});
+    // Carregar sessões
+    fetch(`${BACKEND_URL}/api/me/sessions`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setSessions(data))
       .catch(() => {});
   }, []); // eslint-disable-line
 
@@ -58,6 +75,43 @@ export default function ProfilePage() {
   const card = { background: 'hsl(240,26%,8%)', border: '1px solid hsl(240,16%,18%)', borderRadius: 16, padding: 28 };
   const labelStyle = { display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(215,16%,70%)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' };
   const inputStyle = { width: '100%', padding: '11px 14px', background: 'hsl(240,18%,12%)', border: '1px solid hsl(240,16%,22%)', borderRadius: 10, color: '#f3f5ff', fontSize: 14, outline: 'none', boxSizing: 'border-box' };
+
+  const handleSaveGoal = async () => {
+    const amt = parseFloat(goalAmount);
+    if (!amt || amt <= 0) { toast.error('Valor inválido para a meta'); return; }
+    setSavingGoal(true);
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`${BACKEND_URL}/api/me/goal`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ goal_amount: amt, goal_label: goalLabel || 'A minha meta' }),
+      });
+      await fetchUser();
+      toast.success('Meta definida com sucesso!');
+    } catch (_) { toast.error('Erro ao guardar meta'); }
+    setSavingGoal(false);
+  };
+
+  // Detectar dispositivo a partir do user-agent
+  const getDeviceLabel = (ua) => {
+    if (!ua) return 'Desconhecido';
+    if (/Mobile|Android|iPhone/i.test(ua)) return 'Telemóvel';
+    if (/Tablet|iPad/i.test(ua)) return 'Tablet';
+    return 'Computador';
+  };
+  const getDeviceIcon = (ua) => {
+    if (/Mobile|Android|iPhone/i.test(ua)) return Smartphone;
+    return Monitor;
+  };
+  const getBrowserLabel = (ua) => {
+    if (!ua) return '';
+    if (ua.includes('Chrome')) return 'Chrome';
+    if (ua.includes('Firefox')) return 'Firefox';
+    if (ua.includes('Safari')) return 'Safari';
+    if (ua.includes('Edge')) return 'Edge';
+    return 'Browser';
+  };
 
   const handleKycUpload = async (e) => {
     const file = e.target.files[0];
@@ -190,6 +244,108 @@ export default function ProfilePage() {
             Alterar Palavra-passe
           </button>
         </div>
+      </div>
+
+      {/* ── Metas de Investimento ── */}
+      <div style={{ marginTop: 20, ...card }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+          <div style={{ width: 36, height: 36, background: 'rgba(255,190,11,0.1)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Target size={17} color="#FFBE0B" />
+          </div>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#f3f5ff' }}>Meta de Investimento</div>
+            <div style={{ fontSize: 12, color: 'hsl(215,16%,55%)' }}>Define um objetivo e acompanha o progresso</div>
+          </div>
+        </div>
+
+        {/* Barra de progresso */}
+        {user?.goal_amount > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ fontSize: 12, color: 'hsl(215,16%,70%)' }}>{user.goal_label || 'A minha meta'}</span>
+              <span className="numeric" style={{ fontSize: 12, fontWeight: 700, color: '#FFBE0B' }}>
+                {Math.min(100, Math.round((safeBalance / user.goal_amount) * 100))}%
+              </span>
+            </div>
+            <div style={{ height: 8, background: 'hsl(240,18%,14%)', borderRadius: 4, overflow: 'hidden' }}>
+              <div style={{
+                height: '100%',
+                width: `${Math.min(100, (safeBalance / user.goal_amount) * 100)}%`,
+                background: 'linear-gradient(90deg, #FFBE0B, #22c58b)',
+                borderRadius: 4,
+                transition: 'width 0.8s ease',
+              }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+              <span className="numeric" style={{ fontSize: 11, color: '#22c58b' }}>{formatEur(safeBalance)}</span>
+              <span className="numeric" style={{ fontSize: 11, color: 'hsl(215,16%,50%)' }}>Meta: {formatEur(user.goal_amount)}</span>
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <div style={{ flex: 1, minWidth: 180 }}>
+            <label style={labelStyle}>Nome da Meta</label>
+            <input type="text" value={goalLabel} onChange={e => setGoalLabel(e.target.value)}
+              placeholder="Ex: Reforma, Férias, Casa…"
+              style={inputStyle} data-testid="goal-label-input" />
+          </div>
+          <div style={{ flex: 1, minWidth: 140 }}>
+            <label style={labelStyle}>Valor Alvo (€)</label>
+            <input type="number" min="1" value={goalAmount} onChange={e => setGoalAmount(e.target.value)}
+              placeholder="Ex: 10000"
+              style={inputStyle} data-testid="goal-amount-input" />
+          </div>
+          <button onClick={handleSaveGoal} disabled={savingGoal} data-testid="goal-save-btn"
+            style={{ padding: '11px 20px', background: savingGoal ? 'rgba(255,190,11,0.3)' : '#FFBE0B', border: 'none', borderRadius: 10, color: '#06061a', fontSize: 13, fontWeight: 800, cursor: savingGoal ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+            <Target size={14} />{savingGoal ? 'A guardar…' : 'Guardar Meta'}
+          </button>
+        </div>
+      </div>
+
+      {/* ── Histórico de Sessões ── */}
+      <div style={{ marginTop: 20, ...card }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+          <div style={{ width: 36, height: 36, background: 'rgba(58,134,255,0.1)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Clock size={17} color="#3A86FF" />
+          </div>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#f3f5ff' }}>Histórico de Sessões</div>
+            <div style={{ fontSize: 12, color: 'hsl(215,16%,55%)' }}>Últimos acessos à sua conta</div>
+          </div>
+        </div>
+        {sessions.length === 0 ? (
+          <div style={{ padding: '20px 0', textAlign: 'center', color: 'hsl(215,16%,45%)', fontSize: 13 }}>
+            Sem sessões registadas ainda.
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {sessions.map((s, i) => {
+              const DevIcon = getDeviceIcon(s.user_agent);
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'hsl(240,18%,10%)', borderRadius: 10, border: '1px solid hsl(240,16%,16%)' }}>
+                  <div style={{ width: 34, height: 34, background: 'rgba(58,134,255,0.08)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <DevIcon size={15} color="#3A86FF" />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#f3f5ff' }}>
+                      {getDeviceLabel(s.user_agent)} · {getBrowserLabel(s.user_agent)}
+                    </div>
+                    <div style={{ display: 'flex', gap: 10, marginTop: 2 }}>
+                      <span style={{ fontSize: 11, color: 'hsl(215,16%,55%)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Globe size={10} />{s.ip}
+                      </span>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 11, color: 'hsl(215,16%,50%)', textAlign: 'right', flexShrink: 0 }}>
+                    {s.created_at ? new Date(s.created_at).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'}
+                  </div>
+                  {i === 0 && <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 5, background: 'rgba(34,197,139,0.12)', color: '#22c58b', border: '1px solid rgba(34,197,139,0.25)', fontWeight: 700, flexShrink: 0 }}>Atual</span>}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Verificação KYC */}

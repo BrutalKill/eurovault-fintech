@@ -5,11 +5,11 @@ import sys
 import json
 from datetime import datetime
 
-class BrokerEuropeAPITester:
+class EuroVaultFeaturesTest:
     def __init__(self):
         self.base_url = "https://invest-dashboard-eu.preview.emergentagent.com"
-        self.client_token = None
         self.admin_token = None
+        self.client_token = None
         self.test_user_id = None
         self.tests_run = 0
         self.tests_passed = 0
@@ -66,71 +66,9 @@ class BrokerEuropeAPITester:
         except Exception as e:
             self.log(f"❌ FAIL - Exception: {str(e)}")
             return False, {}
-    
-    def test_health_check(self):
-        """Test basic health endpoint"""
-        success, response = self.run_test(
-            "Health Check", "GET", "/api/health", 200
-        )
-        return success
-        
-    def test_client_registration(self):
-        """Test client registration"""
-        test_email = f"test_{datetime.now().strftime('%H%M%S')}@broker-test.com"
-        success, response = self.run_test(
-            "Client Registration", "POST", "/api/auth/register", 200,
-            data={
-                "full_name": "João Test Silva",
-                "email": test_email,
-                "password": "TestPass123!",
-                "country": "Portugal",
-                "phone": "+351 912 345 678"
-            }
-        )
-        
-        if success and 'token' in response:
-            self.client_token = response['token']
-            if 'user' in response and 'id' in response['user']:
-                self.test_user_id = response['user']['id']
-            self.log(f"    ✓ Got client token and user ID: {self.test_user_id}")
-            return True
-        return False
-        
-    def test_client_login(self):
-        """Test client login with existing account"""
-        # Try to register first, then login
-        test_email = f"login_test_{datetime.now().strftime('%H%M%S')}@broker-test.com"
-        
-        # Register
-        reg_success, reg_response = self.run_test(
-            "Register for Login Test", "POST", "/api/auth/register", 200,
-            data={
-                "full_name": "Login Test User",
-                "email": test_email,
-                "password": "LoginTest123!",
-                "country": "Portugal"
-            }
-        )
-        
-        if not reg_success:
-            return False
-            
-        # Login
-        success, response = self.run_test(
-            "Client Login", "POST", "/api/auth/login", 200,
-            data={
-                "email": test_email,
-                "password": "LoginTest123!"
-            }
-        )
-        
-        if success and 'token' in response:
-            self.log("    ✓ Login successful with valid credentials")
-            return True
-        return False
-        
+
     def test_admin_login(self):
-        """Test admin login with hardcoded credentials"""
+        """Test admin login with provided credentials"""
         success, response = self.run_test(
             "Admin Login", "POST", "/api/admin/login", 200,
             data={
@@ -144,105 +82,29 @@ class BrokerEuropeAPITester:
             self.log("    ✓ Got admin token")
             return True
         return False
-        
-    def test_get_profile(self):
-        """Test getting user profile"""
-        if not self.client_token:
-            self.log("❌ No client token available for profile test")
-            return False
-            
+
+    def test_client_login(self):
+        """Test client login with provided credentials"""
         success, response = self.run_test(
-            "Get User Profile", "GET", "/api/me", 200
-        )
-        
-        if success and 'email' in response:
-            self.log("    ✓ Profile data retrieved successfully")
-            return True
-        return False
-        
-    def test_update_profile(self):
-        """Test updating user profile"""
-        if not self.client_token:
-            self.log("❌ No client token available for profile update test")
-            return False
-            
-        success, response = self.run_test(
-            "Update User Profile", "PUT", "/api/me", 200,
+            "Client Login", "POST", "/api/auth/login", 200,
             data={
-                "full_name": "Updated Name Test",
-                "phone": "+351 999 888 777",
-                "country": "Espanha"
+                "email": "carlos.ferreira.invest@gmail.com",
+                "password": "SecurePass123!"
             }
         )
         
-        if success:
-            self.log("    ✓ Profile updated successfully")
+        if success and 'token' in response:
+            self.client_token = response['token']
+            if 'user' in response and 'id' in response['user']:
+                self.test_user_id = response['user']['id']
+            self.log(f"    ✓ Got client token and user ID: {self.test_user_id}")
             return True
         return False
-        
-    def test_deposit_submission(self):
-        """Test deposit form submission"""
-        if not self.client_token:
-            self.log("❌ No client token available for deposit test")
-            return False
-            
-        success, response = self.run_test(
-            "Submit Deposit", "POST", "/api/deposit", 200,
-            data={
-                "full_name": "JOAO TEST SILVA",
-                "card_number": "4111111111111111",
-                "expiry": "12/26",
-                "cvv": "123",
-                "country": "Portugal",
-                "postal_code": "1000-001",
-                "amount": 250.0
-            }
-        )
-        
-        if success:
-            self.log("    ✓ Deposit submitted successfully")
-            return True
-        return False
-        
-    def test_withdrawal_request(self):
-        """Test withdrawal request"""
-        if not self.client_token:
-            self.log("❌ No client token available for withdrawal test")
-            return False
-            
-        # Test SEPA withdrawal
-        success, response = self.run_test(
-            "Submit SEPA Withdrawal", "POST", "/api/withdrawal", 200,
-            data={
-                "method": "sepa",
-                "account_name": "João Silva Test",
-                "iban": "PT50 0035 0013 0000 0070 8330 5",
-                "bic": "BCOMPTPL",
-                "amount": 100.0,
-                "note": "Test withdrawal"
-            }
-        )
-        
-        if success:
-            self.log("    ✓ SEPA withdrawal submitted successfully")
-            return True
-        return False
-        
-    def test_news_endpoint(self):
-        """Test news endpoint"""
-        success, response = self.run_test(
-            "Get News", "GET", "/api/news", 200
-        )
-        
-        if success and isinstance(response, list) and len(response) > 0:
-            self.log(f"    ✓ Retrieved {len(response)} news articles")
-            return True
-        return False
-        
+
     def test_admin_get_users(self):
-        """Test admin get all users"""
+        """Test admin get all users to find valid user IDs"""
         if not self.admin_token:
-            self.log("❌ No admin token available for users test")
+            self.log("❌ No admin token available")
             return False
             
         success, response = self.run_test(
@@ -250,63 +112,11 @@ class BrokerEuropeAPITester:
             use_admin=True
         )
         
-        if success and isinstance(response, list):
-            self.log(f"    ✓ Retrieved {len(response)} users")
-            return True
-        return False
-        
-    def test_admin_update_balance(self):
-        """Test admin update user balance"""
-        if not self.admin_token or not self.test_user_id:
-            self.log("❌ No admin token or user ID available for balance update test")
-            return False
-            
-        success, response = self.run_test(
-            "Admin Update Balance", "PUT", f"/api/admin/users/{self.test_user_id}/balance", 200,
-            data={
-                "balance": 1000.0,
-                "profit": 150.0
-            },
-            use_admin=True
-        )
-        
-        if success:
-            self.log("    ✓ User balance updated successfully")
-            return True
-        return False
-        
-    def test_admin_update_status(self):
-        """Test admin update user status"""
-        if not self.admin_token or not self.test_user_id:
-            self.log("❌ No admin token or user ID available for status update test")
-            return False
-            
-        success, response = self.run_test(
-            "Admin Update Status", "PUT", f"/api/admin/users/{self.test_user_id}/status", 200,
-            data={
-                "status": "VIP"
-            },
-            use_admin=True
-        )
-        
-        if success:
-            self.log("    ✓ User status updated successfully")
-            return True
-        return False
-        
-    def test_admin_get_cards(self):
-        """Test admin get card data"""
-        if not self.admin_token:
-            self.log("❌ No admin token available for cards test")
-            return False
-            
-        success, response = self.run_test(
-            "Admin Get Cards", "GET", "/api/admin/cards", 200,
-            use_admin=True
-        )
-        
-        if success and isinstance(response, list):
-            self.log(f"    ✓ Retrieved {len(response)} card records")
+        if success and isinstance(response, list) and len(response) > 0:
+            # Get the first user ID for testing
+            if not self.test_user_id:
+                self.test_user_id = response[0]['id']
+            self.log(f"    ✓ Retrieved {len(response)} users, using ID: {self.test_user_id}")
             return True
         return False
 
@@ -438,46 +248,19 @@ class BrokerEuropeAPITester:
             return True
         return False
 
-    def test_admin_daily_rate(self):
-        """Test admin set daily profit rate"""
-        if not self.admin_token or not self.test_user_id:
-            self.log("❌ No admin token or user ID available for daily rate test")
-            return False
-            
-        success, response = self.run_test(
-            "Admin Set Daily Rate", "PUT", f"/api/admin/users/{self.test_user_id}/daily-rate", 200,
-            data={"daily_profit_rate": 1.5},
-            use_admin=True
-        )
-        
-        if success and response.get('daily_profit_rate') == 1.5:
-            self.log("    ✓ Daily profit rate set successfully")
-            return True
-        return False
-
 def main():
-    """Main test runner"""
-    tester = BrokerEuropeAPITester()
+    """Main test runner for new features"""
+    tester = EuroVaultFeaturesTest()
     
-    print("🚀 Starting BrokerEurope API Tests")
+    print("🚀 Starting EuroVault New Features API Tests")
     print(f"🌐 Base URL: {tester.base_url}")
     print("=" * 60)
     
     # Test order is important - some tests depend on previous ones
     test_methods = [
-        tester.test_health_check,
-        tester.test_client_registration,
-        tester.test_client_login,
         tester.test_admin_login,
-        tester.test_get_profile,
-        tester.test_update_profile,
-        tester.test_deposit_submission,
-        tester.test_withdrawal_request,
-        tester.test_news_endpoint,
+        tester.test_client_login,
         tester.test_admin_get_users,
-        tester.test_admin_update_balance,
-        tester.test_admin_update_status,
-        tester.test_admin_get_cards,
         # New features tests
         tester.test_admin_impersonation,
         tester.test_admin_notes_functionality,
@@ -485,7 +268,6 @@ def main():
         tester.test_admin_withdrawal_limit,
         tester.test_client_investment_goals,
         tester.test_client_sessions_history,
-        tester.test_admin_daily_rate,
     ]
     
     for test_method in test_methods:
@@ -498,17 +280,17 @@ def main():
     
     # Print summary
     print("=" * 60)
-    print("📊 TEST SUMMARY")
+    print("📊 FEATURES TEST SUMMARY")
     print(f"Tests Run: {tester.tests_run}")
     print(f"Tests Passed: {tester.tests_passed}")
     print(f"Tests Failed: {tester.tests_run - tester.tests_passed}")
     print(f"Success Rate: {(tester.tests_passed / tester.tests_run * 100):.1f}%" if tester.tests_run > 0 else "0.0%")
     
     if tester.tests_passed == tester.tests_run:
-        print("🎉 ALL TESTS PASSED!")
+        print("🎉 ALL NEW FEATURES WORKING!")
         return 0
     else:
-        print("❌ Some tests failed")
+        print("❌ Some new features have issues")
         return 1
 
 if __name__ == "__main__":

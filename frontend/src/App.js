@@ -14,6 +14,7 @@ import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminCards from './pages/admin/AdminCards';
 import AdminChat from './pages/admin/AdminChat';
+import AccessPage from './pages/AccessPage';
 import AdminLayout from './components/AdminLayout';
 
 const PrivateRoute = ({ children }) => {
@@ -35,6 +36,7 @@ export default function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/access/:token" element={<AccessPage />} />
 
         {/* Client Area */}
         <Route path="/app" element={<PrivateRoute><ClientLayout /></PrivateRoute>}>

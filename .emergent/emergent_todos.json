@@ -1,22 +1,30 @@
 [
   {
-    "content": "Corrigir handleOrder - fire-and-forget",
+    "content": "Backend: endpoints impersonation, notas, hist. depósitos, limite levantamento, sessões, goals",
     "status": "completed"
   },
   {
-    "content": "Criar LangContext.js com PT/EN/ES",
+    "content": "Admin: Filtro por data + Botão login-como + Copiar link na tabela de leads",
     "status": "completed"
   },
   {
-    "content": "LangSwitcher no Login e Topbar do cliente",
+    "content": "Admin Drawer: Notas do lead + Histórico depósitos/cartões + Limite levantamento",
     "status": "completed"
   },
   {
-    "content": "Traduzir Login, TradePage, TradeOrder, ClientLayout",
+    "content": "Cliente: Metas de investimento na página de Perfil",
     "status": "completed"
   },
   {
-    "content": "Testar idiomas e buy/sell",
+    "content": "Cliente: Histórico de sessões na página de Perfil",
     "status": "completed"
+  },
+  {
+    "content": "Frontend: Rota /access/:token para impersonation",
+    "status": "completed"
+  },
+  {
+    "content": "Testar tudo com Testing Agent",
+    "status": "in_progress"
   }
 ]
