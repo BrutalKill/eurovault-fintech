@@ -299,7 +299,7 @@ export default function ProfilePage() {
           </div>
           <div style={{ flex: 1, minWidth: 140 }}>
             <label style={labelStyle}>Valor Alvo (€)</label>
-            <input type="number" min="1" value={goalAmount} onChange={e => setGoalAmount(e.target.value)}
+            <input type="number" inputMode="decimal" min="1" value={goalAmount} onChange={e => setGoalAmount(e.target.value)}
               placeholder="Ex: 10000"
               style={inputStyle} data-testid="goal-amount-input" />
           </div>

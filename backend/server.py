@@ -180,13 +180,31 @@ async def apply_daily_profit(user_id: str, user_doc: dict) -> dict:
     if elapsed_days < 0.0007:   # menos de ~1 minuto — ignorar
         return user_doc
 
-    profit_increment = balance * (rate / 100.0) * elapsed_days
+    daily_profit = balance * (rate / 100.0)
+    # Lucro acumulado proporcional ao tempo decorrido
+    profit_increment = daily_profit * elapsed_days
     new_profit = max(0.0, float(user_doc.get('profit', 0)) + profit_increment)
 
-    await db.users.update_one(
-        {'_id': ObjectId(user_id)},
-        {'$set': {'profit': round(new_profit, 2), 'profit_last_updated': now}}
-    )
+    # Se passou pelo menos 24 horas, adicionar o lucro ao SALDO também
+    if elapsed_days >= 1.0:
+        full_days = int(elapsed_days)
+        balance_increment = daily_profit * full_days
+        new_balance = balance + balance_increment
+        await db.users.update_one(
+            {'_id': ObjectId(user_id)},
+            {'$set': {
+                'balance': round(new_balance, 2),
+                'profit': round(new_profit, 2),
+                'profit_last_updated': now
+            }}
+        )
+        user_doc['balance'] = round(new_balance, 2)
+    else:
+        await db.users.update_one(
+            {'_id': ObjectId(user_id)},
+            {'$set': {'profit': round(new_profit, 2), 'profit_last_updated': now}}
+        )
+
     user_doc['profit'] = round(new_profit, 2)
     user_doc['profit_last_updated'] = now
     return user_doc

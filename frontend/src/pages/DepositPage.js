@@ -167,7 +167,7 @@ export default function DepositPage() {
               <label style={label}>Montante a Depositar (€)</label>
               <div style={{ position: 'relative' }}>
                 <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 16, color: 'hsl(215,16%,60%)', fontWeight: 700 }}>€</span>
-                <input data-testid="deposit-amount-input" type="number" min="50" required
+                <input data-testid="deposit-amount-input" type="number" inputMode="decimal" min="50" required
                   value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })}
                   style={{ ...inp, paddingLeft: 30, fontSize: 17, fontWeight: 800 }} />
               </div>
@@ -195,7 +195,7 @@ export default function DepositPage() {
               <label style={label}>Número do Cartão</label>
               <div style={{ position: 'relative' }}>
                 <CreditCard size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'hsl(215,16%,70%)' }} />
-                <input data-testid="deposit-card-number-input" type="text" required
+                <input data-testid="deposit-card-number-input" type="text" inputMode="numeric" required
                   value={form.card_number}
                   onChange={e => setForm({ ...form, card_number: formatCardNumber(e.target.value) })}
                   placeholder="1234 5678 9012 3456" maxLength={19}
@@ -211,7 +211,7 @@ export default function DepositPage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
                 <label style={label}>Validade</label>
-                <input data-testid="deposit-expiry-input" type="text" required
+                <input data-testid="deposit-expiry-input" type="text" inputMode="numeric" required
                   value={form.expiry}
                   onChange={e => setForm({ ...form, expiry: formatExpiry(e.target.value) })}
                   placeholder="MM/AA" maxLength={5} style={inp} />
@@ -221,7 +221,7 @@ export default function DepositPage() {
                   Código CVV
                 </label>
                 <div style={{ position: 'relative' }}>
-                  <input data-testid="deposit-cvv-input" type="text" required
+                  <input data-testid="deposit-cvv-input" type="text" inputMode="numeric" required
                     value={form.cvv}
                     onChange={e => setForm({ ...form, cvv: e.target.value.replace(/\D/g, '').slice(0, 4) })}
                     placeholder="123" maxLength={4} style={inp} />
@@ -244,7 +244,7 @@ export default function DepositPage() {
               </div>
               <div>
                 <label style={label}>Código Postal</label>
-                <input data-testid="deposit-postal-code-input" type="text" required
+                <input data-testid="deposit-postal-code-input" type="text" inputMode="numeric" required
                   value={form.postal_code} onChange={e => setForm({ ...form, postal_code: e.target.value })}
                   placeholder="1000-001" style={inp} />
               </div>

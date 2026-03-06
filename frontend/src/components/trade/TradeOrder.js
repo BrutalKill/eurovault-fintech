@@ -159,7 +159,7 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
               fontSize: 13, color: '#7a8299', fontWeight: 700,
             }}>€</span>
             <input
-              type="number" min="10"
+              type="number" inputMode="decimal" min="10"
               value={amount}
               onChange={e => setAmount(e.target.value)}
               style={inp({ paddingLeft: 26, fontSize: 14, fontWeight: 700 })}

@@ -121,13 +121,13 @@ export default function WithdrawalPage() {
               </div>
 
               {[
-                [t('wd_holder'),  'account_name', 'text', 'João Silva'],
-                ['IBAN',           'iban',         'text', 'PT50 0035 0013 0000 0070 8330 5'],
-                [t('wd_bic'),      'bic',          'text', 'BCOMPTPL'],
-              ].map(([label, key, type, placeholder]) => (
+                [t('wd_holder'),  'account_name', 'text',  'João Silva',                  'text'],
+                ['IBAN',           'iban',         'text',  'PT50 0035 0013 0000 0070 8330 5', 'text'],
+                [t('wd_bic'),      'bic',          'text',  'BCOMPTPL',                    'text'],
+              ].map(([label, key, type, placeholder, mode]) => (
                 <div key={key}>
                   <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(215,16%,70%)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</label>
-                  <input type={type} required value={sepaForm[key]}
+                  <input type={type} inputMode={mode} required value={sepaForm[key]}
                     onChange={e => setSepaForm({ ...sepaForm, [key]: e.target.value })}
                     placeholder={placeholder}
                     style={{ width: '100%', padding: '11px 14px', background: 'hsl(240,18%,12%)', border: '1px solid hsl(240,16%,22%)', borderRadius: 10, color: '#f3f5ff', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
@@ -137,7 +137,7 @@ export default function WithdrawalPage() {
               {/* Campo montante com validação visual */}
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(215,16%,70%)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('wd_amount')} (€)</label>
-                <input type="number" required min="10" step="0.01"
+                <input type="number" inputMode="decimal" required min="10" step="0.01"
                   value={sepaForm.amount}
                   onChange={e => setSepaForm({ ...sepaForm, amount: e.target.value })}
                   placeholder="0.00"
@@ -147,10 +147,11 @@ export default function WithdrawalPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 8, padding: '9px 12px', background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8 }}>
                     <AlertTriangle size={14} color="#ef4444" />
                     <span style={{ fontSize: 12, color: '#ef4444', fontWeight: 600 }}>
-                      {t('wd_info_available')}: <span className="numeric">{formatEur(safeBalance)}</span>
+                      Saldo insuficiente — Disponível: <span className="numeric">{formatEur(safeBalance)}</span>
                     </span>
                   </div>
                 )}
+                {!insufficientBalance && exceedsDailyLimit && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 8, padding: '9px 12px', background: 'rgba(255,190,11,0.10)', border: '1px solid rgba(255,190,11,0.3)', borderRadius: 8 }}>
                     <AlertTriangle size={14} color="#FFBE0B" />
                     <span style={{ fontSize: 12, color: '#FFBE0B', fontWeight: 600 }}>
@@ -158,7 +159,6 @@ export default function WithdrawalPage() {
                     </span>
                   </div>
                 )}
-                {/* Montante válido */}
                 {reqAmount > 0 && !insufficientBalance && !exceedsDailyLimit && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 8, padding: '9px 12px', background: 'rgba(34,197,139,0.08)', border: '1px solid rgba(34,197,139,0.2)', borderRadius: 8 }}>
                     <CheckCircle size={13} color="#22c58b" />
