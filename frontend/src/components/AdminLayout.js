@@ -138,19 +138,20 @@ export default function AdminLayout() {
     return () => { clearInterval(heartbeat); ws.close(); };
   }, [addNotif]); // addNotif é estável — deps mínimas
 
+  const lastLeadCountRef = useRef(null); // último total de leads visto
+
   useEffect(() => {
     if (Notification.permission === 'default') Notification.requestPermission();
 
-    // Desbloquear AudioContext na primeira interação do utilizador (política do browser)
+    // Desbloquear AudioContext na primeira interação
     const unlock = () => {
       getAudioCtx();
-      // Tentar tocar um som silencioso para "aquecer" o contexto
       try {
         const ctx = audioCtxRef.current;
         if (ctx) {
           const osc = ctx.createOscillator();
           osc.connect(ctx.destination);
-          osc.frequency.value = 1; // inaudível
+          osc.frequency.value = 1;
           osc.start(); osc.stop(ctx.currentTime + 0.001);
         }
       } catch (_) {}
@@ -160,16 +161,58 @@ export default function AdminLayout() {
     const cleanup = connectWS();
     const token = localStorage.getItem('adminToken');
     const h = { Authorization: `Bearer ${token}` };
-    const fetchCounts = () => {
+
+    const fetchCounts = async () => {
+      // Chat não lidas
       fetch(`${BACKEND_URL}/api/admin/chat/unread-count`, { headers: h })
-        .then(r => r.ok ? r.json() : { unread: 0 }).then(d => setChatUnread(d.unread || 0)).catch(() => {});
+        .then(r => r.ok ? r.json() : { unread: 0 })
+        .then(d => setChatUnread(d.unread || 0))
+        .catch(() => {});
+
+      // Levantamentos pendentes
       fetch(`${BACKEND_URL}/api/admin/withdrawals/count`, { headers: h })
-        .then(r => r.ok ? r.json() : { pending: 0 }).then(d => setPendingWd(d.pending || 0)).catch(() => {});
+        .then(r => r.ok ? r.json() : { pending: 0 })
+        .then(d => setPendingWd(d.pending || 0))
+        .catch(() => {});
+
+      // ── Novos leads por polling (fiável, como o chat) ──
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/admin/leads/count`, { headers: h });
+        if (!res.ok) return;
+        const { total } = await res.json();
+        if (lastLeadCountRef.current === null) {
+          // Primeira chamada: guardar o total actual sem mostrar badge
+          lastLeadCountRef.current = total;
+        } else if (total > lastLeadCountRef.current) {
+          const diff = total - lastLeadCountRef.current;
+          // Tocar som e actualizar badge
+          playToneRef.current([{ freq: 440, time: 0 }, { freq: 554, time: 0.12 }, { freq: 659, time: 0.24 }]);
+          setNewLeads(n => n + diff);
+          addNotif({
+            type: 'lead', color: '#3A86FF',
+            title: diff === 1 ? 'Novo Cliente Registado' : `${diff} Novos Clientes`,
+            body: `${diff} lead${diff > 1 ? 's' : ''} novo${diff > 1 ? 's' : ''} registado${diff > 1 ? 's' : ''}`,
+          });
+          toast.info(diff === 1 ? 'Novo Cliente Registado!' : `${diff} Novos Clientes!`, {
+            description: `${diff} lead${diff > 1 ? 's' : ''} no painel`,
+            duration: 10000,
+            action: { label: 'Ver Leads', onClick: () => navigate('/adm') },
+          });
+          if (Notification.permission === 'granted') {
+            new Notification('Novo Cliente!', { body: `${diff} novo${diff > 1 ? 's' : ''} lead${diff > 1 ? 's' : ''} registado${diff > 1 ? 's' : ''}`, icon: '/logo-eurovault.png' });
+          }
+          lastLeadCountRef.current = total;
+        } else if (total < lastLeadCountRef.current) {
+          // Lead eliminado — actualizar sem badge
+          lastLeadCountRef.current = total;
+        }
+      } catch (_) {}
     };
+
     fetchCounts();
-    const iv = setInterval(fetchCounts, 15000);
+    const iv = setInterval(fetchCounts, 8000); // Verificar a cada 8 segundos
     return () => { cleanup(); clearInterval(iv); };
-  }, [connectWS, getAudioCtx]); // connectWS é agora estável — não reconecta desnecessariamente
+  }, [connectWS, getAudioCtx, addNotif, navigate]);
 
   // Fechar sino ao clicar fora
   useEffect(() => {

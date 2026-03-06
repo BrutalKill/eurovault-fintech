@@ -576,6 +576,13 @@ async def review_withdrawal(withdrawal_id: str, req: WithdrawalReviewRequest, ad
     return {"success": True}
 
 
+@app.get("/api/admin/leads/count")
+async def get_leads_count(admin = Depends(get_admin_user)):
+    """Contagem total de leads — usado para detectar novos via polling."""
+    count = await db.users.count_documents({})
+    return {"total": count}
+
+
 # ── Contagem de mensagens não lidas no chat (para badge)
 @app.get("/api/admin/chat/unread-count")
 async def get_unread_chat_count(admin = Depends(get_admin_user)):
