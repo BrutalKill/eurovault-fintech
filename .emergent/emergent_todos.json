@@ -1,34 +1,6 @@
 [
   {
-    "content": "FASE 1 - Admin: Analytics/KPIs + Bulk Actions + Export CSV + Filtros avançados",
-    "status": "completed"
-  },
-  {
-    "content": "FASE 1 - Admin: Audit Log por lead + Sistema de follow-up/tarefas",
-    "status": "completed"
-  },
-  {
-    "content": "FASE 1 - Admin: Templates chat + KYC management + Notas com histórico",
-    "status": "completed"
-  },
-  {
-    "content": "FASE 2 - Cliente: Dashboard principal com gráfico de saldo",
-    "status": "completed"
-  },
-  {
-    "content": "FASE 2 - Cliente: Programa de referidos + Conta Demo",
-    "status": "completed"
-  },
-  {
-    "content": "FASE 2 - Cliente: Notificações in-app (sino)",
-    "status": "completed"
-  },
-  {
-    "content": "FASE 3 - Cliente: 2FA backend + Favoritos Trade + Dark mode (adiado)",
-    "status": "completed"
-  },
-  {
     "content": "Testar tudo com Testing Agent",
-    "status": "in_progress"
+    "status": "completed"
   }
 ]
