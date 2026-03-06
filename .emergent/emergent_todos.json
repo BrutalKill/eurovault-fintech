@@ -1,26 +1,6 @@
 [
   {
-    "content": "Fase 3: Criar HistoryPage.js e rota em App.js + link no menu",
-    "status": "completed"
-  },
-  {
-    "content": "Fase 3: Ligar TradeOrder.js ao /api/orders ao submeter ordem",
-    "status": "completed"
-  },
-  {
-    "content": "Fase 3: Push Notifications - pedir permissão ao utilizador no login",
-    "status": "completed"
-  },
-  {
-    "content": "Fase 3: KYC Upload - adicionar secção na ProfilePage.js",
-    "status": "completed"
-  },
-  {
-    "content": "Fase 3: Admin Chat - criar página AdminChat.js + rota no admin",
-    "status": "completed"
-  },
-  {
     "content": "Fase 3: Testar todas as funcionalidades com Testing Agent",
-    "status": "in_progress"
+    "status": "completed"
   }
 ]
