@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Clock, TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { useLang } from '../context/LangContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -16,6 +17,7 @@ const fmtDate = (iso) => {
 };
 
 export default function HistoryPage() {
+  const { t } = useLang();
   const [orders, setOrders]   = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -51,18 +53,16 @@ export default function HistoryPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
           <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 22, fontWeight: 700, color: '#f3f5ff', marginBottom: 4 }}>
-            Histórico de Ordens
+            {t('hist_title')}
           </h1>
           <p style={{ fontSize: 13, color: 'hsl(215,16%,70%)', margin: 0 }}>
-            Todas as suas operações registadas
+            {t('hist_subtitle')}
           </p>
         </div>
-        <button
-          onClick={() => { setLoading(true); fetchOrders(); }}
+        <button onClick={() => { setLoading(true); fetchOrders(); }}
           style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', background: 'hsl(240,18%,14%)', border: '1px solid hsl(240,16%,22%)', borderRadius: 10, color: 'hsl(215,16%,70%)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
-          data-testid="history-refresh-btn"
-        >
-          <RefreshCw size={13} />Actualizar
+          data-testid="history-refresh-btn">
+          <RefreshCw size={13} />{t('hist_refresh')}
         </button>
       </div>
 
@@ -70,16 +70,16 @@ export default function HistoryPage() {
         {loading ? (
           <div style={{ padding: '60px 0', textAlign: 'center', color: 'hsl(215,16%,50%)' }}>
             <Clock size={28} style={{ marginBottom: 10, opacity: 0.4 }} />
-            <p style={{ fontSize: 13, margin: 0 }}>A carregar histórico…</p>
+            <p style={{ fontSize: 13, margin: 0 }}>{t('hist_loading')}</p>
           </div>
         ) : orders.length === 0 ? (
           <div style={{ padding: '60px 0', textAlign: 'center', color: 'hsl(215,16%,50%)' }}>
             <Clock size={32} style={{ marginBottom: 12, opacity: 0.3 }} />
             <p style={{ fontSize: 14, fontWeight: 600, color: 'hsl(215,16%,60%)', margin: '0 0 6px' }}>
-              Nenhuma operação registada
+              {t('hist_empty_title')}
             </p>
             <p style={{ fontSize: 12, color: 'hsl(215,16%,45%)', margin: 0 }}>
-              As suas ordens aparecerão aqui após negociar.
+              {t('hist_empty_sub')}
             </p>
           </div>
         ) : (
@@ -87,7 +87,7 @@ export default function HistoryPage() {
             <table data-testid="history-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: 'hsl(240,18%,10%)' }}>
-                  {['Instrumento', 'Lado', 'Montante', 'Alavancagem', 'Exposição', 'Preço', 'Data / Hora'].map(h => (
+                  {[t('hist_instrument'), t('hist_side'), t('hist_amount'), t('hist_leverage'), t('hist_exposure'), t('hist_price'), t('hist_date')].map(h => (
                     <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: 'hsl(215,16%,40%)', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>
                       {h}
                     </th>
@@ -118,7 +118,7 @@ export default function HistoryPage() {
                           border: `1px solid ${isBuy ? 'rgba(34,197,139,0.25)' : 'rgba(239,68,68,0.25)'}`,
                         }}>
                           {isBuy ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
-                          {isBuy ? 'Compra' : 'Venda'}
+                          {isBuy ? t('hist_buy') : t('hist_sell')}
                         </span>
                       </td>
 

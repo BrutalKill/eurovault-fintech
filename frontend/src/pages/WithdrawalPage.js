@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Building2, CreditCard, CheckCircle, AlertCircle, AlertTriangle, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUser } from '../context/UserContext';
+import { useLang } from '../context/LangContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
 export default function WithdrawalPage() {
   const { user } = useUser();
+  const { t } = useLang();
   const [activeTab, setActiveTab] = useState('sepa');
   const [sepaForm, setSepaForm] = useState({ account_name: '', iban: '', bic: '', amount: '', note: '' });
   const [chargebackSubmitted, setChargebackSubmitted] = useState(false);
@@ -64,15 +66,15 @@ export default function WithdrawalPage() {
   return (
     <div>
       <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 22, fontWeight: 700, color: '#f3f5ff', marginBottom: 4 }}>Levantamento de Fundos</h1>
-        <p style={{ fontSize: 13, color: 'hsl(215,16%,70%)' }}>Escolha o método de levantamento</p>
+        <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 22, fontWeight: 700, color: '#f3f5ff', marginBottom: 4 }}>{t('wd_title_full')}</h1>
+        <p style={{ fontSize: 13, color: 'hsl(215,16%,70%)' }}>{t('wd_subtitle_full')}</p>
       </div>
 
       {/* Tabs */}
       <div data-testid="withdrawal-method-tabs" style={{ display: 'flex', gap: 4, marginBottom: 20, background: 'hsl(240,26%,8%)', border: '1px solid hsl(240,16%,18%)', borderRadius: 12, padding: 4, width: 'fit-content' }}>
         {[
-          { id: 'sepa', icon: Building2, label: 'Transferência SEPA' },
-          { id: 'chargeback', icon: CreditCard, label: 'Estorno no Cartão' },
+          { id: 'sepa',       icon: Building2,  label: t('wd_tab_sepa') },
+          { id: 'chargeback', icon: CreditCard, label: t('wd_tab_card') },
         ].map(({ id, icon: Icon, label }) => (
           <button
             key={id}
@@ -99,7 +101,7 @@ export default function WithdrawalPage() {
           <div style={{ background: 'hsl(240,26%,8%)', border: '1px solid hsl(240,16%,18%)', borderRadius: 16, padding: 28 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24, padding: '10px 14px', background: 'hsl(214,100%,60%,0.08)', borderRadius: 10, border: '1px solid hsl(214,100%,60%,0.2)' }}>
               <Building2 size={14} color="hsl(214,100%,60%)" />
-              <span style={{ fontSize: 12, color: 'hsl(215,16%,70%)' }}>Transferência SEPA (IBAN) — prazo típico 1–2 dias úteis</span>
+              <span style={{ fontSize: 12, color: 'hsl(215,16%,70%)' }}>{t('wd_sepa_info')}</span>
             </div>
 
             <form onSubmit={submitSepa} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -107,54 +109,48 @@ export default function WithdrawalPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: 'rgba(34,197,139,0.07)', borderRadius: 10, border: '1px solid rgba(34,197,139,0.2)' }}>
                 <Wallet size={15} color="#22c58b" />
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 11, color: 'hsl(215,16%,65%)' }}>Saldo disponível para levantamento</div>
+                  <div style={{ fontSize: 11, color: 'hsl(215,16%,65%)' }}>{t('wd_info_available')}</div>
                   <div className="numeric" style={{ fontSize: 16, fontWeight: 800, color: '#22c58b' }}>{formatEur(safeBalance)}</div>
                 </div>
                 {dailyLimit > 0 && (
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 10, color: 'hsl(215,16%,55%)' }}>Limite diário</div>
+                    <div style={{ fontSize: 10, color: 'hsl(215,16%,55%)' }}>{t('wd_info_limit')}</div>
                     <div className="numeric" style={{ fontSize: 13, fontWeight: 700, color: '#FFBE0B' }}>{formatEur(dailyLimit)}</div>
                   </div>
                 )}
               </div>
 
               {[
-                ['Nome do Titular', 'account_name', 'text', 'João Silva'],
-                ['IBAN', 'iban', 'text', 'PT50 0035 0013 0000 0070 8330 5'],
-                ['Código BIC/SWIFT', 'bic', 'text', 'BCOMPTPL'],
+                [t('wd_holder'),  'account_name', 'text', 'João Silva'],
+                ['IBAN',           'iban',         'text', 'PT50 0035 0013 0000 0070 8330 5'],
+                [t('wd_bic'),      'bic',          'text', 'BCOMPTPL'],
               ].map(([label, key, type, placeholder]) => (
                 <div key={key}>
                   <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(215,16%,70%)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</label>
-                  <input
-                    type={type} required
-                    value={sepaForm[key]}
+                  <input type={type} required value={sepaForm[key]}
                     onChange={e => setSepaForm({ ...sepaForm, [key]: e.target.value })}
                     placeholder={placeholder}
-                    style={{ width: '100%', padding: '11px 14px', background: 'hsl(240,18%,12%)', border: '1px solid hsl(240,16%,22%)', borderRadius: 10, color: '#f3f5ff', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
-                  />
+                    style={{ width: '100%', padding: '11px 14px', background: 'hsl(240,18%,12%)', border: '1px solid hsl(240,16%,22%)', borderRadius: 10, color: '#f3f5ff', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
                 </div>
               ))}
 
               {/* Campo montante com validação visual */}
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(215,16%,70%)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Montante (€)</label>
-                <input
-                  type="number" required min="10" step="0.01"
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(215,16%,70%)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('wd_amount')} (€)</label>
+                <input type="number" required min="10" step="0.01"
                   value={sepaForm.amount}
                   onChange={e => setSepaForm({ ...sepaForm, amount: e.target.value })}
                   placeholder="0.00"
                   style={{ width: '100%', padding: '11px 14px', background: 'hsl(240,18%,12%)', border: `1px solid ${insufficientBalance || exceedsDailyLimit ? '#ef4444' : 'hsl(240,16%,22%)'}`, borderRadius: 10, color: insufficientBalance || exceedsDailyLimit ? '#ef4444' : '#f3f5ff', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontWeight: insufficientBalance || exceedsDailyLimit ? 700 : 400 }}
                 />
-                {/* Alertas */}
                 {insufficientBalance && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 8, padding: '9px 12px', background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8 }}>
                     <AlertTriangle size={14} color="#ef4444" />
                     <span style={{ fontSize: 12, color: '#ef4444', fontWeight: 600 }}>
-                      Saldo insuficiente. Disponível: <span className="numeric">{formatEur(safeBalance)}</span>
+                      {t('wd_info_available')}: <span className="numeric">{formatEur(safeBalance)}</span>
                     </span>
                   </div>
                 )}
-                {!insufficientBalance && exceedsDailyLimit && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 8, padding: '9px 12px', background: 'rgba(255,190,11,0.10)', border: '1px solid rgba(255,190,11,0.3)', borderRadius: 8 }}>
                     <AlertTriangle size={14} color="#FFBE0B" />
                     <span style={{ fontSize: 12, color: '#FFBE0B', fontWeight: 600 }}>
@@ -203,36 +199,29 @@ export default function WithdrawalPage() {
                 <div style={{ width: 56, height: 56, background: 'hsl(155,72%,45%,0.12)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                   <CheckCircle size={28} color="hsl(155,72%,45%)" />
                 </div>
-                <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 18, fontWeight: 700, color: '#f3f5ff', marginBottom: 8 }}>Pedido Enviado!</h3>
-                <p style={{ fontSize: 13, color: 'hsl(215,16%,70%)', lineHeight: 1.6 }}>O seu pedido de estorno foi registado. A nossa equipa entrará em contacto dentro de 2-3 dias úteis.</p>
+                <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 18, fontWeight: 700, color: '#f3f5ff', marginBottom: 8 }}>{t('wd_cb_submitted_title')}</h3>
+                <p style={{ fontSize: 13, color: 'hsl(215,16%,70%)', lineHeight: 1.6 }}>{t('wd_cb_submitted_msg')}</p>
               </div>
             ) : (
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24, padding: '10px 14px', background: 'hsl(36,95%,55%,0.08)', borderRadius: 10, border: '1px solid hsl(36,95%,55%,0.2)' }}>
                   <AlertCircle size={14} color="hsl(36,95%,55%)" />
-                  <span style={{ fontSize: 12, color: 'hsl(215,16%,70%)' }}>Estorno será devolvido ao cartão original do depósito</span>
+                  <span style={{ fontSize: 12, color: 'hsl(215,16%,70%)' }}>{t('wd_cb_alert')}</span>
                 </div>
 
-                <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 16, fontWeight: 600, color: '#f3f5ff', marginBottom: 16 }}>Como funciona o estorno?</h3>
+                <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 16, fontWeight: 600, color: '#f3f5ff', marginBottom: 16 }}>{t('wd_cb_how')}</h3>
 
-                {[
-                  'O pedido é submetido à nossa equipa financeira',
-                  'Verificamos o histórico de depósitos da sua conta',
-                  'O montante é devolvido ao cartão de crédito/débito original',
-                  'Prazo: 5-10 dias úteis (dependendo do banco emissor)',
-                ].map((step, i) => (
+                {[t('wd_cb_step1'), t('wd_cb_step2'), t('wd_cb_step3'), t('wd_cb_step4')].map((step, i) => (
                   <div key={i} style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
                     <div style={{ width: 24, height: 24, background: 'hsl(214,100%,60%,0.15)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 11, fontWeight: 700, color: 'hsl(214,100%,60%)' }}>{i + 1}</div>
                     <span style={{ fontSize: 13, color: 'hsl(215,16%,70%)', lineHeight: 1.5 }}>{step}</span>
                   </div>
                 ))}
 
-                <button
-                  data-testid="withdrawal-chargeback-submit-button"
+                <button data-testid="withdrawal-chargeback-submit-button"
                   onClick={submitChargeback} disabled={loading}
-                  style={{ width: '100%', padding: '13px', background: loading ? 'hsl(0,78%,54%,0.4)' : 'hsl(0,78%,54%)', border: 'none', borderRadius: 12, color: '#fff', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', marginTop: 20 }}
-                >
-                  {loading ? 'A processar...' : 'Iniciar Pedido de Estorno'}
+                  style={{ width: '100%', padding: '13px', background: loading ? 'hsl(0,78%,54%,0.4)' : 'hsl(0,78%,54%)', border: 'none', borderRadius: 12, color: '#fff', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', marginTop: 20 }}>
+                  {loading ? t('wd_loading_btn') : t('wd_cb_btn')}
                 </button>
               </div>
             )}
@@ -242,11 +231,11 @@ export default function WithdrawalPage() {
         {/* Info panel */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {[
-            { label: 'Saldo disponível', value: formatEur(safeBalance), color: '#22c58b' },
-            { label: 'Prazo SEPA', value: '1-2 dias úteis', color: '#f3f5ff' },
-            { label: 'Montante mínimo', value: '€10.00', color: '#f3f5ff' },
-            { label: 'Taxa de levantamento', value: 'Grátis', color: '#22c58b' },
-            { label: 'Limite diário', value: dailyLimit > 0 ? formatEur(dailyLimit) : 'Sem limite', color: dailyLimit > 0 ? '#FFBE0B' : '#f3f5ff' },
+            { label: t('wd_info_available'), value: formatEur(safeBalance),                              color: '#22c58b'  },
+            { label: t('wd_info_sepa'),      value: t('wd_info_sepa_val'),                               color: '#f3f5ff'  },
+            { label: t('wd_info_min'),       value: t('wd_info_min_val'),                                color: '#f3f5ff'  },
+            { label: t('wd_info_fee'),       value: t('wd_info_fee_val'),                                color: '#22c58b'  },
+            { label: t('wd_info_limit'),     value: dailyLimit > 0 ? formatEur(dailyLimit) : t('wd_info_no_limit'), color: dailyLimit > 0 ? '#FFBE0B' : '#f3f5ff' },
           ].map(({ label, value, color }) => (
             <div key={label} style={{ background: 'hsl(240,26%,8%)', border: '1px solid hsl(240,16%,18%)', borderRadius: 12, padding: '14px 16px' }}>
               <div style={{ fontSize: 11, color: 'hsl(215,16%,70%)', marginBottom: 4 }}>{label}</div>

@@ -80,16 +80,27 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
   };
 
   const handleSaveNotes = async () => {
+    if (!notes.trim() && notes !== '') {
+      toast.error('Escreva alguma nota antes de guardar.');
+      return;
+    }
     setSavingNotes(true);
     try {
-      await fetch(`${BACKEND_URL}/api/admin/users/${lead.id}/notes`, {
+      const res = await fetch(`${BACKEND_URL}/api/admin/users/${lead.id}/notes`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ notes }),
       });
-      toast.success('Notas guardadas!');
-    } catch (_) { toast.error('Erro ao guardar notas'); }
-    setSavingNotes(false);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Erro HTTP ${res.status}`);
+      }
+      toast.success('Notas guardadas com sucesso!');
+    } catch (e) {
+      toast.error('Erro ao guardar notas: ' + (e.message || 'tente novamente'));
+    } finally {
+      setSavingNotes(false);
+    }
   };
 
   const TABS = [

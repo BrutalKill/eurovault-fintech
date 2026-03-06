@@ -1,18 +1,30 @@
 [
   {
-    "content": "Backend: validar saldo no endpoint /api/withdrawal",
-    "status": "completed"
+    "content": "Corrigir handleSaveNotes - adicionar res.ok check e melhor feedback de erro",
+    "status": "in_progress"
   },
   {
-    "content": "Frontend: WithdrawalPage - mostrar saldo, bloquear se montante > saldo",
-    "status": "completed"
+    "content": "Aplicar t() ao Register.js",
+    "status": "pending"
   },
   {
-    "content": "Redesenhar FloatingChat com bot FAQ + escalada para agente",
-    "status": "completed"
+    "content": "Aplicar t() ao DepositPage.js",
+    "status": "pending"
   },
   {
-    "content": "Testar validação de saldo e bot FAQ",
-    "status": "completed"
+    "content": "Aplicar t() ao WithdrawalPage.js",
+    "status": "pending"
+  },
+  {
+    "content": "Aplicar t() ao ProfilePage.js",
+    "status": "pending"
+  },
+  {
+    "content": "Aplicar t() ao HistoryPage.js",
+    "status": "pending"
+  },
+  {
+    "content": "Testar notas e idiomas",
+    "status": "pending"
   }
 ]
