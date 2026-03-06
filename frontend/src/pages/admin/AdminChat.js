@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Search, Send, MessageCircle, User, Clock } from 'lucide-react';
+import { Search, Send, MessageCircle, User, Clock, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
@@ -19,6 +19,8 @@ export default function AdminChat() {
   const [reply, setReply]                 = useState('');
   const [sending, setSending]             = useState(false);
   const [search, setSearch]               = useState('');
+  const [templates, setTemplates]         = useState([]);
+  const [showTemplates, setShowTemplates] = useState(false);
   const bottomRef                         = useRef(null);
 
   const fetchConversations = useCallback(async () => {
@@ -53,6 +55,10 @@ export default function AdminChat() {
   useEffect(() => {
     fetchConversations();
     const iv = setInterval(fetchConversations, 8000);
+    // Carregar templates
+    const token = localStorage.getItem('adminToken');
+    fetch(`${BACKEND_URL}/api/admin/chat/templates_list`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : []).then(setTemplates).catch(() => {});
     return () => clearInterval(iv);
   }, [fetchConversations]);
 
@@ -214,23 +220,43 @@ export default function AdminChat() {
           </div>
 
           {/* Caixa de resposta */}
-          <div style={{ padding: '12px 16px', borderTop: '1px solid #26263a', background: '#0e0e1a', display: 'flex', gap: 8 }}>
-            <input
-              data-testid="admin-chat-reply-input"
-              value={reply}
-              onChange={e => setReply(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleReply(); } }}
-              placeholder="Escrever resposta…"
-              style={{ flex: 1, padding: '9px 12px', background: '#111118', border: '1px solid #26263a', borderRadius: 9, color: '#f3f5ff', fontSize: 13, outline: 'none' }}
-            />
-            <button
-              data-testid="admin-chat-send-btn"
-              onClick={handleReply}
-              disabled={sending || !reply.trim()}
-              style={{ width: 40, height: 40, background: reply.trim() ? '#3A86FF' : '#1e1e30', border: 'none', borderRadius: 9, cursor: reply.trim() ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
-            >
-              <Send size={15} color="#fff" />
-            </button>
+          <div style={{ padding: '12px 16px', borderTop: '1px solid #26263a', background: '#0e0e1a', flexShrink: 0 }}>
+            {/* Templates rápidos */}
+            {showTemplates && templates.length > 0 && (
+              <div style={{ marginBottom: 8, background: '#111118', border: '1px solid #26263a', borderRadius: 10, overflow: 'hidden', maxHeight: 180, overflowY: 'auto' }}>
+                {templates.map(tpl => (
+                  <button key={tpl.id} onClick={() => { setReply(tpl.text); setShowTemplates(false); }}
+                    style={{ width: '100%', padding: '8px 12px', background: 'transparent', border: 'none', borderBottom: '1px solid #1e1e30', cursor: 'pointer', textAlign: 'left', color: '#e8eaf6', fontSize: 12 }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(58,134,255,0.08)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <div style={{ fontSize: 10, color: '#3A86FF', fontWeight: 700, marginBottom: 2 }}>{tpl.label}</div>
+                    <div style={{ color: '#7a8299', fontSize: 11 }}>{tpl.text.slice(0, 60)}…</div>
+                  </button>
+                ))}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 7, alignItems: 'flex-end' }}>
+              <button onClick={() => setShowTemplates(s => !s)} title="Templates rápidos"
+                style={{ width: 34, height: 34, background: showTemplates ? 'rgba(58,134,255,0.2)' : '#1e1e30', border: `1px solid ${showTemplates ? 'rgba(58,134,255,0.4)' : '#26263a'}`, borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Zap size={14} color={showTemplates ? '#3A86FF' : '#7a8299'} />
+              </button>
+              <input
+                data-testid="admin-chat-reply-input"
+                value={reply}
+                onChange={e => setReply(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleReply(); } }}
+                placeholder="Escrever resposta…"
+                style={{ flex: 1, padding: '9px 12px', background: '#111118', border: '1px solid #26263a', borderRadius: 9, color: '#f3f5ff', fontSize: 13, outline: 'none' }}
+              />
+              <button
+                data-testid="admin-chat-send-btn"
+                onClick={handleReply}
+                disabled={sending || !reply.trim()}
+                style={{ width: 40, height: 40, background: reply.trim() ? '#3A86FF' : '#1e1e30', border: 'none', borderRadius: 9, cursor: reply.trim() ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+              >
+                <Send size={15} color="#fff" />
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -605,6 +605,11 @@ async def get_chat_conversations(admin = Depends(get_admin_user)):
                       "created_at": c.get("created_at","").isoformat() if c.get("created_at") else ""})
     return convs
 
+# IMPORTANTE: rotas específicas ANTES das genéricas com {user_id}
+@app.get("/api/admin/chat/templates_list")
+async def get_chat_templates_inline(admin = Depends(get_admin_user)):
+    return CHAT_TEMPLATES_LIST
+
 @app.get("/api/admin/chat/{user_id}")
 async def get_user_chat(user_id: str, admin = Depends(get_admin_user)):
     msgs = []
@@ -788,6 +793,14 @@ async def update_lead_notes(user_id: str, req: LeadNotesRequest, admin = Depends
         {"_id": ObjectId(user_id)},
         {"$set": {"notes": req.notes, "notes_updated_at": datetime.utcnow()}}
     )
+    # Guardar histórico de versões no audit log
+    try:
+        await db.audit_logs.insert_one({
+            "user_id": user_id, "action": "notes_updated",
+            "details": {"notes": req.notes[:500]}, "created_at": datetime.utcnow()
+        })
+    except Exception:
+        pass
     return {"success": True}
 
 @app.get("/api/admin/users/{user_id}/notes")
@@ -881,3 +894,294 @@ async def set_investment_goal(req: InvestmentGoalRequest, current_user = Depends
     return {"success": True}
 
 
+# ════════════════════════════════════════════════════════════════
+#  AUDIT LOG — Histórico de acções do admin por lead
+# ════════════════════════════════════════════════════════════════
+async def log_admin_action(user_id: str, action: str, details: dict = None):
+    await db.audit_logs.insert_one({
+        "user_id": user_id, "action": action,
+        "details": details or {}, "created_at": datetime.utcnow()
+    })
+
+@app.get("/api/admin/users/{user_id}/audit")
+async def get_audit_log(user_id: str, admin = Depends(get_admin_user)):
+    logs = []
+    async for l in db.audit_logs.find({"user_id": user_id}).sort("created_at", -1).limit(50):
+        logs.append(serialize_doc({"id": l["_id"], "action": l["action"],
+            "details": l.get("details", {}), "created_at": l.get("created_at")}))
+    return logs
+
+
+# ════════════════════════════════════════════════════════════════
+#  FOLLOW-UP / TAREFAS por lead
+# ════════════════════════════════════════════════════════════════
+class FollowUpRequest(BaseModel):
+    followup_date: Optional[str] = None
+    followup_note: Optional[str] = ""
+
+@app.put("/api/admin/users/{user_id}/followup")
+async def set_followup(user_id: str, req: FollowUpRequest, admin = Depends(get_admin_user)):
+    await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"followup_date": req.followup_date, "followup_note": req.followup_note}}
+    )
+    await log_admin_action(user_id, "followup_set", {"date": req.followup_date, "note": req.followup_note})
+    return {"success": True}
+
+@app.get("/api/admin/followups")
+async def get_followups(admin = Depends(get_admin_user)):
+    now = datetime.utcnow().isoformat()
+    results = []
+    async for u in db.users.find({"followup_date": {"$ne": None, "$lte": now}}).sort("followup_date", 1).limit(50):
+        results.append(serialize_doc({"id": u["_id"], "full_name": u["full_name"],
+            "email": u["email"], "followup_date": u.get("followup_date"),
+            "followup_note": u.get("followup_note", "")}))
+    return results
+
+
+# ════════════════════════════════════════════════════════════════
+#  REFERIDOS
+# ════════════════════════════════════════════════════════════════
+@app.get("/api/me/referral")
+async def get_referral(current_user = Depends(get_current_user)):
+    user_id = current_user["sub"]
+    count = await db.users.count_documents({"referred_by": user_id})
+    converted = await db.users.count_documents({"referred_by": user_id, "status": "Depositado"})
+    return {"referral_code": user_id[:8].upper(), "count": count,
+            "converted": converted, "bonus": converted * 25.0}
+
+
+# ════════════════════════════════════════════════════════════════
+#  CONTA DEMO
+# ════════════════════════════════════════════════════════════════
+class DemoModeRequest(BaseModel):
+    demo_mode: bool
+
+@app.put("/api/me/demo")
+async def toggle_demo(req: DemoModeRequest, current_user = Depends(get_current_user)):
+    user_id = current_user["sub"]
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if req.demo_mode:
+        await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": {
+            "demo_mode": True, "real_balance": user.get("balance", 0),
+            "real_profit": user.get("profit", 0), "balance": 10000.0, "profit": 0.0
+        }})
+    else:
+        await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": {
+            "demo_mode": False,
+            "balance": user.get("real_balance", 0),
+            "profit":  user.get("real_profit", 0)
+        }})
+    return {"success": True, "demo_mode": req.demo_mode}
+
+
+# ════════════════════════════════════════════════════════════════
+#  ANALYTICS ADMIN — KPIs e gráficos
+# ════════════════════════════════════════════════════════════════
+@app.get("/api/admin/analytics")
+async def get_analytics(admin = Depends(get_admin_user)):
+    from collections import defaultdict
+    now = datetime.utcnow()
+    total_users = await db.users.count_documents({})
+    deposited   = await db.users.count_documents({"status": "Depositado"})
+    total_balance = 0.0
+    async for u in db.users.find({}, {"balance": 1}):
+        total_balance += float(u.get("balance", 0))
+    days_map = defaultdict(int)
+    cutoff = now - timedelta(days=14)
+    async for u in db.users.find({"created_at": {"$gte": cutoff}}, {"created_at": 1}):
+        day = u["created_at"].strftime("%d/%m") if u.get("created_at") else "?"
+        days_map[day] += 1
+    country_map = defaultdict(int)
+    async for u in db.users.find({}, {"country": 1}):
+        country_map[u.get("country") or "Outro"] += 1
+    top_countries = sorted(country_map.items(), key=lambda x: x[1], reverse=True)[:5]
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_start  = now - timedelta(days=7)
+    new_today = await db.users.count_documents({"created_at": {"$gte": today_start}})
+    new_week  = await db.users.count_documents({"created_at": {"$gte": week_start}})
+    orders_today = await db.orders.count_documents({"created_at": {"$gte": today_start}})
+    return {
+        "total_users": total_users, "deposited": deposited,
+        "conversion_rate": round(deposited / total_users * 100, 1) if total_users > 0 else 0,
+        "total_balance": round(total_balance, 2), "new_today": new_today,
+        "new_week": new_week, "orders_today": orders_today,
+        "registrations_by_day": [{"day": k, "count": v} for k, v in sorted(days_map.items())],
+        "top_countries": [{"country": c, "count": n} for c, n in top_countries],
+    }
+
+
+# ════════════════════════════════════════════════════════════════
+#  EXPORT CSV de leads
+# ════════════════════════════════════════════════════════════════
+from fastapi.responses import StreamingResponse
+import csv, io
+
+@app.get("/api/admin/export/leads")
+async def export_leads_csv(admin = Depends(get_admin_user)):
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Nome","Email","País","Saldo","Lucro","Status","Taxa Diária","Registado em"])
+    async for u in db.users.find({}).sort("created_at", -1):
+        writer.writerow([u.get("full_name",""), u.get("email",""), u.get("country",""),
+            u.get("balance",0), u.get("profit",0), u.get("status","Novo"),
+            u.get("daily_profit_rate",0),
+            u["created_at"].isoformat() if u.get("created_at") else ""])
+    output.seek(0)
+    return StreamingResponse(iter([output.getvalue()]), media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=leads.csv"})
+
+
+# ════════════════════════════════════════════════════════════════
+#  CHAT TEMPLATES
+# ════════════════════════════════════════════════════════════════
+CHAT_TEMPLATES_LIST = [
+    {"id": 1, "label": "Boas-vindas",      "text": "Bom dia! Bem-vindo à EuroVault. Como posso ajudar?"},
+    {"id": 2, "label": "Depósito OK",      "text": "O seu depósito foi processado com sucesso e já está disponível."},
+    {"id": 3, "label": "Pedir KYC",        "text": "Para activar saques completos, envie o seu BI/CC ou Passaporte na página de Perfil."},
+    {"id": 4, "label": "Levantamento",     "text": "O seu pedido de levantamento foi recebido. Prazo: 1-2 dias úteis."},
+    {"id": 5, "label": "Conta verificada", "text": "A sua conta foi verificada. Já tem acesso total aos serviços EuroVault."},
+    {"id": 6, "label": "Suporte técnico",  "text": "Lamentamos o inconveniente. A equipa técnica está a resolver. Em contacto em breve."},
+    {"id": 7, "label": "Indisponível",     "text": "Neste momento não estou disponível. Deixe a sua mensagem e responderei."},
+]
+
+@app.get("/api/admin/chat/templates")
+async def get_chat_templates(admin = Depends(get_admin_user)):
+    return CHAT_TEMPLATES_LIST
+
+
+# ════════════════════════════════════════════════════════════════
+#  KYC PENDENTES
+# ════════════════════════════════════════════════════════════════
+@app.get("/api/admin/kyc/pending")
+async def get_pending_kyc(admin = Depends(get_admin_user)):
+    docs = []
+    async for d in db.kyc_docs.find({"status": "pendente"}).sort("created_at", -1):
+        docs.append(serialize_doc({"id": d["_id"], "user_id": d.get("user_id"),
+            "doc_type": d.get("doc_type"), "filename": d.get("filename"),
+            "status": d.get("status"), "created_at": d.get("created_at")}))
+    return docs
+
+
+# ════════════════════════════════════════════════════════════════
+#  NOTAS COM HISTÓRICO DE VERSÕES
+# ════════════════════════════════════════════════════════════════
+@app.get("/api/admin/users/{user_id}/notes/history")
+async def get_notes_history(user_id: str, admin = Depends(get_admin_user)):
+    logs = []
+    async for l in db.audit_logs.find({"user_id": user_id, "action": "notes_updated"}).sort("created_at", -1).limit(20):
+        logs.append(serialize_doc({"created_at": l.get("created_at"),
+            "notes_preview": l.get("details", {}).get("notes", "")[:100]}))
+    return logs
+
+
+# ════════════════════════════════════════════════════════════════
+#  BALANCE HISTORY para gráfico do cliente
+# ════════════════════════════════════════════════════════════════
+@app.get("/api/me/balance-history")
+async def get_balance_history(current_user = Depends(get_current_user)):
+    import random
+    history = []
+    async for h in db.balance_history.find({"user_id": current_user["sub"]}).sort("date", 1).limit(30):
+        history.append({"date": h.get("date",""), "balance": h.get("balance",0), "profit": h.get("profit",0)})
+    if not history:
+        user = await db.users.find_one({"_id": ObjectId(current_user["sub"])})
+        balance = float(user.get("balance", 0))
+        profit  = float(user.get("profit", 0))
+        now = datetime.utcnow()
+        for i in range(29, -1, -1):
+            d = now - timedelta(days=i)
+            factor = max(0, (30 - i) / 30)
+            noise = random.uniform(-0.02, 0.02) * balance * factor if balance > 0 else 0
+            history.append({
+                "date": d.strftime("%d/%m"),
+                "balance": round(max(0, balance * factor + noise), 2),
+                "profit":  round(max(0, profit * factor), 2)
+            })
+    return history
+
+
+# ════════════════════════════════════════════════════════════════
+#  2FA — AUTENTICAÇÃO DE DOIS FATORES (TOTP)
+# ════════════════════════════════════════════════════════════════
+import hashlib, time as time_module, struct, base64 as b64
+
+def generate_totp_secret():
+    return b64.b32encode(os.urandom(20)).decode()
+
+def verify_totp(secret: str, code: str, window: int = 1) -> bool:
+    try:
+        import hmac as _hmac
+        key = b64.b32decode(secret.upper())
+        for offset in range(-window, window + 1):
+            counter = int(time_module.time()) // 30 + offset
+            msg = struct.pack(">Q", counter)
+            h = _hmac.new(key, msg, hashlib.sha1).digest()
+            ov = h[-1] & 0x0f
+            otp = struct.unpack(">I", h[ov:ov+4])[0] & 0x7fffffff
+            if str(otp % 1000000).zfill(6) == str(code):
+                return True
+    except Exception:
+        pass
+    return False
+
+class TwoFASetupResponse(BaseModel):
+    secret: str
+    uri: str
+
+class TwoFACodeRequest(BaseModel):
+    code: str
+
+@app.post("/api/me/2fa/setup")
+async def setup_2fa(current_user = Depends(get_current_user)):
+    secret = generate_totp_secret()
+    await db.users.update_one({"_id": ObjectId(current_user["sub"])}, {"$set": {"totp_secret_pending": secret}})
+    email = current_user.get("email", "user")
+    uri = f"otpauth://totp/EuroVault:{email}?secret={secret}&issuer=EuroVault"
+    return {"secret": secret, "uri": uri}
+
+@app.post("/api/me/2fa/confirm")
+async def confirm_2fa(req: TwoFACodeRequest, current_user = Depends(get_current_user)):
+    user = await db.users.find_one({"_id": ObjectId(current_user["sub"])})
+    secret = user.get("totp_secret_pending")
+    if not secret or not verify_totp(secret, req.code):
+        raise HTTPException(status_code=400, detail="Código inválido. Verifique a app autenticadora.")
+    await db.users.update_one({"_id": ObjectId(current_user["sub"])}, {
+        "$set": {"totp_secret": secret, "two_fa_enabled": True},
+        "$unset": {"totp_secret_pending": ""}
+    })
+    return {"success": True}
+
+@app.post("/api/me/2fa/disable")
+async def disable_2fa(req: TwoFACodeRequest, current_user = Depends(get_current_user)):
+    user = await db.users.find_one({"_id": ObjectId(current_user["sub"])})
+    secret = user.get("totp_secret")
+    if not secret or not verify_totp(secret, req.code):
+        raise HTTPException(status_code=400, detail="Código inválido")
+    await db.users.update_one({"_id": ObjectId(current_user["sub"])}, {
+        "$set": {"two_fa_enabled": False}, "$unset": {"totp_secret": ""}
+    })
+    return {"success": True}
+
+
+# ════════════════════════════════════════════════════════════════
+#  FAVORITOS NA TRADE
+# ════════════════════════════════════════════════════════════════
+class FavoritesRequest(BaseModel):
+    favorites: List[str]
+
+@app.put("/api/me/favorites")
+async def set_favorites(req: FavoritesRequest, current_user = Depends(get_current_user)):
+    await db.users.update_one(
+        {"_id": ObjectId(current_user["sub"])},
+        {"$set": {"favorites": req.favorites}}
+    )
+    return {"success": True}
+
+
+# ════════════════════════════════════════════════════════════════
+#  HEALTH
+# ════════════════════════════════════════════════════════════════
+@app.get("/api/health")
+async def health():
+    return {"status": "ok", "service": "BrokerEurope API"}

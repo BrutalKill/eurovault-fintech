@@ -1,30 +1,34 @@
 [
   {
-    "content": "Corrigir handleSaveNotes - adicionar res.ok check e melhor feedback de erro",
+    "content": "FASE 1 - Admin: Analytics/KPIs + Bulk Actions + Export CSV + Filtros avançados",
+    "status": "completed"
+  },
+  {
+    "content": "FASE 1 - Admin: Audit Log por lead + Sistema de follow-up/tarefas",
+    "status": "completed"
+  },
+  {
+    "content": "FASE 1 - Admin: Templates chat + KYC management + Notas com histórico",
+    "status": "completed"
+  },
+  {
+    "content": "FASE 2 - Cliente: Dashboard principal com gráfico de saldo",
+    "status": "completed"
+  },
+  {
+    "content": "FASE 2 - Cliente: Programa de referidos + Conta Demo",
+    "status": "completed"
+  },
+  {
+    "content": "FASE 2 - Cliente: Notificações in-app (sino)",
+    "status": "completed"
+  },
+  {
+    "content": "FASE 3 - Cliente: 2FA backend + Favoritos Trade + Dark mode (adiado)",
+    "status": "completed"
+  },
+  {
+    "content": "Testar tudo com Testing Agent",
     "status": "in_progress"
-  },
-  {
-    "content": "Aplicar t() ao Register.js",
-    "status": "pending"
-  },
-  {
-    "content": "Aplicar t() ao DepositPage.js",
-    "status": "pending"
-  },
-  {
-    "content": "Aplicar t() ao WithdrawalPage.js",
-    "status": "pending"
-  },
-  {
-    "content": "Aplicar t() ao ProfilePage.js",
-    "status": "pending"
-  },
-  {
-    "content": "Aplicar t() ao HistoryPage.js",
-    "status": "pending"
-  },
-  {
-    "content": "Testar notas e idiomas",
-    "status": "pending"
   }
 ]

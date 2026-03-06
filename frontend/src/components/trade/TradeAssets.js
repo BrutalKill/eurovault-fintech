@@ -1,15 +1,41 @@
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Star } from 'lucide-react';
 import { ASSETS, CAT_COLORS } from './tradeData';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
 export default function TradeAssets({ activeCat, selectedAsset, onCatChange, onAssetSelect }) {
   const [search, setSearch] = useState('');
+  const [favorites, setFavorites] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('ev_fav') || '[]'); } catch { return []; }
+  });
   const col = CAT_COLORS[activeCat] || CAT_COLORS['Forex'];
+
+  const toggleFav = async (symbol, e) => {
+    e.stopPropagation();
+    const updated = favorites.includes(symbol)
+      ? favorites.filter(s => s !== symbol)
+      : [...favorites, symbol];
+    setFavorites(updated);
+    localStorage.setItem('ev_fav', JSON.stringify(updated));
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetch(`${BACKEND_URL}/api/me/favorites`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ favorites: updated }),
+      }).catch(() => {});
+    }
+  };
 
   const items = ASSETS[activeCat].items.filter(a =>
     a.label.toLowerCase().includes(search.toLowerCase()) ||
     a.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  // Favoritos no topo (só quando não há pesquisa)
+  const favItems = !search ? items.filter(a => favorites.includes(a.symbol)) : [];
+  const nonFavItems = !search ? items.filter(a => !favorites.includes(a.symbol)) : items;
+  const displayItems = [...favItems, ...nonFavItems];
 
   return (
     <div style={{
@@ -81,44 +107,50 @@ export default function TradeAssets({ activeCat, selectedAsset, onCatChange, onA
 
       {/* ── Lista de activos ── */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
-        {items.length === 0 && (
+        {displayItems.length === 0 && (
           <div style={{ padding: 24, textAlign: 'center', color: '#7a8299', fontSize: 12 }}>
             Sem resultados
           </div>
         )}
-        {items.map(asset => {
+        {displayItems.map((asset, i) => {
           const sel = selectedAsset.symbol === asset.symbol;
+          const isFav = favorites.includes(asset.symbol);
+          const isFirstNonFav = !search && i === favItems.length && favItems.length > 0;
           return (
-            <div
-              key={asset.symbol}
-              onClick={() => onAssetSelect(asset)}
-              style={{
-                padding: '9px 12px', cursor: 'pointer',
-                background: sel ? col.bg : 'transparent',
-                borderLeft: `2px solid ${sel ? col.active : 'transparent'}`,
-                display: 'flex', alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-              onMouseEnter={e => { if (!sel) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = sel ? col.bg : 'transparent'; }}
-            >
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: sel ? col.active : '#e8eaf6' }}>
-                  {asset.label}
+            <React.Fragment key={asset.symbol}>
+              {isFirstNonFav && (
+                <div style={{ padding: '4px 12px', fontSize: 9, color: '#4a5068', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', background: '#0a0a18', borderTop: '1px solid #1e1e30' }}>
+                  Todos
                 </div>
-                <div style={{ fontSize: 10, color: '#7a8299', marginTop: 1 }}>
-                  {asset.name}
+              )}
+              <div
+                onClick={() => onAssetSelect(asset)}
+                style={{
+                  padding: '9px 12px', cursor: 'pointer',
+                  background: sel ? col.bg : 'transparent',
+                  borderLeft: `2px solid ${sel ? col.active : 'transparent'}`,
+                  display: 'flex', alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+                onMouseEnter={e => { if (!sel) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = sel ? col.bg : 'transparent'; }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <button onClick={(e) => toggleFav(asset.symbol, e)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, flexShrink: 0 }}>
+                    <Star size={11} color={isFav ? '#FFBE0B' : '#26263a'} fill={isFav ? '#FFBE0B' : 'none'} />
+                  </button>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: sel ? col.active : '#e8eaf6' }}>{asset.label}</div>
+                    <div style={{ fontSize: 10, color: '#7a8299', marginTop: 1 }}>{asset.name}</div>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div className="numeric" style={{ fontSize: 11, fontWeight: 700, color: '#e8eaf6' }}>{asset.price}</div>
+                  <div className="numeric" style={{ fontSize: 10, fontWeight: 600, color: asset.pos ? '#22c58b' : '#ef4444' }}>{asset.change}</div>
                 </div>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <div className="numeric" style={{ fontSize: 11, fontWeight: 700, color: '#e8eaf6' }}>
-                  {asset.price}
-                </div>
-                <div className="numeric" style={{ fontSize: 10, fontWeight: 600, color: asset.pos ? '#22c58b' : '#ef4444' }}>
-                  {asset.change}
-                </div>
-              </div>
-            </div>
+            </React.Fragment>
           );
         })}
       </div>

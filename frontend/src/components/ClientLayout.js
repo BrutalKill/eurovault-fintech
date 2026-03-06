@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { BarChart2, CreditCard, ArrowDownToLine, Newspaper, User, Clock, LogOut, Menu } from 'lucide-react';
+import { BarChart2, CreditCard, ArrowDownToLine, Newspaper, User, Clock, LogOut, Menu, Home } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 import { useLang } from '../context/LangContext';
 import Footer from './Footer';
 import FloatingChat from './FloatingChat';
 import LangSwitcher from './LangSwitcher';
+import NotificationBell from './NotificationBell';
 
 export default function ClientLayout() {
   const navigate = useNavigate();
@@ -14,7 +15,8 @@ export default function ClientLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navItems = [
-    { to: '/app/trade',      icon: BarChart2,       label: t('nav_trade')      },
+    { to: '/app/dashboard',  icon: Home,           label: 'Dashboard'     },
+    { to: '/app/trade',      icon: BarChart2,       label: t('nav_trade')  },
     { to: '/app/deposit',    icon: CreditCard,      label: t('nav_deposit')    },
     { to: '/app/withdrawal', icon: ArrowDownToLine, label: t('nav_withdrawal') },
     { to: '/app/history',    icon: Clock,           label: t('nav_history')    },
@@ -133,6 +135,9 @@ export default function ClientLayout() {
 
           {/* Seletor de idioma */}
           <LangSwitcher />
+
+          {/* Notificações */}
+          <NotificationBell />
 
           {/* Avatar */}
           <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'hsl(214,100%,60%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff' }}>

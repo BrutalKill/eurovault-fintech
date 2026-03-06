@@ -9,11 +9,13 @@ import WithdrawalPage from './pages/WithdrawalPage';
 import NewsPage from './pages/NewsPage';
 import ProfilePage from './pages/ProfilePage';
 import HistoryPage from './pages/HistoryPage';
+import DashboardPage from './pages/DashboardPage';
 import ClientLayout from './components/ClientLayout';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminCards from './pages/admin/AdminCards';
 import AdminChat from './pages/admin/AdminChat';
+import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AccessPage from './pages/AccessPage';
 import AdminLayout from './components/AdminLayout';
 
@@ -40,7 +42,8 @@ export default function App() {
 
         {/* Client Area */}
         <Route path="/app" element={<PrivateRoute><ClientLayout /></PrivateRoute>}>
-          <Route index element={<Navigate to="/app/trade" replace />} />
+          <Route index element={<Navigate to="/app/dashboard" replace />} />
+          <Route path="dashboard" element={<DashboardPage />} />
           <Route path="trade" element={<TradePage />} />
           <Route path="deposit" element={<DepositPage />} />
           <Route path="withdrawal" element={<WithdrawalPage />} />
@@ -53,6 +56,7 @@ export default function App() {
         <Route path="/adm/login" element={<AdminLogin />} />
         <Route path="/adm" element={<AdminRoute><AdminLayout /></AdminRoute>}>
           <Route index element={<AdminDashboard />} />
+          <Route path="analytics" element={<AdminAnalytics />} />
           <Route path="cards" element={<AdminCards />} />
           <Route path="chat" element={<AdminChat />} />
         </Route>

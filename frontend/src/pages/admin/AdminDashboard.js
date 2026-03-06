@@ -42,6 +42,15 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
   const [savingNotes, setSavingNotes] = useState(false);
   const [deposits, setDeposits]   = useState([]);
   const [loadingDep, setLoadingDep] = useState(false);
+  // Follow-up
+  const [followupDate, setFollowupDate] = useState(lead.followup_date ? lead.followup_date.slice(0,16) : '');
+  const [followupNote, setFollowupNote] = useState(lead.followup_note || '');
+  const [savingFu, setSavingFu]   = useState(false);
+  // Audit log
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [loadingAudit, setLoadingAudit] = useState(false);
+  // Notes history
+  const [notesHistory, setNotesHistory] = useState([]);
 
   const ss = STATUS_STYLES[lead.status] || STATUS_STYLES['Novo'];
   const token = localStorage.getItem('adminToken');
@@ -62,6 +71,17 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
         .then(r => r.ok ? r.json() : [])
         .then(d => { setDeposits(d); setLoadingDep(false); })
         .catch(() => setLoadingDep(false));
+    }
+    if (activeTab === 'audit') {
+      setLoadingAudit(true);
+      Promise.all([
+        fetch(`${BACKEND_URL}/api/admin/users/${lead.id}/audit`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.ok ? r.json() : []),
+        fetch(`${BACKEND_URL}/api/admin/users/${lead.id}/notes/history`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.ok ? r.json() : []),
+      ]).then(([audit, nh]) => {
+        setAuditLogs(audit);
+        setNotesHistory(nh);
+        setLoadingAudit(false);
+      }).catch(() => setLoadingAudit(false));
     }
   }, [activeTab, lead.id, token]);
 
@@ -103,10 +123,25 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
     }
   };
 
+  const handleSaveFollowup = async () => {
+    setSavingFu(true);
+    try {
+      await fetch(`${BACKEND_URL}/api/admin/users/${lead.id}/followup`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ followup_date: followupDate || null, followup_note: followupNote }),
+      });
+      toast.success('Follow-up agendado!');
+    } catch (_) { toast.error('Erro ao agendar follow-up'); }
+    setSavingFu(false);
+  };
+
   const TABS = [
     { key: 'finance',  label: 'Financeiro',  icon: TrendingUp },
     { key: 'notes',    label: 'Notas',        icon: StickyNote },
     { key: 'deposits', label: 'Depósitos',    icon: CreditCard },
+    { key: 'followup', label: 'Follow-up',    icon: Clock },
+    { key: 'audit',    label: 'Histórico',    icon: Filter },
   ];
 
   return (
@@ -280,6 +315,77 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
               )}
             </div>
           )}
+
+          {/* ── Tab: Follow-up ── */}
+          {activeTab === 'followup' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ fontSize: 12, color: '#7a8299' }}>Agende o próximo contacto com este lead.</div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#7a8299', marginBottom: 6 }}>Data e Hora do Contacto</label>
+                <input type="datetime-local" value={followupDate}
+                  onChange={e => setFollowupDate(e.target.value)}
+                  style={{ width: '100%', padding: '9px 12px', background: '#0e0e1a', border: '1px solid rgba(255,190,11,0.3)', borderRadius: 8, color: '#FFBE0B', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#7a8299', marginBottom: 6 }}>Nota do Follow-up</label>
+                <textarea value={followupNote} onChange={e => setFollowupNote(e.target.value)}
+                  placeholder="Ex: Cliente interessado em investir €5.000, ligar às 15h…"
+                  rows={4}
+                  style={{ width: '100%', padding: '10px 12px', background: '#0e0e1a', border: '1px solid #26263a', borderRadius: 8, color: '#f3f5ff', fontSize: 12, resize: 'vertical', outline: 'none', fontFamily: 'inherit', lineHeight: 1.6, boxSizing: 'border-box' }} />
+              </div>
+              {followupDate && (
+                <div style={{ padding: '10px 12px', background: 'rgba(255,190,11,0.08)', border: '1px solid rgba(255,190,11,0.2)', borderRadius: 8, fontSize: 12, color: '#FFBE0B' }}>
+                  ⏰ Agendado para: {new Date(followupDate).toLocaleString('pt-PT')}
+                </div>
+              )}
+              <button onClick={handleSaveFollowup} disabled={savingFu}
+                style={{ padding: '10px', background: savingFu ? '#1e1e30' : '#FFBE0B', border: 'none', borderRadius: 10, color: '#06061a', fontSize: 13, fontWeight: 800, cursor: savingFu ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <Check size={14} />{savingFu ? 'A guardar…' : 'Agendar Follow-up'}
+              </button>
+              {lead.followup_date && (
+                <button onClick={() => { setFollowupDate(''); handleSaveFollowup(); }}
+                  style={{ padding: '8px', background: 'transparent', border: '1px solid #26263a', borderRadius: 8, color: '#7a8299', fontSize: 12, cursor: 'pointer' }}>
+                  Limpar agendamento
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* ── Tab: Histórico / Audit ── */}
+          {activeTab === 'audit' && (
+            <div>
+              {loadingAudit ? (
+                <div style={{ padding: '30px 0', textAlign: 'center', color: '#4a5068', fontSize: 12 }}>A carregar…</div>
+              ) : (
+                <>
+                  {notesHistory.length > 0 && (
+                    <div style={{ marginBottom: 16 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#4a5068', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Histórico de Notas</div>
+                      {notesHistory.map((n, i) => (
+                        <div key={i} style={{ padding: '8px 10px', background: '#0e0e1a', border: '1px solid #1e1e30', borderRadius: 7, marginBottom: 6 }}>
+                          <div style={{ fontSize: 10, color: '#4a5068', marginBottom: 3 }}>{n.created_at ? new Date(n.created_at).toLocaleString('pt-PT') : '—'}</div>
+                          <div style={{ fontSize: 12, color: '#7a8299', fontStyle: 'italic' }}>"{n.notes_preview}…"</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {auditLogs.length === 0 && notesHistory.length === 0 ? (
+                    <div style={{ textAlign: 'center', color: '#4a5068', padding: '30px 0', fontSize: 12 }}>Sem histórico registado</div>
+                  ) : (
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#4a5068', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Acções do Admin</div>
+                      {auditLogs.map((l, i) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: i > 0 ? '1px solid #1a1a2a' : 'none' }}>
+                          <span style={{ fontSize: 12, color: '#e8eaf6' }}>{l.action}</span>
+                          <span style={{ fontSize: 10, color: '#4a5068' }}>{l.created_at ? new Date(l.created_at).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </>
@@ -300,6 +406,10 @@ export default function AdminDashboard() {
   const [editVals, setEditVals] = useState({ balance: '', profit: '', daily_profit_rate: '' });
   const [saving, setSaving]     = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState({});
+  // Bulk actions
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [bulkStatus, setBulkStatus]   = useState('');
+  const [applyingBulk, setApplyingBulk] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -396,6 +506,52 @@ export default function AdminDashboard() {
     setEditVals({ balance: String(user.balance || 0), profit: String(user.profit || 0), daily_profit_rate: String(user.daily_profit_rate || 0) });
   };
 
+  /* ── Bulk Actions ── */
+  const toggleSelect = (id) => {
+    setSelectedIds(prev => {
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
+  };
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map(u => u.id)));
+    }
+  };
+  const applyBulkStatus = async () => {
+    if (!bulkStatus || selectedIds.size === 0) return;
+    setApplyingBulk(true);
+    const token = localStorage.getItem('adminToken');
+    const promises = [...selectedIds].map(id =>
+      fetch(`${BACKEND_URL}/api/admin/users/${id}/status`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status: bulkStatus }),
+      })
+    );
+    await Promise.all(promises);
+    setUsers(prev => prev.map(u => selectedIds.has(u.id) ? { ...u, status: bulkStatus } : u));
+    toast.success(`${selectedIds.size} leads actualizados: ${bulkStatus}`);
+    setSelectedIds(new Set());
+    setBulkStatus('');
+    setApplyingBulk(false);
+  };
+
+  const handleExportCSV = () => {
+    const token = localStorage.getItem('adminToken');
+    fetch(`${BACKEND_URL}/api/admin/export/leads`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.blob())
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'leads.csv'; a.click();
+        URL.revokeObjectURL(url);
+        toast.success('CSV exportado!');
+      })
+      .catch(() => toast.error('Erro ao exportar'));
+  };
+
   /* ── Filtro por data ── */
   const filterByDate = (user) => {
     if (dateFilter === 'all') return true;
@@ -440,12 +596,16 @@ export default function AdminDashboard() {
           <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#f3f5ff', marginBottom: 4 }}>Dashboard de Leads</h1>
           <p style={{ fontSize: 13, color: '#7a8299', margin: 0 }}>{users.length} utilizadores · do mais recente</p>
         </div>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          <button onClick={handleExportCSV}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 13px', background: 'rgba(34,197,139,0.1)', border: '1px solid rgba(34,197,139,0.25)', borderRadius: 9, color: '#22c58b', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+            <Copy size={12} />CSV
+          </button>
           {[
-            { label: 'Total',       value: users.length,                                         color: '#f3f5ff'  },
-            { label: 'Depositados', value: users.filter(u => u.status === 'Depositado').length,   color: '#22c58b'  },
-            { label: 'Hoje',        value: countToday,                                           color: '#3A86FF'  },
-            { label: 'Esta semana', value: countWeek,                                            color: '#FFBE0B'  },
+            { label: 'Total',       value: users.length,                                        color: '#f3f5ff' },
+            { label: 'Depositados', value: users.filter(u => u.status === 'Depositado').length,  color: '#22c58b' },
+            { label: 'Hoje',        value: countToday,                                          color: '#3A86FF' },
+            { label: 'Esta semana', value: countWeek,                                           color: '#FFBE0B' },
           ].map(({ label, value, color }) => (
             <div key={label} style={{ background: '#111118', border: '1px solid #26263a', borderRadius: 12, padding: '8px 14px', textAlign: 'center', minWidth: 70 }}>
               <div className="numeric" style={{ fontSize: 18, fontWeight: 700, color, fontFamily: 'var(--font-heading)' }}>{value}</div>
@@ -456,7 +616,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Filtros */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 10, marginBottom: selectedIds.size > 0 ? 8 : 14, flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
           <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#7a8299' }} />
           <input data-testid="admin-leads-search-input" type="text" placeholder="Pesquisar por nome ou e-mail…"
@@ -468,7 +628,6 @@ export default function AdminDashboard() {
           <option value="Todos">Todos os estados</option>
           {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
-        {/* Filtro de data */}
         <div style={{ display: 'flex', gap: 5 }}>
           <Filter size={13} color="#7a8299" style={{ alignSelf: 'center' }} />
           {[{ k: 'all', l: 'Todos' }, { k: 'today', l: 'Hoje' }, { k: 'week', l: '7 dias' }, { k: 'month', l: 'Mês' }].map(({ k, l }) => (
@@ -480,12 +639,38 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {/* Bulk Actions Bar */}
+      {selectedIds.size > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, padding: '10px 14px', background: 'rgba(58,134,255,0.1)', border: '1px solid rgba(58,134,255,0.3)', borderRadius: 10, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: '#3A86FF' }}>{selectedIds.size} seleccionado{selectedIds.size !== 1 ? 's' : ''}</span>
+          <select value={bulkStatus} onChange={e => setBulkStatus(e.target.value)}
+            style={{ padding: '6px 10px', background: '#0e0e1a', border: '1px solid rgba(58,134,255,0.4)', borderRadius: 7, color: '#f3f5ff', fontSize: 12, outline: 'none' }}>
+            <option value="">Mudar estado para…</option>
+            {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <button onClick={applyBulkStatus} disabled={!bulkStatus || applyingBulk}
+            style={{ padding: '6px 14px', background: bulkStatus ? '#3A86FF' : '#1e1e30', border: 'none', borderRadius: 7, color: '#fff', fontSize: 12, fontWeight: 700, cursor: bulkStatus ? 'pointer' : 'not-allowed' }}>
+            {applyingBulk ? 'A aplicar…' : 'Aplicar'}
+          </button>
+          <button onClick={() => setSelectedIds(new Set())}
+            style={{ padding: '6px 10px', background: 'transparent', border: '1px solid #26263a', borderRadius: 7, color: '#7a8299', fontSize: 12, cursor: 'pointer' }}>
+            Cancelar
+          </button>
+        </div>
+      )}
+
       {/* Tabela */}
       <div style={{ background: '#111118', border: '1px solid #26263a', borderRadius: 14, overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
           <table data-testid="admin-leads-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#0d0d1a' }}>
+                <th style={{ padding: '11px 14px', textAlign: 'center', width: 40 }}>
+                  <input type="checkbox"
+                    checked={filtered.length > 0 && selectedIds.size === filtered.length}
+                    onChange={toggleSelectAll}
+                    style={{ cursor: 'pointer', accentColor: '#3A86FF' }} />
+                </th>
                 {['#', 'Nome / E-mail', 'País', 'Estado', 'Saldo', 'Lucro', '% Dia', 'Acções'].map(h => (
                   <th key={h} style={{ padding: '11px 14px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: '#4a5068', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
@@ -500,10 +685,17 @@ export default function AdminDashboard() {
                 const ss = STATUS_STYLES[user.status] || STATUS_STYLES['Novo'];
                 const isEd = editing === user.id;
                 const hasRate = (user.daily_profit_rate || 0) > 0;
+                const isSelected = selectedIds.has(user.id);
 
                 return (
                   <tr key={user.id} data-testid="admin-lead-row"
-                    style={{ borderTop: '1px solid #1a1a2a', background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
+                    style={{ borderTop: '1px solid #1a1a2a', background: isSelected ? 'rgba(58,134,255,0.06)' : idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
+
+                    {/* Checkbox */}
+                    <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                      <input type="checkbox" checked={isSelected} onChange={() => toggleSelect(user.id)}
+                        style={{ cursor: 'pointer', accentColor: '#3A86FF' }} />
+                    </td>
 
                     <td style={{ padding: '12px 14px' }}>
                       <span style={{ fontSize: 11, color: '#4a5068', fontWeight: 700 }}>{idx + 1}</span>
