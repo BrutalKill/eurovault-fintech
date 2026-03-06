@@ -3,6 +3,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { BarChart2, CreditCard, ArrowDownToLine, Newspaper, User, LogOut, Menu } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 import Footer from './Footer';
+import FloatingChat from './FloatingChat';
 
 const navItems = [
   { to: '/app/trade',      icon: BarChart2,       label: 'Negociar'      },
@@ -149,6 +150,9 @@ export default function ClientLayout() {
 
         {/* Rodapé */}
         <Footer />
+
+        {/* Chat de suporte flutuante */}
+        <FloatingChat />
       </div>
     </div>
   );

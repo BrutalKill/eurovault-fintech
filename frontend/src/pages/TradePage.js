@@ -36,8 +36,9 @@ export default function TradePage() {
     setSelectedAsset(ASSETS[key].items[0]);
   };
 
-  const handleBuy  = () => { setInitSide('comprar'); setShowOrder(true); };
-  const handleSell = () => { setInitSide('vender');  setShowOrder(true); };
+  const handleBuy          = () => { setInitSide('comprar'); setShowOrder(true); };
+  const handleSell         = () => { setInitSide('vender');  setShowOrder(true); };
+  const handleAssetSelect  = (a) => setSelectedAsset(a);
 
   const chartSrc = `https://s.tradingview.com/widgetembed/?frameElementId=tv_ev&symbol=${encodeURIComponent(selectedAsset.symbol)}&interval=D&theme=dark&style=1&timezone=Europe%2FLisbon&locale=pt&withdateranges=1`;
 

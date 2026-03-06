@@ -1,22 +1,42 @@
 [
   {
-    "content": "Backend: Chat, Ordens, KYC endpoints",
+    "content": "Fase 1: Inspecionar tradeData.js e assetsData.js para entender o estado atual",
+    "status": "completed"
+  },
+  {
+    "content": "Fase 1: Limpar tradeData.js — remover bloco ASSETS duplicado (_UNUSED)",
+    "status": "completed"
+  },
+  {
+    "content": "Fase 1: Corrigir handleAssetSelect não definido no TradePage.js (desktop)",
+    "status": "completed"
+  },
+  {
+    "content": "Fase 1: Verificar importações em TradePage.js e componentes filhos",
+    "status": "completed"
+  },
+  {
+    "content": "Fase 1: Testar estabilidade da página de Trading com Testing Agent",
     "status": "in_progress"
   },
   {
-    "content": "Frontend: Chat flutuante + notificações push",
+    "content": "Fase 2: Corrigir bugs Buy/Sell no mobile e desktop",
     "status": "pending"
   },
   {
-    "content": "Frontend: Histórico de operações",
+    "content": "Fase 3: Live Chat — interface admin para ver/responder mensagens",
     "status": "pending"
   },
   {
-    "content": "Frontend: KYC upload no Perfil",
+    "content": "Fase 3: Push Notifications — lógica no UserContext.js",
     "status": "pending"
   },
   {
-    "content": "Admin: Chat + visualização KYC",
+    "content": "Fase 3: Histórico de Ordens — ligar TradeOrder.js ao /api/orders + link no menu",
+    "status": "pending"
+  },
+  {
+    "content": "Fase 3: KYC Upload — interface na página de Perfil do cliente",
     "status": "pending"
   }
 ]
