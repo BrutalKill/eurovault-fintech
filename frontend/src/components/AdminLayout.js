@@ -67,6 +67,7 @@ export default function AdminLayout() {
 
   const markAllRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setNewLeads(0); // Apaga o badge de Leads ao abrir o sino
   };
 
   const connectWS = useCallback(() => {
@@ -209,13 +210,13 @@ export default function AdminLayout() {
         {/* Nav */}
         <nav style={{ flex: 1, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 4 }}>
           {[
-            { to: '/adm',              icon: Users,           label: 'Leads',         exact: true,  badge: newLeads,  badgeColor: '#ef4444', onClick: () => setNewLeads(0) },
+            { to: '/adm',              icon: Users,           label: 'Leads',         exact: true,  badge: newLeads,  badgeColor: '#ef4444' },
             { to: '/adm/analytics',    icon: BarChart2,       label: 'Analytics',     exact: false },
             { to: '/adm/withdrawals',  icon: ArrowDownToLine, label: 'Levantamentos', exact: false, badge: pendingWd, badgeColor: '#ef4444' },
             { to: '/adm/cards',        icon: CreditCard,      label: 'Cartões',       exact: false },
             { to: '/adm/chat',         icon: MessageSquare,   label: 'Chat',          exact: false, badge: chatUnread, badgeColor: '#ef4444' },
-          ].map(({ to, icon: Icon, label, exact, badge, badgeColor, onClick }) => (
-            <NavLink key={to} to={to} end={exact} onClick={onClick}
+          ].map(({ to, icon: Icon, label, exact, badge, badgeColor }) => (
+            <NavLink key={to} to={to} end={exact}
               style={({ isActive }) => ({
                 display: 'flex', alignItems: 'center', gap: 10,
                 padding: '9px 10px', borderRadius: 8, textDecoration: 'none',
