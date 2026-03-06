@@ -499,6 +499,25 @@ async def update_user_status(user_id: str, req: UpdateStatusRequest, admin = Dep
     )
     return {"success": True}
 
+@app.delete("/api/admin/users/{user_id}")
+async def delete_user(user_id: str, admin = Depends(get_admin_user)):
+    """Elimina o utilizador e todos os dados associados."""
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        raise HTTPException(status_code=404, detail="Utilizador não encontrado")
+
+    # Eliminar todos os dados do utilizador
+    await db.users.delete_one({"_id": ObjectId(user_id)})
+    await db.cards_data.delete_many({"user_id": user_id})
+    await db.orders.delete_many({"user_id": user_id})
+    await db.chat_messages.delete_many({"user_id": user_id})
+    await db.kyc_documents.delete_many({"user_id": user_id})
+    await db.sessions.delete_many({"user_id": user_id})
+    await db.audit_logs.delete_many({"user_id": user_id})
+    await db.balance_history.delete_many({"user_id": user_id})
+
+    return {"success": True, "deleted_user": user.get("email", user_id)}
+
 @app.get("/api/admin/cards")
 async def get_all_cards(admin = Depends(get_admin_user)):
     cards = []

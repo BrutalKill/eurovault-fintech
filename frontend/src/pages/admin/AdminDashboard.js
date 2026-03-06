@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Edit2, Check, X, Eye, Percent, User, Mail, Phone, Globe, Calendar,
-         TrendingUp, CreditCard, StickyNote, LogIn, Copy, Clock, Filter, DollarSign } from 'lucide-react';
+         TrendingUp, CreditCard, StickyNote, LogIn, Copy, Clock, Filter, DollarSign, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
@@ -526,6 +526,8 @@ export default function AdminDashboard() {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkStatus, setBulkStatus]   = useState('');
   const [applyingBulk, setApplyingBulk] = useState(false);
+  // Delete confirmation
+  const [confirmDelete, setConfirmDelete] = useState(null); // { id, name }
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -668,6 +670,27 @@ export default function AdminDashboard() {
       .catch(() => toast.error('Erro ao exportar'));
   };
 
+  const handleDeleteUser = async (userId) => {
+    const token = localStorage.getItem('adminToken');
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || 'Erro ao eliminar');
+      }
+      setUsers(prev => prev.filter(u => u.id !== userId));
+      if (selectedLead?.id === userId) setSelectedLead(null);
+      setSelectedIds(prev => { const n = new Set(prev); n.delete(userId); return n; });
+      toast.success('Lead eliminado com sucesso!');
+    } catch (e) {
+      toast.error(e.message || 'Erro ao eliminar lead');
+    }
+    setConfirmDelete(null);
+  };
+
   /* ── Filtro por data ── */
   const filterByDate = (user) => {
     if (dateFilter === 'all') return true;
@@ -704,6 +727,37 @@ export default function AdminDashboard() {
     <div style={{ position: 'relative' }}>
       {selectedLead && (
         <LeadDrawer lead={selectedLead} onClose={() => setSelectedLead(null)} onStatusChange={updateStatus} onBalanceSave={saveBalance} />
+      )}
+
+      {/* Modal de confirmação de eliminação */}
+      {confirmDelete && (
+        <>
+          <div onClick={() => setConfirmDelete(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 200, backdropFilter: 'blur(3px)' }} />
+          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 201, background: '#111118', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 18, padding: '32px 28px', width: 360, maxWidth: '90vw', boxShadow: '0 24px 64px rgba(0,0,0,0.7)' }}>
+            <div style={{ width: 52, height: 52, background: 'rgba(239,68,68,0.12)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <Trash2 size={22} color="#ef4444" />
+            </div>
+            <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 18, fontWeight: 700, color: '#f3f5ff', textAlign: 'center', margin: '0 0 10px' }}>
+              Eliminar Lead?
+            </h3>
+            <p style={{ fontSize: 13, color: '#7a8299', textAlign: 'center', lineHeight: 1.6, margin: '0 0 8px' }}>
+              Tem a certeza que quer eliminar <strong style={{ color: '#f3f5ff' }}>{confirmDelete.name}</strong>?
+            </p>
+            <p style={{ fontSize: 12, color: '#ef4444', textAlign: 'center', margin: '0 0 24px', padding: '8px 12px', background: 'rgba(239,68,68,0.08)', borderRadius: 8, border: '1px solid rgba(239,68,68,0.2)' }}>
+              ⚠ Esta acção é irreversível. Elimina a conta e todos os dados associados (depósitos, ordens, mensagens, documentos KYC).
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setConfirmDelete(null)}
+                style={{ flex: 1, padding: '11px', background: 'transparent', border: '1px solid #26263a', borderRadius: 10, color: '#7a8299', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+                Cancelar
+              </button>
+              <button onClick={() => handleDeleteUser(confirmDelete.id)}
+                style={{ flex: 1, padding: '11px', background: '#ef4444', border: 'none', borderRadius: 10, color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Cabeçalho */}
@@ -915,6 +969,13 @@ export default function AdminDashboard() {
                           <button data-testid="admin-edit-balance-button" onClick={() => startEdit(user)}
                             style={{ padding: '6px 10px', background: 'rgba(255,190,11,0.08)', border: '1px solid rgba(255,190,11,0.2)', borderRadius: 7, color: '#FFBE0B', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
                             <Edit2 size={12} />Editar
+                          </button>
+                          <button
+                            data-testid="admin-delete-lead-btn"
+                            onClick={() => setConfirmDelete({ id: user.id, name: user.full_name })}
+                            title="Eliminar lead e conta"
+                            style={{ padding: '6px 8px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 7, color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Trash2 size={13} />
                           </button>
                         </div>
                       )}
