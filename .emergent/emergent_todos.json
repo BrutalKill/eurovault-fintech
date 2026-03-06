@@ -1,6 +1,18 @@
 [
   {
-    "content": "Testar tudo com Testing Agent",
+    "content": "Backend: validar saldo no endpoint /api/withdrawal",
+    "status": "completed"
+  },
+  {
+    "content": "Frontend: WithdrawalPage - mostrar saldo, bloquear se montante > saldo",
+    "status": "completed"
+  },
+  {
+    "content": "Redesenhar FloatingChat com bot FAQ + escalada para agente",
+    "status": "completed"
+  },
+  {
+    "content": "Testar validação de saldo e bot FAQ",
     "status": "completed"
   }
 ]

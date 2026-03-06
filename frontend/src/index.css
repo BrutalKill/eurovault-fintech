@@ -82,6 +82,11 @@ h1, h2, h3, h4, h5, h6 {
   to   { transform: rotate(360deg); }
 }
 
+@keyframes bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30%           { transform: translateY(-6px); }
+}
+
 /* ── Responsive helpers (removidos inline <style> dos componentes) ── */
 .hide-mobile { display: flex; }
 @media (max-width: 900px) {

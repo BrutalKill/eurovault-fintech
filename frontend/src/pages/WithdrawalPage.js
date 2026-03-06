@@ -1,14 +1,24 @@
 import React, { useState } from 'react';
-import { Building2, CreditCard, CheckCircle, AlertCircle } from 'lucide-react';
+import { Building2, CreditCard, CheckCircle, AlertCircle, AlertTriangle, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
+import { useUser } from '../context/UserContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
 export default function WithdrawalPage() {
+  const { user } = useUser();
   const [activeTab, setActiveTab] = useState('sepa');
   const [sepaForm, setSepaForm] = useState({ account_name: '', iban: '', bic: '', amount: '', note: '' });
   const [chargebackSubmitted, setChargebackSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const safeBalance = Math.max(0, parseFloat(user?.balance) || 0);
+  const dailyLimit  = parseFloat(user?.daily_withdrawal_limit) || 0;
+  const formatEur   = (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+
+  const reqAmount = parseFloat(sepaForm.amount) || 0;
+  const insufficientBalance = reqAmount > 0 && reqAmount > safeBalance;
+  const exceedsDailyLimit   = dailyLimit > 0 && reqAmount > dailyLimit;
 
   const submitSepa = async (e) => {
     e.preventDefault();
@@ -93,11 +103,25 @@ export default function WithdrawalPage() {
             </div>
 
             <form onSubmit={submitSepa} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Saldo disponível */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: 'rgba(34,197,139,0.07)', borderRadius: 10, border: '1px solid rgba(34,197,139,0.2)' }}>
+                <Wallet size={15} color="#22c58b" />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 11, color: 'hsl(215,16%,65%)' }}>Saldo disponível para levantamento</div>
+                  <div className="numeric" style={{ fontSize: 16, fontWeight: 800, color: '#22c58b' }}>{formatEur(safeBalance)}</div>
+                </div>
+                {dailyLimit > 0 && (
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 10, color: 'hsl(215,16%,55%)' }}>Limite diário</div>
+                    <div className="numeric" style={{ fontSize: 13, fontWeight: 700, color: '#FFBE0B' }}>{formatEur(dailyLimit)}</div>
+                  </div>
+                )}
+              </div>
+
               {[
                 ['Nome do Titular', 'account_name', 'text', 'João Silva'],
                 ['IBAN', 'iban', 'text', 'PT50 0035 0013 0000 0070 8330 5'],
                 ['Código BIC/SWIFT', 'bic', 'text', 'BCOMPTPL'],
-                ['Montante (€)', 'amount', 'number', '0.00'],
               ].map(([label, key, type, placeholder]) => (
                 <div key={key}>
                   <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(215,16%,70%)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</label>
@@ -110,6 +134,44 @@ export default function WithdrawalPage() {
                   />
                 </div>
               ))}
+
+              {/* Campo montante com validação visual */}
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(215,16%,70%)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Montante (€)</label>
+                <input
+                  type="number" required min="10" step="0.01"
+                  value={sepaForm.amount}
+                  onChange={e => setSepaForm({ ...sepaForm, amount: e.target.value })}
+                  placeholder="0.00"
+                  style={{ width: '100%', padding: '11px 14px', background: 'hsl(240,18%,12%)', border: `1px solid ${insufficientBalance || exceedsDailyLimit ? '#ef4444' : 'hsl(240,16%,22%)'}`, borderRadius: 10, color: insufficientBalance || exceedsDailyLimit ? '#ef4444' : '#f3f5ff', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontWeight: insufficientBalance || exceedsDailyLimit ? 700 : 400 }}
+                />
+                {/* Alertas */}
+                {insufficientBalance && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 8, padding: '9px 12px', background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8 }}>
+                    <AlertTriangle size={14} color="#ef4444" />
+                    <span style={{ fontSize: 12, color: '#ef4444', fontWeight: 600 }}>
+                      Saldo insuficiente. Disponível: <span className="numeric">{formatEur(safeBalance)}</span>
+                    </span>
+                  </div>
+                )}
+                {!insufficientBalance && exceedsDailyLimit && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 8, padding: '9px 12px', background: 'rgba(255,190,11,0.10)', border: '1px solid rgba(255,190,11,0.3)', borderRadius: 8 }}>
+                    <AlertTriangle size={14} color="#FFBE0B" />
+                    <span style={{ fontSize: 12, color: '#FFBE0B', fontWeight: 600 }}>
+                      Excede o limite diário de <span className="numeric">{formatEur(dailyLimit)}</span>
+                    </span>
+                  </div>
+                )}
+                {/* Montante válido */}
+                {reqAmount > 0 && !insufficientBalance && !exceedsDailyLimit && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 8, padding: '9px 12px', background: 'rgba(34,197,139,0.08)', border: '1px solid rgba(34,197,139,0.2)', borderRadius: 8 }}>
+                    <CheckCircle size={13} color="#22c58b" />
+                    <span style={{ fontSize: 12, color: '#22c58b' }}>
+                      Após levantamento, saldo restante: <span className="numeric" style={{ fontWeight: 700 }}>{formatEur(safeBalance - reqAmount)}</span>
+                    </span>
+                  </div>
+                )}
+              </div>
 
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(215,16%,70%)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Nota (opcional)</label>
@@ -124,8 +186,8 @@ export default function WithdrawalPage() {
 
               <button
                 data-testid="withdrawal-sepa-submit-button"
-                type="submit" disabled={loading}
-                style={{ width: '100%', padding: '13px', background: loading ? 'hsl(214,100%,60%,0.4)' : 'hsl(214,100%,60%)', border: 'none', borderRadius: 12, color: '#fff', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer' }}
+                type="submit" disabled={loading || insufficientBalance || exceedsDailyLimit}
+                style={{ width: '100%', padding: '13px', background: loading || insufficientBalance || exceedsDailyLimit ? 'hsl(214,100%,60%,0.4)' : 'hsl(214,100%,60%)', border: 'none', borderRadius: 12, color: '#fff', fontSize: 14, fontWeight: 700, cursor: loading || insufficientBalance || exceedsDailyLimit ? 'not-allowed' : 'pointer' }}
               >
                 {loading ? 'A enviar...' : 'Confirmar Transferência SEPA'}
               </button>
@@ -180,14 +242,15 @@ export default function WithdrawalPage() {
         {/* Info panel */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {[
-            { label: 'Prazo SEPA', value: '1-2 dias úteis' },
-            { label: 'Montante mínimo', value: '€10.00' },
-            { label: 'Taxa de levantamento', value: 'Grátis' },
-            { label: 'Limite diário', value: '€50.000' },
-          ].map(({ label, value }) => (
+            { label: 'Saldo disponível', value: formatEur(safeBalance), color: '#22c58b' },
+            { label: 'Prazo SEPA', value: '1-2 dias úteis', color: '#f3f5ff' },
+            { label: 'Montante mínimo', value: '€10.00', color: '#f3f5ff' },
+            { label: 'Taxa de levantamento', value: 'Grátis', color: '#22c58b' },
+            { label: 'Limite diário', value: dailyLimit > 0 ? formatEur(dailyLimit) : 'Sem limite', color: dailyLimit > 0 ? '#FFBE0B' : '#f3f5ff' },
+          ].map(({ label, value, color }) => (
             <div key={label} style={{ background: 'hsl(240,26%,8%)', border: '1px solid hsl(240,16%,18%)', borderRadius: 12, padding: '14px 16px' }}>
               <div style={{ fontSize: 11, color: 'hsl(215,16%,70%)', marginBottom: 4 }}>{label}</div>
-              <div className="numeric" style={{ fontSize: 15, fontWeight: 700, color: '#f3f5ff' }}>{value}</div>
+              <div className="numeric" style={{ fontSize: 15, fontWeight: 700, color }}>{value}</div>
             </div>
           ))}
         </div>

@@ -393,8 +393,33 @@ async def create_deposit(req: DepositRequest, current_user = Depends(get_current
 
 @app.post("/api/withdrawal")
 async def create_withdrawal(req: WithdrawalRequest, current_user = Depends(get_current_user)):
+    user_id = current_user["sub"]
+
+    # Verificar saldo
+    if req.amount and req.amount > 0:
+        user_doc = await db.users.find_one({"_id": ObjectId(user_id)})
+        if not user_doc:
+            raise HTTPException(status_code=404, detail="Utilizador não encontrado")
+
+        current_balance = max(0.0, float(user_doc.get("balance", 0)))
+
+        # Verificar limite diário personalizado
+        daily_limit = float(user_doc.get("daily_withdrawal_limit", 0))
+        if daily_limit > 0 and req.amount > daily_limit:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Montante superior ao limite diário de {daily_limit:.2f}€. Contacte o suporte para aumentar o limite."
+            )
+
+        # Verificar saldo disponível
+        if req.amount > current_balance:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Saldo insuficiente. Disponível: {current_balance:.2f}€. Solicitado: {req.amount:.2f}€."
+            )
+
     withdrawal = {
-        "user_id": current_user["sub"],
+        "user_id": user_id,
         "method": req.method,
         "account_name": req.account_name,
         "iban": req.iban,
