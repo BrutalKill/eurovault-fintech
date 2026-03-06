@@ -94,6 +94,16 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     payload = decode_token(credentials.credentials)
     if not payload:
         raise HTTPException(status_code=401, detail="Token inválido")
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Token inválido")
+    # Verificar se o utilizador ainda existe na DB (revogação instantânea ao eliminar)
+    try:
+        user = await db.users.find_one({"_id": ObjectId(user_id)}, {"_id": 1})
+        if not user:
+            raise HTTPException(status_code=401, detail="Conta não encontrada ou eliminada")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Sessão expirada")
     return payload
 
 async def get_admin_user(credentials: HTTPAuthorizationCredentials = Depends(security)):

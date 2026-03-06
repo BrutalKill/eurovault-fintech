@@ -11,52 +11,51 @@ export default function AdminLayout() {
   const [muted, setMuted]           = useState(false);
   const [chatUnread, setChatUnread]  = useState(0);
   const [pendingWd, setPendingWd]    = useState(0);
-  const [newLeads, setNewLeads]      = useState(0);   // badge "Leads"
+  const [newLeads, setNewLeads]      = useState(0);
   const [bellOpen, setBellOpen]      = useState(false);
   const [notifications, setNotifications] = useState([]);
-  const wsRef     = useRef(null);
-  const audioCtxRef = useRef(null);   // AudioContext reutilizável
-  const bellRef   = useRef(null);
 
-  // Criar/resumir AudioContext após primeira interação do utilizador
+  // ── Refs estáveis — NÃO causam reconexão do WebSocket
+  const wsRef       = useRef(null);
+  const audioCtxRef = useRef(null);
+  const bellRef     = useRef(null);
+  const mutedRef    = useRef(false);   // ref espelha o state — usada dentro do WS callback
+  const navigateRef = useRef(navigate);
+
+  // Sincronizar refs com state/props
+  useEffect(() => { mutedRef.current = muted; }, [muted]);
+  useEffect(() => { navigateRef.current = navigate; }, [navigate]);
+
+  // ── AudioContext — criado uma vez após interação
   const getAudioCtx = useCallback(() => {
     try {
       if (!audioCtxRef.current) {
         audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
       }
-      if (audioCtxRef.current.state === 'suspended') {
-        audioCtxRef.current.resume();
-      }
+      if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume();
       return audioCtxRef.current;
     } catch (_) { return null; }
   }, []);
 
-  const playTone = useCallback((freqs, type = 'sine') => {
-    if (muted) return;
-    const ctx = getAudioCtx();
-    if (!ctx) return;
+  // ── Função de som — usa ref, nunca muda de referência
+  const playToneRef = useRef((freqs) => {
+    if (mutedRef.current) return;
+    const ctx = audioCtxRef.current;
+    if (!ctx || ctx.state !== 'running') return;
     freqs.forEach(({ freq, time, duration = 0.25 }) => {
       try {
-        const osc  = ctx.createOscillator();
+        const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.type = type;
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sine';
         osc.frequency.setValueAtTime(freq, ctx.currentTime + time);
-        gain.gain.setValueAtTime(0.25, ctx.currentTime + time);
+        gain.gain.setValueAtTime(0.28, ctx.currentTime + time);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + time + duration);
         osc.start(ctx.currentTime + time);
         osc.stop(ctx.currentTime + time + duration);
       } catch (_) {}
     });
-  }, [muted, getAudioCtx]);
-
-  // Sons distintos por tipo
-  const playSoundDeposit = useCallback(() =>
-    playTone([{ freq: 880, time: 0 }, { freq: 660, time: 0.1 }]), [playTone]);
-
-  const playSoundNewLead = useCallback(() =>
-    playTone([{ freq: 440, time: 0 }, { freq: 554, time: 0.12 }, { freq: 659, time: 0.24 }]), [playTone]);
+  });
 
   const addNotif = useCallback((notif) => {
     const entry = { ...notif, id: Date.now() + Math.random(), read: false, ts: new Date().toISOString() };
@@ -67,81 +66,94 @@ export default function AdminLayout() {
 
   const markAllRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    setNewLeads(0); // Apaga o badge de Leads ao abrir o sino
+    setNewLeads(0);
   };
 
+  // ── WebSocket — dependências ZERO (tudo via refs)
   const connectWS = useCallback(() => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) return () => {};
+
     const wsUrl = BACKEND_URL.replace('https://', 'wss://').replace('http://', 'ws://');
     const ws = new WebSocket(`${wsUrl}/ws/admin`);
     wsRef.current = ws;
 
+    ws.onopen = () => {
+      console.log('[AdminWS] Conectado');
+    };
+
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+        const fmtEur = (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v || 0);
+        const nav = navigateRef.current;
 
         if (data.type === 'deposit_submitted') {
-          playSoundDeposit();
-          addNotif({ type: 'deposit', icon: 'card', color: '#22c58b',
-            title: 'Novo Depósito',
-            body: `${data.user_name} • ${new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(data.amount)}` });
+          playToneRef.current([{ freq: 880, time: 0 }, { freq: 660, time: 0.1 }]);
+          addNotif({ type: 'deposit', color: '#22c58b', title: 'Novo Depósito', body: `${data.user_name} • ${fmtEur(data.amount)}` });
           toast.success('Novo Depósito Recebido!', {
-            description: `${data.user_name} • ${new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(data.amount)} • ****${data.card_last4}`,
+            description: `${data.user_name} • ${fmtEur(data.amount)} • ****${data.card_last4}`,
             duration: 8000,
-            action: { label: 'Ver Cartões', onClick: () => navigate('/adm/cards') },
+            action: { label: 'Ver Cartões', onClick: () => nav('/adm/cards') },
           });
-          if (Notification.permission === 'granted') {
-            new Notification('Novo Depósito!', { body: `${data.user_name} depositou`, icon: '/logo-eurovault.png' });
-          }
+          if (Notification.permission === 'granted')
+            new Notification('Novo Depósito!', { body: `${data.user_name} depositou ${fmtEur(data.amount)}`, icon: '/logo-eurovault.png' });
         }
 
         if (data.type === 'new_client_registered') {
-          playSoundNewLead();
+          playToneRef.current([{ freq: 440, time: 0 }, { freq: 554, time: 0.12 }, { freq: 659, time: 0.24 }]);
           setNewLeads(c => c + 1);
-          addNotif({ type: 'lead', icon: 'user', color: '#3A86FF',
-            title: 'Novo Cliente Registado',
-            body: `${data.user_name} • ${data.email} • ${data.country || ''}` });
+          addNotif({ type: 'lead', color: '#3A86FF', title: 'Novo Cliente Registado', body: `${data.user_name} • ${data.email} • ${data.country || ''}` });
           toast.info('Novo Cliente Registado!', {
             description: `${data.user_name} • ${data.email}`,
             duration: 10000,
-            action: { label: 'Ver Leads', onClick: () => { navigate('/adm'); setNewLeads(0); } },
+            action: { label: 'Ver Leads', onClick: () => nav('/adm') },
           });
-          if (Notification.permission === 'granted') {
+          if (Notification.permission === 'granted')
             new Notification('Novo Cliente!', { body: `${data.user_name} (${data.email}) registou-se.`, icon: '/logo-eurovault.png' });
-          }
         }
 
         if (data.type === 'withdrawal_requested') {
+          playToneRef.current([{ freq: 880, time: 0 }, { freq: 660, time: 0.1 }]);
           setPendingWd(c => c + 1);
-          playSoundDeposit();
-          addNotif({ type: 'withdrawal', icon: 'alert', color: '#FFBE0B',
-            title: 'Pedido de Levantamento',
-            body: `${data.user_name} • ${new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(data.amount || 0)}` });
+          addNotif({ type: 'withdrawal', color: '#FFBE0B', title: 'Pedido de Levantamento', body: `${data.user_name} • ${fmtEur(data.amount)}` });
           toast.warning('Pedido de Levantamento!', {
-            description: `${data.user_name} • ${new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(data.amount || 0)}`,
+            description: `${data.user_name} • ${fmtEur(data.amount)}`,
             duration: 8000,
-            action: { label: 'Ver Pedidos', onClick: () => navigate('/adm/withdrawals') },
+            action: { label: 'Ver Pedidos', onClick: () => nav('/adm/withdrawals') },
           });
         }
-      } catch (e) {}
+      } catch (_) {}
     };
 
-    ws.onclose = () => { setTimeout(() => connectWS(), 3000); };
-    ws.onerror = () => { ws.close(); };
+    ws.onclose = () => {
+      console.log('[AdminWS] Desconectado — a reconectar em 3s');
+      setTimeout(connectWS, 3000);
+    };
+    ws.onerror = () => ws.close();
 
     const heartbeat = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) ws.send('ping');
     }, 25000);
 
     return () => { clearInterval(heartbeat); ws.close(); };
-  }, [playSoundDeposit, playSoundNewLead, addNotif, navigate]);
+  }, [addNotif]); // addNotif é estável — deps mínimas
 
   useEffect(() => {
     if (Notification.permission === 'default') Notification.requestPermission();
 
-    // Desbloquear AudioContext na primeira interação
+    // Desbloquear AudioContext na primeira interação do utilizador (política do browser)
     const unlock = () => {
       getAudioCtx();
-      document.removeEventListener('click', unlock);
+      // Tentar tocar um som silencioso para "aquecer" o contexto
+      try {
+        const ctx = audioCtxRef.current;
+        if (ctx) {
+          const osc = ctx.createOscillator();
+          osc.connect(ctx.destination);
+          osc.frequency.value = 1; // inaudível
+          osc.start(); osc.stop(ctx.currentTime + 0.001);
+        }
+      } catch (_) {}
     };
     document.addEventListener('click', unlock, { once: true });
 
@@ -157,7 +169,7 @@ export default function AdminLayout() {
     fetchCounts();
     const iv = setInterval(fetchCounts, 15000);
     return () => { cleanup(); clearInterval(iv); };
-  }, [connectWS, getAudioCtx]);
+  }, [connectWS, getAudioCtx]); // connectWS é agora estável — não reconecta desnecessariamente
 
   // Fechar sino ao clicar fora
   useEffect(() => {
