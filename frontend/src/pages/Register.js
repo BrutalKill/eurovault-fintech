@@ -28,7 +28,7 @@ export default function Register() {
       if (!res.ok) throw new Error(data.detail || 'Erro ao criar conta');
       localStorage.setItem('token', data.token);
       toast.success('Conta criada com sucesso!');
-      navigate('/app/trade');
+      navigate('/app/dashboard');
     } catch (err) {
       toast.error(err.message);
     } finally {

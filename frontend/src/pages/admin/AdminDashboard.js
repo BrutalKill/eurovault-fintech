@@ -678,9 +678,9 @@ export default function AdminDashboard() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#7a8299', fontSize: 13 }}>A carregar…</td></tr>
+                <tr><td colSpan={9} style={{ padding: 40, textAlign: 'center', color: '#7a8299', fontSize: 13 }}>A carregar…</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#7a8299', fontSize: 13 }}>Nenhum lead encontrado</td></tr>
+                <tr><td colSpan={9} style={{ padding: 40, textAlign: 'center', color: '#7a8299', fontSize: 13 }}>Nenhum lead encontrado</td></tr>
               ) : filtered.map((user, idx) => {
                 const ss = STATUS_STYLES[user.status] || STATUS_STYLES['Novo'];
                 const isEd = editing === user.id;

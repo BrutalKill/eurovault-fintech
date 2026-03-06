@@ -59,7 +59,7 @@ export default function Login() {
         Notification.requestPermission();
       }
       toast.success('Sessão iniciada com sucesso!');
-      navigate('/app/trade');
+      navigate('/app/dashboard');
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -75,17 +75,17 @@ export default function Login() {
         position: 'absolute', inset: 0,
         backgroundImage: `url(https://images.unsplash.com/photo-1630983410779-88aba3aac0ce?crop=entropy&cs=srgb&fm=jpg&q=80&w=1920)`,
         backgroundSize: 'cover', backgroundPosition: 'center 30%',
-        opacity: 0.18,
+        opacity: 0.28,
       }} />
 
       {/* ── Gradient overlay colorido ── */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none',
         background: `
-          radial-gradient(ellipse 80% 60% at 10% 20%, rgba(58,134,255,0.25) 0%, transparent 70%),
-          radial-gradient(ellipse 60% 50% at 90% 80%, rgba(255,190,11,0.12) 0%, transparent 60%),
-          radial-gradient(ellipse 100% 80% at 50% 100%, rgba(34,197,139,0.10) 0%, transparent 50%),
-          linear-gradient(180deg, rgba(6,6,26,0.4) 0%, rgba(6,6,26,0.85) 100%)
+          radial-gradient(ellipse 80% 60% at 10% 20%, rgba(58,134,255,0.30) 0%, transparent 70%),
+          radial-gradient(ellipse 60% 50% at 90% 80%, rgba(255,190,11,0.14) 0%, transparent 60%),
+          radial-gradient(ellipse 100% 80% at 50% 100%, rgba(34,197,139,0.12) 0%, transparent 50%),
+          linear-gradient(135deg, rgba(6,6,26,0.75) 0%, rgba(6,6,26,0.55) 50%, rgba(6,6,26,0.9) 100%)
         `,
       }} />
 
@@ -108,17 +108,6 @@ export default function Login() {
           }} />
         ))}
       </div>
-
-      <style>{`
-        @keyframes orbFloat0 { from { transform: translate(0,0) scale(1); } to { transform: translate(40px,30px) scale(1.1); } }
-        @keyframes orbFloat1 { from { transform: translate(0,0) scale(1); } to { transform: translate(-30px,40px) scale(0.95); } }
-        @keyframes orbFloat2 { from { transform: translate(0,0) scale(1); } to { transform: translate(20px,-40px) scale(1.05); } }
-        @keyframes orbFloat3 { from { transform: translate(0,0) scale(1); } to { transform: translate(-20px,30px) scale(1.08); } }
-        @keyframes tickerScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-        @keyframes fadeInUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
-        @keyframes shimmer { 0%,100% { opacity:0.6; } 50% { opacity:1; } }
-        @keyframes pulse-border { 0%,100% { box-shadow: 0 0 0 0 rgba(58,134,255,0); } 50% { box-shadow: 0 0 0 4px rgba(58,134,255,0.15); } }
-      `}</style>
 
       {/* ── Header ── */}
       <header style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', flexShrink: 0 }}>
@@ -171,6 +160,7 @@ export default function Login() {
             fontFamily: 'var(--font-heading)', fontSize: 'clamp(32px, 3.5vw, 52px)',
             fontWeight: 800, color: '#ffffff', lineHeight: 1.08,
             marginBottom: 16, letterSpacing: '-0.03em',
+            textShadow: '0 2px 20px rgba(0,0,0,0.8)',
           }}>
             {t('login_hero1')}<br />
             <span style={{
@@ -182,7 +172,7 @@ export default function Login() {
             </span>
           </h1>
 
-          <p style={{ fontSize: 16, color: 'hsl(215,16%,72%)', marginBottom: 28, lineHeight: 1.65, maxWidth: 460 }}>
+          <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.80)', marginBottom: 28, lineHeight: 1.65, maxWidth: 460, textShadow: '0 1px 8px rgba(0,0,0,0.7)' }}>
             {t('login_desc')}
           </p>
 

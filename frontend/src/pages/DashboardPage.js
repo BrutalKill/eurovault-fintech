@@ -97,12 +97,10 @@ export default function DashboardPage() {
       </div>
 
       {/* Cards de saldo */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }} className="dash-cards">
-        <style>{`.dash-cards { grid-template-columns: repeat(3,1fr); } @media(max-width:768px){ .dash-cards{ grid-template-columns: repeat(2,1fr) !important; } } @media(max-width:500px){ .dash-cards{ grid-template-columns: 1fr !important; } }`}</style>
+      <div style={{ display: 'grid', gap: 14 }} className="dash-cards">
 
         {/* Saldo */}
-        <div style={{ background: 'hsl(240,26%,8%)', border: '1px solid hsl(240,16%,18%)', borderRadius: 16, padding: '20px 22px', gridColumn: 'span 2' }} className="dash-balance-card">
-          <style>{`.dash-balance-card { grid-column: span 2; } @media(max-width:500px){ .dash-balance-card{ grid-column: span 1 !important; } }`}</style>
+        <div style={{ background: 'hsl(240,26%,8%)', border: '1px solid hsl(240,16%,18%)', borderRadius: 16, padding: '20px 22px' }} className="dash-balance-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <div style={{ fontSize: 11, color: 'hsl(215,16%,60%)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>Saldo Total</div>
@@ -141,8 +139,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Ações rápidas */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }} className="dash-actions">
-        <style>{`.dash-actions { grid-template-columns: repeat(4,1fr); } @media(max-width:600px){ .dash-actions{ grid-template-columns: repeat(2,1fr) !important; } }`}</style>
+      <div style={{ display: 'grid', gap: 10 }} className="dash-actions">
         {QUICK_ACTIONS.map(({ icon: Icon, label, color, path }) => (
           <button key={path} onClick={() => navigate(path)}
             style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '16px 12px', background: 'hsl(240,26%,8%)', border: '1px solid hsl(240,16%,18%)', borderRadius: 14, cursor: 'pointer', transition: 'border-color 0.2s', color }}
@@ -157,8 +154,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Meta de investimento + Referidos */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }} className="dash-meta">
-        <style>{`.dash-meta { grid-template-columns: 1fr 1fr; } @media(max-width:700px){ .dash-meta{ grid-template-columns: 1fr !important; } }`}</style>
+      <div style={{ display: 'grid', gap: 16 }} className="dash-meta">
 
         {/* Meta */}
         {goalAmount > 0 ? (

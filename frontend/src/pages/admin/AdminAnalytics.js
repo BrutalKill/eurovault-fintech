@@ -84,8 +84,7 @@ export default function AdminAnalytics() {
       </div>
 
       {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 24 }} className="analytics-grid">
-        <style>{`.analytics-grid { grid-template-columns: repeat(3,1fr); } @media(max-width:900px){ .analytics-grid{ grid-template-columns: repeat(2,1fr) !important; } } @media(max-width:500px){ .analytics-grid{ grid-template-columns: 1fr !important; } }`}</style>
+      <div style={{ display: 'grid', gap: 14, marginBottom: 24 }} className="analytics-grid">
         {KPIS.map(({ icon: Icon, label, value, color, bg }) => (
           <div key={label} style={{ background: '#111118', border: '1px solid #26263a', borderRadius: 14, padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
             <div style={{ width: 44, height: 44, background: bg, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -100,8 +99,7 @@ export default function AdminAnalytics() {
       </div>
 
       {/* Gráficos */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }} className="analytics-charts">
-        <style>{`.analytics-charts { grid-template-columns: 1fr 1fr; } @media(max-width:768px){ .analytics-charts{ grid-template-columns: 1fr !important; } }`}</style>
+      <div style={{ display: 'grid', gap: 16, marginBottom: 24 }} className="analytics-charts">
 
         {/* Registos por dia */}
         <div style={{ background: '#111118', border: '1px solid #26263a', borderRadius: 14, padding: 20 }}>
