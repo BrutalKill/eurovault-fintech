@@ -472,7 +472,6 @@ async def get_all_deposits(admin = Depends(get_admin_user)):
 
 @app.get("/api/news")
 async def get_news():
-    # Return static financial news items (in a real app this would be from an API)
     news = [
         {"id": 1, "title": "BCE mantém taxas de juro inalteradas na reunião de dezembro", "source": "Reuters", "category": "Macro", "time": "Há 2h", "snippet": "O Banco Central Europeu decidiu manter as taxas de referência, sinalizando cautela perante a volatilidade nos mercados.", "url": "#"},
         {"id": 2, "title": "EUR/USD consolida acima de 1.0850 com dados de inflação", "source": "Bloomberg", "category": "FX", "time": "Há 3h", "snippet": "O par cambial EUR/USD mantém-se estável após a divulgação dos dados de inflação da zona euro acima do esperado.", "url": "#"},
@@ -485,6 +484,216 @@ async def get_news():
     ]
     return news
 
+
+# ════════════════════════════════════════════════════════════════
+#  CHAT AO VIVO
+# ════════════════════════════════════════════════════════════════
+class ChatMessageRequest(BaseModel):
+    message: str
+
+@app.post("/api/chat/message")
+async def send_chat_message(req: ChatMessageRequest, current_user = Depends(get_current_user)):
+    user_id = current_user["sub"]
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    msg = {
+        "user_id": user_id,
+        "user_name": user["full_name"] if user else "Cliente",
+        "email": current_user.get("email", ""),
+        "message": req.message,
+        "sender": "client",
+        "read_by_admin": False,
+        "created_at": datetime.utcnow(),
+    }
+    result = await db.chat_messages.insert_one(msg)
+    # Notificar admin via WebSocket
+    await manager.broadcast({
+        "type": "new_chat_message",
+        "user_id": user_id,
+        "user_name": user["full_name"] if user else "Cliente",
+        "email": current_user.get("email", ""),
+        "message": req.message,
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+    return {"success": True, "id": str(result.inserted_id)}
+
+@app.get("/api/chat/messages")
+async def get_chat_messages(current_user = Depends(get_current_user)):
+    msgs = []
+    async for m in db.chat_messages.find({"user_id": current_user["sub"]}).sort("created_at", 1):
+        msgs.append(serialize_doc({
+            "id": m["_id"], "message": m["message"],
+            "sender": m.get("sender", "client"),
+            "created_at": m.get("created_at"),
+        }))
+    return msgs
+
+@app.get("/api/admin/chat/conversations")
+async def get_chat_conversations(admin = Depends(get_admin_user)):
+    """Listar todas as conversas (última mensagem de cada utilizador)"""
+    pipeline = [
+        {"$sort": {"created_at": -1}},
+        {"$group": {"_id": "$user_id", "last_message": {"$first": "$message"},
+                    "user_name": {"$first": "$user_name"}, "email": {"$first": "$email"},
+                    "created_at": {"$first": "$created_at"}, "unread": {"$sum": {"$cond": [{"$eq": ["$read_by_admin", False]}, 1, 0]}}}},
+        {"$sort": {"created_at": -1}}
+    ]
+    convs = []
+    async for c in db.chat_messages.aggregate(pipeline):
+        convs.append({"user_id": c["_id"], "user_name": c.get("user_name",""), "email": c.get("email",""),
+                      "last_message": c.get("last_message",""), "unread": c.get("unread", 0),
+                      "created_at": c.get("created_at","").isoformat() if c.get("created_at") else ""})
+    return convs
+
+@app.get("/api/admin/chat/{user_id}")
+async def get_user_chat(user_id: str, admin = Depends(get_admin_user)):
+    msgs = []
+    async for m in db.chat_messages.find({"user_id": user_id}).sort("created_at", 1):
+        msgs.append(serialize_doc({"id": m["_id"], "message": m["message"],
+            "sender": m.get("sender","client"), "created_at": m.get("created_at")}))
+    await db.chat_messages.update_many({"user_id": user_id, "sender": "client"}, {"$set": {"read_by_admin": True}})
+    return msgs
+
+@app.post("/api/admin/chat/{user_id}/reply")
+async def admin_reply_chat(user_id: str, req: ChatMessageRequest, admin = Depends(get_admin_user)):
+    msg = {"user_id": user_id, "message": req.message, "sender": "admin",
+           "read_by_admin": True, "created_at": datetime.utcnow()}
+    await db.chat_messages.insert_one(msg)
+    return {"success": True}
+
+
+# ════════════════════════════════════════════════════════════════
+#  HISTÓRICO DE OPERAÇÕES
+# ════════════════════════════════════════════════════════════════
+class OrderRequest(BaseModel):
+    asset_label: str
+    asset_name: str
+    category: str
+    side: str          # comprar | vender
+    amount: float
+    leverage: str
+    price: str
+
+@app.post("/api/orders")
+async def create_order(req: OrderRequest, current_user = Depends(get_current_user)):
+    order = {
+        "user_id": current_user["sub"],
+        "asset_label": req.asset_label,
+        "asset_name": req.asset_name,
+        "category": req.category,
+        "side": req.side,
+        "amount": req.amount,
+        "leverage": req.leverage,
+        "price": req.price,
+        "status": "executada",
+        "created_at": datetime.utcnow(),
+    }
+    result = await db.orders.insert_one(order)
+    return {"success": True, "id": str(result.inserted_id)}
+
+@app.get("/api/orders")
+async def get_orders(current_user = Depends(get_current_user)):
+    orders = []
+    async for o in db.orders.find({"user_id": current_user["sub"]}).sort("created_at", -1).limit(50):
+        orders.append(serialize_doc({
+            "id": o["_id"], "asset_label": o["asset_label"], "asset_name": o["asset_name"],
+            "category": o.get("category",""), "side": o["side"], "amount": o["amount"],
+            "leverage": o["leverage"], "price": o["price"], "status": o.get("status","executada"),
+            "created_at": o.get("created_at"),
+        }))
+    return orders
+
+@app.get("/api/admin/orders/{user_id}")
+async def get_user_orders(user_id: str, admin = Depends(get_admin_user)):
+    orders = []
+    async for o in db.orders.find({"user_id": user_id}).sort("created_at", -1).limit(100):
+        orders.append(serialize_doc({
+            "id": o["_id"], "asset_label": o["asset_label"], "asset_name": o["asset_name"],
+            "side": o["side"], "amount": o["amount"], "leverage": o["leverage"],
+            "price": o["price"], "status": o.get("status","executada"), "created_at": o.get("created_at"),
+        }))
+    return orders
+
+
+# ════════════════════════════════════════════════════════════════
+#  KYC — DOCUMENTOS DE IDENTIDADE
+# ════════════════════════════════════════════════════════════════
+import base64
+from fastapi import UploadFile, File, Form
+
+@app.post("/api/kyc/upload")
+async def upload_kyc(
+    doc_type: str = Form(...),
+    file: UploadFile = File(...),
+    current_user = Depends(get_current_user)
+):
+    allowed = ["image/jpeg", "image/png", "image/jpg", "application/pdf"]
+    if file.content_type not in allowed:
+        raise HTTPException(status_code=400, detail="Formato não suportado. Use JPG, PNG ou PDF.")
+    content = await file.read()
+    if len(content) > 10 * 1024 * 1024:  # 10MB max
+        raise HTTPException(status_code=400, detail="Ficheiro demasiado grande. Máximo 10MB.")
+    doc = {
+        "user_id": current_user["sub"],
+        "doc_type": doc_type,
+        "filename": file.filename,
+        "content_type": file.content_type,
+        "data": base64.b64encode(content).decode(),
+        "status": "pending",
+        "created_at": datetime.utcnow(),
+    }
+    await db.kyc_documents.replace_one(
+        {"user_id": current_user["sub"], "doc_type": doc_type},
+        doc, upsert=True
+    )
+    await db.users.update_one(
+        {"_id": ObjectId(current_user["sub"])},
+        {"$set": {"kyc_status": "pending", "updated_at": datetime.utcnow()}}
+    )
+    return {"success": True, "status": "pending"}
+
+@app.get("/api/kyc/status")
+async def get_kyc_status(current_user = Depends(get_current_user)):
+    docs = []
+    async for d in db.kyc_documents.find({"user_id": current_user["sub"]}):
+        docs.append({"doc_type": d["doc_type"], "filename": d["filename"],
+                     "status": d.get("status","pending"), "created_at": d.get("created_at","").isoformat() if d.get("created_at") else ""})
+    user = await db.users.find_one({"_id": ObjectId(current_user["sub"])})
+    return {"kyc_status": user.get("kyc_status","not_submitted") if user else "not_submitted", "documents": docs}
+
+@app.get("/api/admin/kyc")
+async def get_all_kyc(admin = Depends(get_admin_user)):
+    docs = []
+    async for d in db.kyc_documents.find({}).sort("created_at", -1):
+        docs.append(serialize_doc({
+            "id": d["_id"], "user_id": d["user_id"],
+            "doc_type": d["doc_type"], "filename": d["filename"],
+            "content_type": d["content_type"], "status": d.get("status","pending"),
+            "created_at": d.get("created_at"),
+        }))
+    return docs
+
+@app.put("/api/admin/kyc/{doc_id}/status")
+async def update_kyc_status(doc_id: str, req: UpdateStatusRequest, admin = Depends(get_admin_user)):
+    doc = await db.kyc_documents.find_one({"_id": ObjectId(doc_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento não encontrado")
+    await db.kyc_documents.update_one({"_id": ObjectId(doc_id)}, {"$set": {"status": req.status}})
+    kyc_status = "approved" if req.status == "approved" else ("rejected" if req.status == "rejected" else "pending")
+    await db.users.update_one({"_id": ObjectId(doc["user_id"])}, {"$set": {"kyc_status": kyc_status}})
+    return {"success": True}
+
+@app.get("/api/admin/kyc/{doc_id}/download")
+async def download_kyc(doc_id: str, admin = Depends(get_admin_user)):
+    from fastapi.responses import Response
+    doc = await db.kyc_documents.find_one({"_id": ObjectId(doc_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Não encontrado")
+    data = base64.b64decode(doc["data"])
+    return Response(content=data, media_type=doc["content_type"],
+                    headers={"Content-Disposition": f"attachment; filename={doc['filename']}"})
+
+
 @app.get("/api/health")
 async def health():
     return {"status": "ok", "service": "BrokerEurope API"}
+

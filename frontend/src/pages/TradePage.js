@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, ArrowDownToLine, ChevronUp, ChevronDown, Info, X } from 'lucide-react';
+import { CreditCard, ArrowDownToLine, ChevronUp, ChevronDown, Info } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 import { ASSETS, CAT_COLORS } from '../components/trade/tradeData';
 import TradeAssets from '../components/trade/TradeAssets';
@@ -16,9 +16,9 @@ export default function TradePage() {
 
   const [activeCat, setActiveCat]         = useState('Forex');
   const [selectedAsset, setSelectedAsset] = useState(ASSETS.Forex.items[0]);
-  const [showModal, setShowModal]         = useState(false);
-  const [modalSide, setModalSide]         = useState('comprar'); // qual lado abre o modal
-  const [isMobile, setIsMobile]           = useState(window.innerWidth < 1024);
+  const [showOrder, setShowOrder]         = useState(false);
+  const [initSide, setInitSide]           = useState('comprar');
+  const [isMobile, setIsMobile]           = useState(() => window.innerWidth < 1024);
 
   // Actualiza isMobile ao redimensionar a janela
   useEffect(() => {
@@ -36,10 +36,8 @@ export default function TradePage() {
     setSelectedAsset(ASSETS[key].items[0]);
   };
 
-  const openModal = (side) => {
-    setModalSide(side);
-    setShowModal(true);
-  };
+  const handleBuy  = () => { setInitSide('comprar'); setShowOrder(true); };
+  const handleSell = () => { setInitSide('vender');  setShowOrder(true); };
 
   const chartSrc = `https://s.tradingview.com/widgetembed/?frameElementId=tv_ev&symbol=${encodeURIComponent(selectedAsset.symbol)}&interval=D&theme=dark&style=1&timezone=Europe%2FLisbon&locale=pt&withdateranges=1`;
 
@@ -48,40 +46,15 @@ export default function TradePage() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-        {/* Modal de ordem (mobile) */}
-        {showModal && (
-          <>
-            <div
-              onClick={() => setShowModal(false)}
-              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 80 }}
-            />
-            <div style={{
-              position: 'fixed', bottom: 0, left: 0, right: 0,
-              zIndex: 81, borderRadius: '18px 18px 0 0',
-              maxHeight: '90vh', overflowY: 'auto',
-            }}>
-              <div style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '14px 16px', background: '#111118',
-                borderRadius: '18px 18px 0 0', borderBottom: '1px solid #26263a',
-              }}>
-                <div>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: col.active }}>
-                    {selectedAsset.label}
-                  </span>
-                  <span style={{ fontSize: 12, color: '#7a8299', marginLeft: 8 }}>
-                    {selectedAsset.price}
-                  </span>
-                </div>
-                <button onClick={() => setShowModal(false)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7a8299', padding: 4 }}>
-                  <X size={20} />
-                </button>
-              </div>
-              {/* Passa initialSide para abrir no lado correcto */}
-              <TradeOrder asset={selectedAsset} activeCat={activeCat} initialSide={modalSide} />
-            </div>
-          </>
+        {/* Painel de ordem inline — SEM position:fixed, sem modal */}
+        {showOrder && (
+          <TradeOrder
+            key={`${selectedAsset.symbol}-${initSide}`}
+            asset={selectedAsset}
+            activeCat={activeCat}
+            initialSide={initSide}
+            onClose={() => setShowOrder(false)}
+          />
         )}
 
         {/* Saldo + Lucro */}
@@ -96,7 +69,7 @@ export default function TradePage() {
           </div>
         </div>
 
-        {/* Activo + botões de operação (topo, sempre visíveis) */}
+        {/* Activo + botões */}
         <div style={{ background: '#111118', border: `1px solid ${col.border}`, borderRadius: 12, padding: '14px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <div>
@@ -115,17 +88,17 @@ export default function TradePage() {
             </div>
           </div>
 
-          {/* COMPRAR / VENDER — grandes e visíveis, cada um abre no lado correcto */}
+          {/* COMPRAR / VENDER */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <button
-              onClick={() => openModal('comprar')}
-              style={{ padding: '15px', background: '#22c58b', border: 'none', borderRadius: 12, color: '#fff', fontSize: 15, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+              onClick={handleBuy}
+              style={{ padding: '15px 0', background: '#22c58b', border: 'none', borderRadius: 12, color: '#fff', fontSize: 15, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
             >
               <ChevronUp size={18} />COMPRAR
             </button>
             <button
-              onClick={() => openModal('vender')}
-              style={{ padding: '15px', background: '#ef4444', border: 'none', borderRadius: 12, color: '#fff', fontSize: 15, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+              onClick={handleSell}
+              style={{ padding: '15px 0', background: '#ef4444', border: 'none', borderRadius: 12, color: '#fff', fontSize: 15, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
             >
               <ChevronDown size={18} />VENDER
             </button>
@@ -151,7 +124,7 @@ export default function TradePage() {
           activeCat={activeCat}
           selectedAsset={selectedAsset}
           onCatChange={handleCatChange}
-          onAssetSelect={asset => { setSelectedAsset(asset); openModal('comprar'); }}
+          onAssetSelect={(a) => { setSelectedAsset(a); setShowOrder(false); }}
         />
       </div>
     );

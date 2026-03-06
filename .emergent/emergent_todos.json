@@ -1,30 +1,22 @@
 [
   {
-    "content": "Phase 1: WebSocket + Deposit capture POC",
-    "status": "completed"
+    "content": "Backend: Chat, Ordens, KYC endpoints",
+    "status": "in_progress"
   },
   {
-    "content": "Phase 2: Get design guidelines from design agent",
-    "status": "completed"
+    "content": "Frontend: Chat flutuante + notificações push",
+    "status": "pending"
   },
   {
-    "content": "Phase 2: Backend - Auth, Users, Cards, Deposits, WebSocket endpoints",
-    "status": "completed"
+    "content": "Frontend: Histórico de operações",
+    "status": "pending"
   },
   {
-    "content": "Phase 2: Frontend - Client area (Trade, Deposit, Withdrawal, News, Profile)",
-    "status": "completed"
+    "content": "Frontend: KYC upload no Perfil",
+    "status": "pending"
   },
   {
-    "content": "Phase 2: Frontend - Admin CRM (/adm) with leads, cards, balance manipulation",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 2: End-to-end testing with testing agent",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 2: All user stories covered",
-    "status": "completed"
+    "content": "Admin: Chat + visualização KYC",
+    "status": "pending"
   }
 ]
