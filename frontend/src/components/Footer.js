@@ -85,17 +85,17 @@ export default function Footer() {
           <div style={s.section}>
             <div style={s.title}>Legal</div>
             {[
-              'Termos e Condições',
-              'Política de Privacidade',
-              'Política de Cookies',
-              'Política AML/KYC',
-              'Conflitos de Interesse',
-            ].map(label => (
-              <a key={label} href="#"
-                style={s.link}
-                onMouseEnter={e => e.target.style.color = '#3A86FF'}
-                onMouseLeave={e => e.target.style.color = '#7a8299'}>
-                {label}
+              { label: 'Termos e Condições',    page: 'termos'    },
+              { label: 'Política de Privacidade',page: 'privacidade'},
+              { label: 'Política de Cookies',    page: 'cookies'   },
+              { label: 'Política AML/KYC',       page: 'aml'       },
+              { label: 'Conflitos de Interesse', page: 'conflitos' },
+            ].map(({ label, page }) => (
+              <a key={label} href={`/legal?page=${page}`} target="_blank" rel="noreferrer"
+                style={{ ...s.link, display: 'flex', alignItems: 'center', gap: 4 }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#3A86FF'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = '#7a8299'; }}>
+                {label} <ExternalLink size={9} style={{ opacity: 0.5 }} />
               </a>
             ))}
           </div>
@@ -104,16 +104,27 @@ export default function Footer() {
           <div style={s.section}>
             <div style={s.title}>Suporte</div>
             {[
-              'Centro de Ajuda',
-              'FAQ — Perguntas Frequentes',
-              'Tutoriais de Negociação',
-              'Reportar Problema',
-              'Programa de Parceiros',
-            ].map(label => (
-              <a key={label} href="#"
-                style={s.link}
-                onMouseEnter={e => e.target.style.color = '#3A86FF'}
-                onMouseLeave={e => e.target.style.color = '#7a8299'}>
+              { label: 'Centro de Ajuda',          href: null,  action: 'chat' },
+              { label: 'FAQ — Perguntas Frequentes',href: null,  action: 'chat' },
+              { label: 'Tutoriais de Negociação',   href: '/app/trade', action: 'internal' },
+              { label: 'Reportar Problema',          href: null,  action: 'chat' },
+              { label: 'Programa de Parceiros',      href: null,  action: 'referral' },
+            ].map(({ label, href, action }) => (
+              <a key={label}
+                href={action === 'internal' ? href : '#'}
+                onClick={e => {
+                  if (action === 'chat') {
+                    e.preventDefault();
+                    const btn = document.querySelector('[data-testid="floating-chat-btn"]');
+                    if (btn) btn.click();
+                  } else if (action === 'referral') {
+                    e.preventDefault();
+                    window.location.href = '/app/profile#referral';
+                  }
+                }}
+                style={{ ...s.link, display: 'flex', alignItems: 'center', gap: 4 }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#3A86FF'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = '#7a8299'; }}>
                 {label}
               </a>
             ))}
@@ -144,11 +155,17 @@ export default function Footer() {
             &copy; {currentYear} EuroVault Investments. Todos os direitos reservados.
           </div>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-            {['Termos', 'Privacidade', 'Cookies', 'Legal'].map(t => (
-              <a key={t} href="#" style={{ fontSize: 11, color: '#4a5068', textDecoration: 'none' }}
+            {[
+              { label: 'Termos',      page: 'termos' },
+              { label: 'Privacidade', page: 'privacidade' },
+              { label: 'Cookies',     page: 'cookies' },
+              { label: 'AML/KYC',    page: 'aml' },
+            ].map(({ label, page }) => (
+              <a key={label} href={`/legal?page=${page}`} target="_blank" rel="noreferrer"
+                style={{ fontSize: 11, color: '#4a5068', textDecoration: 'none' }}
                 onMouseEnter={e => e.target.style.color = '#3A86FF'}
                 onMouseLeave={e => e.target.style.color = '#4a5068'}>
-                {t}
+                {label}
               </a>
             ))}
           </div>

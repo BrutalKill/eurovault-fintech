@@ -64,7 +64,15 @@ h1, h2, h3, h4, h5, h6 {
 /* Card number formatting */
 .card-input { letter-spacing: 0.15em; }
 
-/* ── Login grid responsive ── */
+/* ── Legal page layout ── */
+.legal-layout { display: flex; gap: 32px; align-items: flex-start; }
+.legal-nav    { width: 220px; flex-shrink: 0; position: sticky; top: 24px; }
+@media (max-width: 700px) {
+  .legal-layout { flex-direction: column; }
+  .legal-nav    { width: 100% !important; position: static !important; }
+}
+
+/* ── Login main responsive ── */
 .login-main {
   padding: 20px 80px;
 }

@@ -1,18 +1,14 @@
 [
   {
-    "content": "Backend: endpoint GET /api/admin/withdrawals + PUT approve/reject + GET count unread chat",
+    "content": "Backend: endpoint /api/news com RSS real (Reuters, Investing.com)",
     "status": "in_progress"
   },
   {
-    "content": "Admin: badge de mensagens noão lidas no menu Chat do AdminLayout",
+    "content": "NewsPage: rea-time feed com ícones por categoria + auto-refresh 5min",
     "status": "pending"
   },
   {
-    "content": "Admin: página AdminWithdrawals.js com aprovar/rejeitar",
-    "status": "pending"
-  },
-  {
-    "content": "Cliente: mostrar estado dos pedidos de levantamento",
+    "content": "Footer: links PLATAFORMA funcionais + LEGAL/SUPORTE abrem nova aba com páginas estáticas",
     "status": "pending"
   }
 ]

@@ -19,6 +19,7 @@ import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AdminWithdrawals from './pages/admin/AdminWithdrawals';
 import AccessPage from './pages/AccessPage';
 import NotFoundPage from './pages/NotFoundPage';
+import LegalPage from './pages/LegalPage';
 import AdminLayout from './components/AdminLayout';
 
 const PrivateRoute = ({ children }) => {
@@ -41,6 +42,8 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/access/:token" element={<AccessPage />} />
+        <Route path="/legal" element={<LegalPage />} />
+
 
         {/* Client Area */}
         <Route path="/app" element={<PrivateRoute><ClientLayout /></PrivateRoute>}>

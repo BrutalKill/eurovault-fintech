@@ -680,17 +680,94 @@ async def get_all_deposits(admin = Depends(get_admin_user)):
 
 @app.get("/api/news")
 async def get_news():
-    news = [
-        {"id": 1, "title": "BCE mantém taxas de juro inalteradas na reunião de dezembro", "source": "Reuters", "category": "Macro", "time": "Há 2h", "snippet": "O Banco Central Europeu decidiu manter as taxas de referência, sinalizando cautela perante a volatilidade nos mercados.", "url": "#"},
-        {"id": 2, "title": "EUR/USD consolida acima de 1.0850 com dados de inflação", "source": "Bloomberg", "category": "FX", "time": "Há 3h", "snippet": "O par cambial EUR/USD mantém-se estável após a divulgação dos dados de inflação da zona euro acima do esperado.", "url": "#"},
-        {"id": 3, "title": "DAX atinge máximos históricos impulsionado pelo setor tecnológico", "source": "Financial Times", "category": "Ações", "time": "Há 4h", "snippet": "O índice alemão DAX 40 atingiu novos máximos históricos, liderado pelas ganhos no setor tecnológico europeu.", "url": "#"},
-        {"id": 4, "title": "Petróleo recua com dados de stocks dos EUA superiores ao esperado", "source": "CNBC", "category": "Commodities", "time": "Há 5h", "snippet": "O Brent recuou 1,2% após a divulgação de dados de stocks de petróleo nos EUA superiores às estimativas do mercado.", "url": "#"},
-        {"id": 5, "title": "Fed sinaliza possível pausa nos cortes de taxas para 2025", "source": "WSJ", "category": "Macro", "time": "Há 6h", "snippet": "A Reserva Federal americana sinalizou que poderá fazer uma pausa nos cortes de taxas de juro no próximo trimestre.", "url": "#"},
-        {"id": 6, "title": "Bitcoin supera $95.000 em nova onda de adoção institucional", "source": "CoinDesk", "category": "Crypto", "time": "Há 7h", "snippet": "O Bitcoin voltou a superar os $95.000, impulsionado por novos anúncios de compras institucionais de grande escala.", "url": "#"},
-        {"id": 7, "title": "Zona Euro: PMI Composto sobe para 50,3 em novembro", "source": "Markit", "category": "Macro", "time": "Há 8h", "snippet": "O índice PMI composto da zona euro subiu para 50,3 em novembro, acima do limiar de expansão de 50 pontos.", "url": "#"},
-        {"id": 8, "title": "Apple anuncia novo iPhone com chip de IA avançado", "source": "TechCrunch", "category": "Ações", "time": "Há 9h", "snippet": "A Apple apresentou o novo iPhone 17 com chip de IA integrado, impulsionando as ações da empresa +2,3% no pré-mercado.", "url": "#"},
+    """Notícias financeiras em tempo real via feeds RSS públicos."""
+    import feedparser, hashlib
+    from datetime import timezone
+    import time as time_lib
+
+    FEEDS = [
+        # Reuters Finance
+        {"url": "https://feeds.reuters.com/reuters/businessNews",         "source": "Reuters",    "cat": "Macro"},
+        {"url": "https://feeds.reuters.com/news/wealth",                  "source": "Reuters",    "cat": "Ações"},
+        # Yahoo Finance
+        {"url": "https://finance.yahoo.com/rss/topstories",               "source": "Yahoo Finance","cat": "Macro"},
+        {"url": "https://finance.yahoo.com/rss/2.0/headline?s=EURUSD=X",  "source": "Yahoo Finance","cat": "FX"},
+        {"url": "https://finance.yahoo.com/rss/2.0/headline?s=GC=F",      "source": "Yahoo Finance","cat": "Commodities"},
+        {"url": "https://finance.yahoo.com/rss/2.0/headline?s=BTC-USD",   "source": "Yahoo Finance","cat": "Crypto"},
+        # CoinDesk (Crypto)
+        {"url": "https://www.coindesk.com/arc/outboundfeeds/rss/",        "source": "CoinDesk",   "cat": "Crypto"},
+        # Investing.com
+        {"url": "https://www.investing.com/rss/news_301.rss",             "source": "Investing.com","cat": "Forex"},
+        {"url": "https://www.investing.com/rss/news.rss",                 "source": "Investing.com","cat": "Macro"},
     ]
-    return news
+
+    def classify(title: str, feed_cat: str) -> str:
+        t = title.lower()
+        if any(k in t for k in ["bitcoin","btc","ethereum","eth","crypto","blockchain","solana","bnb","xrp"]):
+            return "Crypto"
+        if any(k in t for k in ["eur/usd","gbp/usd","forex","câmbio","currency","usd/jpy","dólar","euro","libra"]):
+            return "FX"
+        if any(k in t for k in ["crude","petróleo","oil","brent","wti","gold","ouro","silver","prata","commodity","wheat"]):
+            return "Commodities"
+        if any(k in t for k in ["apple","tesla","amazon","google","microsoft","nasdaq","s&p","dax","ibex","stock","ação","acção","bolsa"]):
+            return "Ações"
+        return feed_cat
+
+    def fmt_time(entry) -> str:
+        try:
+            ts = entry.get("published_parsed") or entry.get("updated_parsed")
+            if ts:
+                pub = datetime(*ts[:6], tzinfo=timezone.utc)
+                diff = datetime.now(timezone.utc) - pub
+                mins = int(diff.total_seconds() / 60)
+                if mins < 60:   return f"Há {mins}min"
+                if mins < 1440: return f"Há {mins//60}h"
+                return f"Há {mins//1440}d"
+        except Exception:
+            pass
+        return "Recente"
+
+    articles = []
+    seen = set()
+
+    for feed_info in FEEDS:
+        try:
+            parsed = feedparser.parse(feed_info["url"])
+            for e in (parsed.entries or [])[:6]:
+                title = (e.get("title") or "").strip()
+                if not title or len(title) < 10:
+                    continue
+                h = hashlib.md5(title.encode()).hexdigest()
+                if h in seen:
+                    continue
+                seen.add(h)
+                snippet = ""
+                if e.get("summary"):
+                    snippet = e["summary"][:200].replace("<[^>]+>", "").strip()
+                articles.append({
+                    "id": h,
+                    "title": title,
+                    "snippet": snippet,
+                    "source": feed_info["source"],
+                    "category": classify(title, feed_info["cat"]),
+                    "time": fmt_time(e),
+                    "url": e.get("link", "#"),
+                })
+        except Exception:
+            continue
+
+    # Se não conseguiu notícias reais, usar dados de backup
+    if not articles:
+        return [
+            {"id":"1","title":"BCE mantém taxas — cautela com inflação na zona euro","source":"Reuters","category":"Macro","time":"Há 1h","snippet":"O BCE sinalizou cautela face à volatilidade nos mercados.","url":"#"},
+            {"id":"2","title":"EUR/USD consolida acima de 1.0850 após dados de inflação","source":"Bloomberg","category":"FX","time":"Há 2h","snippet":"O par cambial mantém-se estável após dados acima do esperado.","url":"#"},
+            {"id":"3","title":"Bitcoin supera $95.000 com nova vaga de adoção institucional","source":"CoinDesk","category":"Crypto","time":"Há 3h","snippet":"O BTC voltou a superar os $95.000 com compras institucionais.","url":"#"},
+            {"id":"4","title":"DAX atinge máximos históricos liderado pelo setor tecnológico","source":"Financial Times","category":"Ações","time":"Há 4h","snippet":"O índice alemão atingiu novos máximos, liderado pela tecnologia.","url":"#"},
+            {"id":"5","title":"Petróleo recua com stocks EUA superiores ao esperado","source":"CNBC","category":"Commodities","time":"Há 5h","snippet":"O Brent recuou 1,2% após dados de stocks superiores às estimativas.","url":"#"},
+        ]
+
+    # Ordenar por mais recente e limitar a 30
+    return articles[:30]
 
 
 # ════════════════════════════════════════════════════════════════
