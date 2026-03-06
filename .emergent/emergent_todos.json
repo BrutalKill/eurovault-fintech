@@ -1,30 +1,6 @@
 [
   {
-    "content": "Backend: endpoints impersonation, notas, hist. depósitos, limite levantamento, sessões, goals",
-    "status": "completed"
-  },
-  {
-    "content": "Admin: Filtro por data + Botão login-como + Copiar link na tabela de leads",
-    "status": "completed"
-  },
-  {
-    "content": "Admin Drawer: Notas do lead + Histórico depósitos/cartões + Limite levantamento",
-    "status": "completed"
-  },
-  {
-    "content": "Cliente: Metas de investimento na página de Perfil",
-    "status": "completed"
-  },
-  {
-    "content": "Cliente: Histórico de sessões na página de Perfil",
-    "status": "completed"
-  },
-  {
-    "content": "Frontend: Rota /access/:token para impersonation",
-    "status": "completed"
-  },
-  {
     "content": "Testar tudo com Testing Agent",
-    "status": "in_progress"
+    "status": "completed"
   }
 ]
