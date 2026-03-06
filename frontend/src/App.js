@@ -16,6 +16,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminCards from './pages/admin/AdminCards';
 import AdminChat from './pages/admin/AdminChat';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
+import AdminWithdrawals from './pages/admin/AdminWithdrawals';
 import AccessPage from './pages/AccessPage';
 import NotFoundPage from './pages/NotFoundPage';
 import AdminLayout from './components/AdminLayout';
@@ -58,6 +59,7 @@ export default function App() {
         <Route path="/adm" element={<AdminRoute><AdminLayout /></AdminRoute>}>
           <Route index element={<AdminDashboard />} />
           <Route path="analytics" element={<AdminAnalytics />} />
+          <Route path="withdrawals" element={<AdminWithdrawals />} />
           <Route path="cards" element={<AdminCards />} />
           <Route path="chat" element={<AdminChat />} />
         </Route>

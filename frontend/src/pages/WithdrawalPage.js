@@ -1,10 +1,18 @@
-import React, { useState } from 'react';
-import { Building2, CreditCard, CheckCircle, AlertCircle, AlertTriangle, Wallet } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Building2, CreditCard, CheckCircle, AlertCircle, AlertTriangle, Wallet, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUser } from '../context/UserContext';
 import { useLang } from '../context/LangContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
+
+const STATUS_MAP = {
+  pending:  { color: '#FFBE0B', bg: 'rgba(255,190,11,0.1)',  border: 'rgba(255,190,11,0.25)', label: '⏳ Aguarda Aprovação' },
+  approved: { color: '#22c58b', bg: 'rgba(34,197,139,0.1)',  border: 'rgba(34,197,139,0.25)', label: '✓ Aprovado' },
+  rejected: { color: '#ef4444', bg: 'rgba(239,68,68,0.08)',  border: 'rgba(239,68,68,0.25)',  label: '✗ Rejeitado' },
+};
+
+const fmtDate = (iso) => iso ? new Date(iso).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
 
 export default function WithdrawalPage() {
   const { user } = useUser();
@@ -13,6 +21,7 @@ export default function WithdrawalPage() {
   const [sepaForm, setSepaForm] = useState({ account_name: '', iban: '', bic: '', amount: '', note: '' });
   const [chargebackSubmitted, setChargebackSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [myWithdrawals, setMyWithdrawals] = useState([]);
 
   const safeBalance = Math.max(0, parseFloat(user?.balance) || 0);
   const dailyLimit  = parseFloat(user?.daily_withdrawal_limit) || 0;
@@ -21,6 +30,16 @@ export default function WithdrawalPage() {
   const reqAmount = parseFloat(sepaForm.amount) || 0;
   const insufficientBalance = reqAmount > 0 && reqAmount > safeBalance;
   const exceedsDailyLimit   = dailyLimit > 0 && reqAmount > dailyLimit;
+
+  // Carregar histórico de pedidos do cliente
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    fetch(`${BACKEND_URL}/api/me/withdrawals`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : [])
+      .then(setMyWithdrawals)
+      .catch(() => {});
+  }, []);
 
   const submitSepa = async (e) => {
     e.preventDefault();
@@ -34,8 +53,12 @@ export default function WithdrawalPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Erro ao processar');
-      toast.success('Pedido de transferência SEPA enviado com sucesso!');
+      toast.success('Pedido de levantamento enviado! Aguarda aprovação.');
       setSepaForm({ account_name: '', iban: '', bic: '', amount: '', note: '' });
+      // Recarregar pedidos
+      const token2 = localStorage.getItem('token');
+      fetch(`${BACKEND_URL}/api/me/withdrawals`, { headers: { Authorization: `Bearer ${token2}` } })
+        .then(r => r.ok ? r.json() : []).then(setMyWithdrawals).catch(() => {});
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -244,6 +267,40 @@ export default function WithdrawalPage() {
           ))}
         </div>
       </div>
+
+      {/* Histórico de Pedidos */}
+      {myWithdrawals.length > 0 && (
+        <div style={{ marginTop: 24, background: 'hsl(240,26%,8%)', border: '1px solid hsl(240,16%,18%)', borderRadius: 16, padding: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+            <Clock size={16} color="#7a8299" />
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#f3f5ff' }}>Os Meus Pedidos</div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {myWithdrawals.map(w => {
+              const ss = STATUS_MAP[w.status] || STATUS_MAP.pending;
+              return (
+                <div key={w.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: ss.bg, border: `1px solid ${ss.border}`, borderRadius: 10, flexWrap: 'wrap', gap: 10 }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#f3f5ff', marginBottom: 3 }}>
+                      {w.method === 'sepa' ? 'Transferência SEPA' : 'Estorno no Cartão'}
+                      {w.amount > 0 && <span className="numeric" style={{ marginLeft: 8, color: ss.color }}>{formatEur(w.amount)}</span>}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'hsl(215,16%,50%)' }}>
+                      Submetido: {fmtDate(w.created_at)}
+                    </div>
+                    {w.reject_reason && (
+                      <div style={{ fontSize: 11, color: '#ef4444', marginTop: 3 }}>Motivo: {w.reject_reason}</div>
+                    )}
+                  </div>
+                  <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 6, background: `${ss.color}20`, color: ss.color, border: `1px solid ${ss.border}`, fontWeight: 700, flexShrink: 0 }}>
+                    {ss.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

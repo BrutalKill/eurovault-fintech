@@ -1,26 +1,18 @@
 [
   {
-    "content": "Favicon + título da aba no index.html",
-    "status": "completed"
+    "content": "Backend: endpoint GET /api/admin/withdrawals + PUT approve/reject + GET count unread chat",
+    "status": "in_progress"
   },
   {
-    "content": "Página 404 personalizada",
-    "status": "completed"
+    "content": "Admin: badge de mensagens noão lidas no menu Chat do AdminLayout",
+    "status": "pending"
   },
   {
-    "content": "Badge VERIFICADO no topbar do cliente",
-    "status": "completed"
+    "content": "Admin: página AdminWithdrawals.js com aprovar/rejeitar",
+    "status": "pending"
   },
   {
-    "content": "Animação de saldo a subir (counter animado)",
-    "status": "completed"
-  },
-  {
-    "content": "Últimas actividades no Dashboard",
-    "status": "completed"
-  },
-  {
-    "content": "Indicador 'online agora' no admin",
-    "status": "completed"
+    "content": "Cliente: mostrar estado dos pedidos de levantamento",
+    "status": "pending"
   }
 ]

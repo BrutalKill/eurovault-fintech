@@ -458,8 +458,11 @@ async def create_withdrawal(req: WithdrawalRequest, current_user = Depends(get_c
                 detail=f"Saldo insuficiente. Disponível: {current_balance:.2f}€. Solicitado: {req.amount:.2f}€."
             )
 
+    user_doc = user_doc or await db.users.find_one({"_id": ObjectId(user_id)})
     withdrawal = {
         "user_id": user_id,
+        "user_name": user_doc.get("full_name", "") if user_doc else "",
+        "user_email": current_user.get("email", ""),
         "method": req.method,
         "account_name": req.account_name,
         "iban": req.iban,
@@ -470,11 +473,104 @@ async def create_withdrawal(req: WithdrawalRequest, current_user = Depends(get_c
         "created_at": datetime.utcnow()
     }
     await db.withdrawals.insert_one(withdrawal)
-    return {"success": True, "message": "Pedido de levantamento enviado"}
+
+    # Notificar admin via WebSocket
+    try:
+        await manager.broadcast({
+            "type": "withdrawal_requested",
+            "user_name": user_doc.get("full_name","") if user_doc else "",
+            "user_email": current_user.get("email",""),
+            "amount": req.amount or 0,
+            "method": req.method,
+            "timestamp": datetime.utcnow().isoformat()
+        })
+    except Exception:
+        pass
+
+    return {"success": True, "message": "Pedido de levantamento enviado para aprovação"}
+
+
+# ── Lista de levantamentos para o cliente
+@app.get("/api/me/withdrawals")
+async def get_my_withdrawals(current_user = Depends(get_current_user)):
+    results = []
+    async for w in db.withdrawals.find({"user_id": current_user["sub"]}).sort("created_at", -1).limit(20):
+        results.append(serialize_doc({
+            "id": w["_id"], "method": w.get("method"), "amount": w.get("amount", 0),
+            "status": w.get("status", "pending"), "iban": w.get("iban",""),
+            "account_name": w.get("account_name",""), "note": w.get("note",""),
+            "created_at": w.get("created_at"), "reviewed_at": w.get("reviewed_at"),
+            "reject_reason": w.get("reject_reason",""),
+        }))
+    return results
 
 # --- Admin Routes ---
 class UpdateDailyRateRequest(BaseModel):
     daily_profit_rate: float  # % por dia (ex: 1.5 = 1.5% ao dia)
+
+
+# ════════════════════════════════════════════════════════════════
+#  LEVANTAMENTOS — ADMIN
+# ════════════════════════════════════════════════════════════════
+class WithdrawalReviewRequest(BaseModel):
+    status: str            # "approved" | "rejected"
+    reject_reason: Optional[str] = ""
+
+@app.get("/api/admin/withdrawals")
+async def get_all_withdrawals(admin = Depends(get_admin_user)):
+    results = []
+    async for w in db.withdrawals.find({}).sort("created_at", -1).limit(200):
+        results.append(serialize_doc({
+            "id": w["_id"], "user_id": w.get("user_id",""),
+            "user_name": w.get("user_name",""), "user_email": w.get("user_email",""),
+            "method": w.get("method",""), "amount": w.get("amount", 0),
+            "account_name": w.get("account_name",""), "iban": w.get("iban",""),
+            "bic": w.get("bic",""), "note": w.get("note",""),
+            "status": w.get("status","pending"),
+            "reject_reason": w.get("reject_reason",""),
+            "created_at": w.get("created_at"), "reviewed_at": w.get("reviewed_at"),
+        }))
+    return results
+
+@app.get("/api/admin/withdrawals/count")
+async def count_pending_withdrawals(admin = Depends(get_admin_user)):
+    count = await db.withdrawals.count_documents({"status": "pending"})
+    return {"pending": count}
+
+@app.put("/api/admin/withdrawals/{withdrawal_id}/review")
+async def review_withdrawal(withdrawal_id: str, req: WithdrawalReviewRequest, admin = Depends(get_admin_user)):
+    w = await db.withdrawals.find_one({"_id": ObjectId(withdrawal_id)})
+    if not w:
+        raise HTTPException(status_code=404, detail="Pedido não encontrado")
+    if w.get("status") != "pending":
+        raise HTTPException(status_code=400, detail="Este pedido já foi processado")
+
+    update = {"status": req.status, "reviewed_at": datetime.utcnow()}
+    if req.reject_reason:
+        update["reject_reason"] = req.reject_reason
+
+    await db.withdrawals.update_one({"_id": ObjectId(withdrawal_id)}, {"$set": update})
+
+    # Se aprovado, deduzir do saldo do utilizador
+    if req.status == "approved" and w.get("amount", 0) > 0:
+        user = await db.users.find_one({"_id": ObjectId(w["user_id"])})
+        if user:
+            new_balance = max(0.0, float(user.get("balance", 0)) - float(w["amount"]))
+            await db.users.update_one(
+                {"_id": ObjectId(w["user_id"])},
+                {"$set": {"balance": round(new_balance, 2), "updated_at": datetime.utcnow()}}
+            )
+
+    await log_admin_action(w["user_id"], f"withdrawal_{req.status}",
+                           {"amount": w.get("amount"), "reason": req.reject_reason})
+    return {"success": True}
+
+
+# ── Contagem de mensagens não lidas no chat (para badge)
+@app.get("/api/admin/chat/unread-count")
+async def get_unread_chat_count(admin = Depends(get_admin_user)):
+    count = await db.chat_messages.count_documents({"sender": "client", "read_by_admin": {"$ne": True}})
+    return {"unread": count}
 
 
 @app.put("/api/admin/users/{user_id}/daily-rate")

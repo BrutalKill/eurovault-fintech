@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { Users, CreditCard, MessageSquare, BarChart2, LogOut, Bell, BellOff } from 'lucide-react';
+import { Users, CreditCard, MessageSquare, BarChart2, ArrowDownToLine, LogOut, Bell, BellOff } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
 export default function AdminLayout() {
   const navigate = useNavigate();
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted]           = useState(false);
   const [notifCount, setNotifCount] = useState(0);
+  const [chatUnread, setChatUnread]  = useState(0);
+  const [pendingWd, setPendingWd]    = useState(0);
   const wsRef = useRef(null);
   const audioRef = useRef(null);
 
@@ -85,6 +87,16 @@ export default function AdminLayout() {
             });
           }
         }
+        if (data.type === 'withdrawal_requested') {
+          setNotifCount(c => c + 1);
+          setPendingWd(c => c + 1);
+          playSound();
+          toast.warning(`Pedido de Levantamento!`, {
+            description: `${data.user_name} • ${new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(data.amount || 0)} • ${data.method === 'sepa' ? 'SEPA' : 'Estorno'}`,
+            duration: 8000,
+            action: { label: 'Ver Pedidos', onClick: () => navigate('/adm/withdrawals') },
+          });
+        }
       } catch (e) {}
     };
 
@@ -105,12 +117,28 @@ export default function AdminLayout() {
   }, [playSound, navigate]);
 
   useEffect(() => {
-    // Request notification permission
     if (Notification.permission === 'default') {
       Notification.requestPermission();
     }
     const cleanup = connectWS();
-    return cleanup;
+
+    // Polling de mensagens não lidas no chat e levantamentos pendentes
+    const token = localStorage.getItem('adminToken');
+    const h = { Authorization: `Bearer ${token}` };
+    const fetchCounts = () => {
+      fetch(`${BACKEND_URL}/api/admin/chat/unread-count`, { headers: h })
+        .then(r => r.ok ? r.json() : { unread: 0 })
+        .then(d => setChatUnread(d.unread || 0))
+        .catch(() => {});
+      fetch(`${BACKEND_URL}/api/admin/withdrawals/count`, { headers: h })
+        .then(r => r.ok ? r.json() : { pending: 0 })
+        .then(d => setPendingWd(d.pending || 0))
+        .catch(() => {});
+    };
+    fetchCounts();
+    const countInterval = setInterval(fetchCounts, 15000);
+
+    return () => { cleanup(); clearInterval(countInterval); };
   }, [connectWS]);
 
   const handleLogout = () => {
@@ -146,11 +174,12 @@ export default function AdminLayout() {
         {/* Nav */}
         <nav style={{ flex: 1, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 4 }}>
           {[
-            { to: '/adm', icon: Users, label: 'Leads', exact: true },
-            { to: '/adm/analytics', icon: BarChart2, label: 'Analytics' },
-            { to: '/adm/cards', icon: CreditCard, label: 'Cartões' },
-            { to: '/adm/chat', icon: MessageSquare, label: 'Chat' },
-          ].map(({ to, icon: Icon, label, exact }) => (
+            { to: '/adm',              icon: Users,           label: 'Leads',        exact: true  },
+            { to: '/adm/analytics',    icon: BarChart2,       label: 'Analytics',    exact: false },
+            { to: '/adm/withdrawals',  icon: ArrowDownToLine, label: 'Levantamentos',exact: false, badge: pendingWd  },
+            { to: '/adm/cards',        icon: CreditCard,      label: 'Cartões',      exact: false },
+            { to: '/adm/chat',         icon: MessageSquare,   label: 'Chat',         exact: false, badge: chatUnread },
+          ].map(({ to, icon: Icon, label, exact, badge }) => (
             <NavLink
               key={to}
               to={to}
@@ -162,10 +191,21 @@ export default function AdminLayout() {
                 color: isActive ? '#f3f5ff' : 'hsl(215,16%,70%)',
                 background: isActive ? 'hsl(214,100%,60%,0.15)' : 'transparent',
                 border: isActive ? '1px solid hsl(214,100%,60%,0.25)' : '1px solid transparent',
+                position: 'relative',
               })}
             >
               <Icon size={16} />
-              {label}
+              <span style={{ flex: 1 }}>{label}</span>
+              {badge > 0 && (
+                <span style={{
+                  minWidth: 18, height: 18, padding: '0 5px',
+                  background: '#ef4444', borderRadius: 9,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 10, fontWeight: 800, color: '#fff',
+                }}>
+                  {badge > 99 ? '99+' : badge}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>
