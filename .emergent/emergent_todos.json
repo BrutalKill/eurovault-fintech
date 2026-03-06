@@ -1,6 +1,14 @@
 [
   {
-    "content": "Testar tudo com Testing Agent",
-    "status": "completed"
+    "content": "Backend: endpoint GET /api/admin/users/{id}/kyc-docs (docs por utilizador)",
+    "status": "in_progress"
+  },
+  {
+    "content": "ProfilePage: KYC com frente e verso separados + estado individual",
+    "status": "pending"
+  },
+  {
+    "content": "AdminDashboard Drawer: nova tab KYC com docs + aprovar/rejeitar",
+    "status": "pending"
   }
 ]

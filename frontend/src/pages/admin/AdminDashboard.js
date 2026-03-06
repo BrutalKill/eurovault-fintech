@@ -51,6 +51,10 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
   const [loadingAudit, setLoadingAudit] = useState(false);
   // Notes history
   const [notesHistory, setNotesHistory] = useState([]);
+  // KYC docs
+  const [kycDocs, setKycDocs]       = useState([]);
+  const [loadingKyc, setLoadingKyc] = useState(false);
+  const [updatingKyc, setUpdatingKyc] = useState({});
 
   const ss = STATUS_STYLES[lead.status] || STATUS_STYLES['Novo'];
   const token = localStorage.getItem('adminToken');
@@ -82,6 +86,13 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
         setNotesHistory(nh);
         setLoadingAudit(false);
       }).catch(() => setLoadingAudit(false));
+    }
+    if (activeTab === 'kyc') {
+      setLoadingKyc(true);
+      fetch(`${BACKEND_URL}/api/admin/users/${lead.id}/kyc-docs`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(r => r.ok ? r.json() : [])
+        .then(d => { setKycDocs(d); setLoadingKyc(false); })
+        .catch(() => setLoadingKyc(false));
     }
   }, [activeTab, lead.id, token]);
 
@@ -123,8 +134,21 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
     }
   };
 
-  const handleSaveFollowup = async () => {
-    setSavingFu(true);
+  const handleKycStatus = async (docId, status) => {
+    setUpdatingKyc(p => ({ ...p, [docId]: true }));
+    try {
+      await fetch(`${BACKEND_URL}/api/admin/users/${lead.id}/kyc-docs/${docId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status }),
+      });
+      setKycDocs(prev => prev.map(d => d.id === docId ? { ...d, status } : d));
+      toast.success(`Documento ${status === 'approved' ? 'aprovado' : 'rejeitado'}!`);
+    } catch (_) { toast.error('Erro ao actualizar documento'); }
+    setUpdatingKyc(p => ({ ...p, [docId]: false }));
+  };
+
+  const handleSaveFollowup = async () => {    setSavingFu(true);
     try {
       await fetch(`${BACKEND_URL}/api/admin/users/${lead.id}/followup`, {
         method: 'PUT',
@@ -140,6 +164,7 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
     { key: 'finance',  label: 'Financeiro',  icon: TrendingUp },
     { key: 'notes',    label: 'Notas',        icon: StickyNote },
     { key: 'deposits', label: 'Depósitos',    icon: CreditCard },
+    { key: 'kyc',      label: 'KYC',          icon: User       },
     { key: 'followup', label: 'Follow-up',    icon: Clock },
     { key: 'audit',    label: 'Histórico',    icon: Filter },
   ];
@@ -311,6 +336,97 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
                       {d.country && <div style={{ fontSize: 10, color: '#4a5068', marginTop: 2 }}>{d.country} · {d.postal_code}</div>}
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Tab: KYC ── */}
+          {activeTab === 'kyc' && (
+            <div>
+              {loadingKyc ? (
+                <div style={{ padding: '30px 0', textAlign: 'center', color: '#4a5068', fontSize: 12 }}>A carregar documentos KYC…</div>
+              ) : kycDocs.length === 0 ? (
+                <div style={{ padding: '40px 0', textAlign: 'center', color: '#4a5068' }}>
+                  <User size={28} style={{ opacity: 0.3, marginBottom: 8 }} />
+                  <p style={{ fontSize: 12, margin: 0 }}>Nenhum documento KYC enviado</p>
+                  <p style={{ fontSize: 11, color: '#26263a', marginTop: 4 }}>O cliente ainda não submeteu documentos de identidade.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {/* Badge de estado geral */}
+                  {(() => {
+                    const statuses = kycDocs.map(d => d.status);
+                    const allApproved = statuses.every(s => s === 'approved');
+                    const anyRejected = statuses.some(s => s === 'rejected');
+                    const color = allApproved ? '#22c58b' : anyRejected ? '#ef4444' : '#FFBE0B';
+                    const label = allApproved ? '✓ Todos aprovados' : anyRejected ? '✗ Tem documentos rejeitados' : '⏳ Aguarda revisão';
+                    return (
+                      <div style={{ padding: '8px 12px', background: `${color}10`, border: `1px solid ${color}30`, borderRadius: 8, fontSize: 12, fontWeight: 700, color }}>
+                        {label} · {kycDocs.length} documento{kycDocs.length !== 1 ? 's' : ''}
+                      </div>
+                    );
+                  })()}
+
+                  {kycDocs.map(doc => {
+                    const isImg   = doc.content_type?.startsWith('image/');
+                    const docLabel = doc.doc_type?.replace('_frente','').replace('_verso','').replace('bi','BI/CC').replace('passport','Passaporte').replace('driver_license','Carta Condução');
+                    const side     = doc.doc_type?.includes('frente') ? 'Frente' : doc.doc_type?.includes('verso') ? 'Verso' : '';
+                    const stColor  = doc.status === 'approved' ? '#22c58b' : doc.status === 'rejected' ? '#ef4444' : '#FFBE0B';
+                    const stBg     = doc.status === 'approved' ? 'rgba(34,197,139,0.08)' : doc.status === 'rejected' ? 'rgba(239,68,68,0.08)' : 'rgba(255,190,11,0.08)';
+                    const stLabel  = doc.status === 'approved' ? 'Aprovado' : doc.status === 'rejected' ? 'Rejeitado' : 'Pendente';
+                    const busy     = updatingKyc[doc.id];
+
+                    return (
+                      <div key={doc.id} style={{ background: '#0e0e1a', border: `1px solid ${stColor}30`, borderRadius: 12, overflow: 'hidden' }}>
+                        {/* Cabeçalho do documento */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid #1e1e30' }}>
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: '#f3f5ff' }}>
+                              {docLabel} {side && `— ${side}`}
+                            </div>
+                            <div style={{ fontSize: 10, color: '#4a5068', marginTop: 2 }}>{doc.filename}</div>
+                          </div>
+                          <span style={{ fontSize: 10, padding: '3px 9px', borderRadius: 6, background: stBg, color: stColor, border: `1px solid ${stColor}40`, fontWeight: 700 }}>
+                            {stLabel}
+                          </span>
+                        </div>
+
+                        {/* Preview da imagem (se for imagem) */}
+                        {isImg && (
+                          <div style={{ padding: '10px 14px', borderBottom: '1px solid #1e1e30', background: '#06060f' }}>
+                            <img
+                              src={`${BACKEND_URL}/api/admin/kyc/${doc.id}/preview`}
+                              alt={doc.filename}
+                              style={{ width: '100%', maxHeight: 180, objectFit: 'contain', borderRadius: 6, display: 'block' }}
+                              onError={e => { e.target.style.display = 'none'; }}
+                            />
+                          </div>
+                        )}
+
+                        {/* Acções */}
+                        <div style={{ display: 'flex', gap: 8, padding: '10px 14px', flexWrap: 'wrap' }}>
+                          <a href={`${BACKEND_URL}/api/admin/kyc/${doc.id}/download`} target="_blank" rel="noreferrer"
+                            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', background: 'rgba(58,134,255,0.08)', border: '1px solid rgba(58,134,255,0.2)', borderRadius: 7, color: '#3A86FF', fontSize: 11, fontWeight: 700, textDecoration: 'none' }}>
+                            ↓ Download
+                          </a>
+                          <button onClick={() => handleKycStatus(doc.id, 'approved')} disabled={busy || doc.status === 'approved'}
+                            style={{ flex: 1, padding: '6px 10px', background: doc.status === 'approved' ? 'rgba(34,197,139,0.15)' : 'rgba(34,197,139,0.08)', border: `1px solid rgba(34,197,139,${doc.status === 'approved' ? '0.4' : '0.2'})`, borderRadius: 7, color: '#22c58b', cursor: busy || doc.status === 'approved' ? 'not-allowed' : 'pointer', fontSize: 11, fontWeight: 700 }}>
+                            {busy ? '…' : '✓ Aprovar'}
+                          </button>
+                          <button onClick={() => handleKycStatus(doc.id, 'rejected')} disabled={busy || doc.status === 'rejected'}
+                            style={{ flex: 1, padding: '6px 10px', background: doc.status === 'rejected' ? 'rgba(239,68,68,0.15)' : 'rgba(239,68,68,0.08)', border: `1px solid rgba(239,68,68,${doc.status === 'rejected' ? '0.4' : '0.2'})`, borderRadius: 7, color: '#ef4444', cursor: busy || doc.status === 'rejected' ? 'not-allowed' : 'pointer', fontSize: 11, fontWeight: 700 }}>
+                            {busy ? '…' : '✗ Rejeitar'}
+                          </button>
+                        </div>
+                        {doc.created_at && (
+                          <div style={{ padding: '0 14px 8px', fontSize: 10, color: '#4a5068' }}>
+                            Enviado em: {new Date(doc.created_at).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

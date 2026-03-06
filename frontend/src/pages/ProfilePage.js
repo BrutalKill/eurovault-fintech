@@ -10,10 +10,12 @@ export default function ProfilePage() {
   const { user, fetchUser } = useUser();
   const [form, setForm] = useState({ full_name: '', phone: '', country: 'Portugal' });
   const [loading, setLoading] = useState(false);
-  const [kycStatus, setKycStatus]     = useState(null);
-  const [kycUploading, setKycUploading] = useState(false);
-  const [kycDocType, setKycDocType]   = useState('bi');
-  const fileInputRef = useRef(null);
+  // KYC — estado separado por face
+  const [kycStatus, setKycStatus]         = useState(null);
+  const [kycDocType, setKycDocType]       = useState('bi');
+  const [kycUploading, setKycUploading]   = useState({ frente: false, verso: false });
+  const frontRef = useRef(null);
+  const backRef  = useRef(null);
 
   // Goals
   const [goalAmount, setGoalAmount]   = useState('');
@@ -113,19 +115,19 @@ export default function ProfilePage() {
     return 'Browser';
   };
 
-  const handleKycUpload = async (e) => {
+  const handleKycUpload = async (side, e) => {
     const file = e.target.files[0];
     if (!file) return;
     if (file.size > 10 * 1024 * 1024) {
       toast.error('Ficheiro demasiado grande', { description: 'Máximo 10 MB.' });
       return;
     }
-    setKycUploading(true);
+    setKycUploading(p => ({ ...p, [side]: true }));
     try {
       const token = localStorage.getItem('token');
       const fd = new FormData();
       fd.append('file', file);
-      fd.append('doc_type', kycDocType);
+      fd.append('doc_type', `${kycDocType}_${side}`); // ex: bi_frente, bi_verso
       const res = await fetch(`${BACKEND_URL}/api/kyc/upload`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
@@ -135,13 +137,18 @@ export default function ProfilePage() {
         const err = await res.json();
         throw new Error(err.detail || 'Erro no upload');
       }
-      toast.success('Documento enviado com sucesso!', { description: 'A equipa irá rever em breve.' });
-      setKycStatus({ status: 'pendente', doc_type: kycDocType });
+      toast.success(`${side === 'frente' ? 'Frente' : 'Verso'} enviado com sucesso!`, { description: 'A equipa irá rever em breve.' });
+      // Recarregar estado KYC
+      fetch(`${BACKEND_URL}/api/kyc/status`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => { if (data) setKycStatus(data); })
+        .catch(() => {});
     } catch (err) {
       toast.error(err.message);
     } finally {
-      setKycUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      setKycUploading(p => ({ ...p, [side]: false }));
+      if (side === 'frente' && frontRef.current) frontRef.current.value = '';
+      if (side === 'verso'  && backRef.current)  backRef.current.value  = '';
     }
   };
 
@@ -350,27 +357,28 @@ export default function ProfilePage() {
 
       {/* Verificação KYC */}
       <div style={{ marginTop: 20, ...card }}>
+        {/* Cabeçalho */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
           <div style={{ width: 36, height: 36, background: 'rgba(58,134,255,0.1)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Shield size={17} color="#3A86FF" />
           </div>
           <div>
             <div style={{ fontSize: 15, fontWeight: 700, color: '#f3f5ff' }}>Verificação de Identidade (KYC)</div>
-            <div style={{ fontSize: 12, color: 'hsl(215,16%,55%)' }}>Envie o seu documento para activar saques completos</div>
+            <div style={{ fontSize: 12, color: 'hsl(215,16%,55%)' }}>Envie a frente e o verso do documento para activar saques completos</div>
           </div>
-          {kycStatus && (
+          {kycStatus?.kyc_status && (
             <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700,
-              background: kycStatus.status === 'aprovado' ? 'rgba(34,197,139,0.12)' : kycStatus.status === 'pendente' ? 'rgba(255,190,11,0.12)' : 'rgba(239,68,68,0.12)',
-              color: kycStatus.status === 'aprovado' ? '#22c58b' : kycStatus.status === 'pendente' ? '#FFBE0B' : '#ef4444',
-              border: `1px solid ${kycStatus.status === 'aprovado' ? 'rgba(34,197,139,0.25)' : kycStatus.status === 'pendente' ? 'rgba(255,190,11,0.25)' : 'rgba(239,68,68,0.25)'}`,
+              background: kycStatus.kyc_status === 'approved' ? 'rgba(34,197,139,0.12)' : kycStatus.kyc_status === 'pending' ? 'rgba(255,190,11,0.12)' : 'rgba(239,68,68,0.12)',
+              color:      kycStatus.kyc_status === 'approved' ? '#22c58b'              : kycStatus.kyc_status === 'pending' ? '#FFBE0B'              : '#ef4444',
+              border:    `1px solid ${kycStatus.kyc_status === 'approved' ? 'rgba(34,197,139,0.25)' : kycStatus.kyc_status === 'pending' ? 'rgba(255,190,11,0.25)' : 'rgba(239,68,68,0.25)'}`,
             }}>
               {kycIcon}
-              {kycStatus.status === 'aprovado' ? 'Verificado' : kycStatus.status === 'pendente' ? 'Em revisão' : 'Rejeitado'}
+              {kycStatus.kyc_status === 'approved' ? 'Verificado' : kycStatus.kyc_status === 'pending' ? 'Em revisão' : 'Rejeitado'}
             </div>
           )}
         </div>
 
-        {kycStatus?.status === 'aprovado' ? (
+        {kycStatus?.kyc_status === 'approved' ? (
           <div style={{ padding: '16px', background: 'rgba(34,197,139,0.06)', border: '1px solid rgba(34,197,139,0.2)', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
             <CheckCircle size={18} color="#22c58b" />
             <div>
@@ -379,53 +387,87 @@ export default function ProfilePage() {
             </div>
           </div>
         ) : (
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-            <div style={{ flex: '0 0 auto' }}>
+          <>
+            {/* Tipo de documento */}
+            <div style={{ marginBottom: 20 }}>
               <label style={labelStyle}>Tipo de Documento</label>
-              <select
-                value={kycDocType}
-                onChange={e => setKycDocType(e.target.value)}
-                style={{ ...inputStyle, width: 'auto', minWidth: 200 }}
-                data-testid="kyc-doc-type-select"
-              >
-                <option value="bi">Bilhete de Identidade / CC</option>
+              <select value={kycDocType} onChange={e => setKycDocType(e.target.value)}
+                style={{ ...inputStyle, maxWidth: 280 }} data-testid="kyc-doc-type-select">
+                <option value="bi">Bilhete de Identidade / Cartão Cidadão</option>
                 <option value="passport">Passaporte</option>
                 <option value="driver_license">Carta de Condução</option>
-                <option value="proof_address">Comprovativo de Morada</option>
               </select>
             </div>
-            <div style={{ flex: 1, minWidth: 220 }}>
-              <label style={labelStyle}>Ficheiro (PDF, JPG, PNG — máx. 10 MB)</label>
-              <div
-                onClick={() => !kycUploading && fileInputRef.current?.click()}
-                data-testid="kyc-upload-area"
-                style={{
-                  padding: '18px', border: '2px dashed hsl(240,16%,25%)', borderRadius: 10,
-                  textAlign: 'center', cursor: kycUploading ? 'not-allowed' : 'pointer',
-                  background: 'hsl(240,18%,10%)',
-                  transition: 'border-color 0.2s',
-                }}
-                onMouseEnter={e => { if (!kycUploading) e.currentTarget.style.borderColor = '#3A86FF'; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'hsl(240,16%,25%)'; }}
-              >
-                <Upload size={20} color={kycUploading ? '#4a5068' : '#3A86FF'} style={{ marginBottom: 6 }} />
-                <div style={{ fontSize: 13, color: kycUploading ? '#4a5068' : 'hsl(215,16%,70%)', fontWeight: 500 }}>
-                  {kycUploading ? 'A enviar…' : 'Clique para seleccionar ficheiro'}
-                </div>
-                {kycStatus?.status === 'pendente' && (
-                  <div style={{ fontSize: 11, color: '#FFBE0B', marginTop: 6 }}>Documento já enviado — aguarda revisão</div>
-                )}
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={handleKycUpload}
-                style={{ display: 'none' }}
-                data-testid="kyc-file-input"
-              />
+
+            {/* Frente e Verso */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }} className="kyc-grid">
+              {[
+                { side: 'frente', label: 'Frente do Documento', ref: frontRef },
+                { side: 'verso',  label: 'Verso do Documento',  ref: backRef  },
+              ].map(({ side, label, ref: inputRef }) => {
+                const uploaded  = kycStatus?.documents?.find(d => d.doc_type === `${kycDocType}_${side}`);
+                const uploading = kycUploading[side];
+                const stColor   = uploaded?.status === 'approved' ? '#22c58b' : uploaded?.status === 'rejected' ? '#ef4444' : '#FFBE0B';
+                const stLabel   = uploaded?.status === 'approved' ? '✓ Aprovado' : uploaded?.status === 'rejected' ? '✗ Rejeitado' : '⏳ Em revisão';
+
+                return (
+                  <div key={side}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'hsl(215,16%,65%)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      {side === 'frente' ? '🪪 Frente' : '🔄 Verso'} — {label}
+                    </div>
+                    <div
+                      onClick={() => !uploading && !uploaded && inputRef.current?.click()}
+                      data-testid={`kyc-upload-${side}`}
+                      style={{
+                        padding: '22px 14px',
+                        border: `2px dashed ${uploaded ? stColor + '55' : 'hsl(240,16%,25%)'}`,
+                        borderRadius: 12, textAlign: 'center',
+                        cursor: uploading || uploaded ? 'default' : 'pointer',
+                        background: uploaded ? `${stColor}0a` : 'hsl(240,18%,10%)',
+                        transition: 'all 0.2s', minHeight: 120,
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      }}
+                      onMouseEnter={e => { if (!uploading && !uploaded) e.currentTarget.style.borderColor = '#3A86FF'; }}
+                      onMouseLeave={e => { if (!uploading && !uploaded) e.currentTarget.style.borderColor = uploaded ? stColor + '55' : 'hsl(240,16%,25%)'; }}
+                    >
+                      {uploading ? (
+                        <>
+                          <div style={{ width: 24, height: 24, border: '2px solid #3A86FF', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                          <span style={{ fontSize: 12, color: '#7a8299' }}>A enviar…</span>
+                        </>
+                      ) : uploaded ? (
+                        <>
+                          <CheckCircle size={22} color={stColor} />
+                          <span style={{ fontSize: 12, fontWeight: 700, color: stColor }}>{stLabel}</span>
+                          <span style={{ fontSize: 10, color: '#4a5068', wordBreak: 'break-all', maxWidth: '90%' }}>{uploaded.filename}</span>
+                          <button onClick={e => { e.stopPropagation(); inputRef.current?.click(); }}
+                            style={{ fontSize: 10, padding: '3px 10px', background: 'transparent', border: `1px solid ${stColor}50`, borderRadius: 6, color: stColor, cursor: 'pointer', marginTop: 2 }}>
+                            Substituir
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <Upload size={22} color="#3A86FF" />
+                          <span style={{ fontSize: 12, color: 'hsl(215,16%,70%)', fontWeight: 500 }}>Clique para enviar</span>
+                          <span style={{ fontSize: 10, color: '#4a5068' }}>JPG, PNG ou PDF · máx. 10 MB</span>
+                        </>
+                      )}
+                    </div>
+                    <input ref={inputRef} type="file" accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={e => handleKycUpload(side, e)} style={{ display: 'none' }} />
+                  </div>
+                );
+              })}
             </div>
-          </div>
+
+            {/* Aviso de privacidade */}
+            <div style={{ marginTop: 14, padding: '10px 14px', background: 'rgba(58,134,255,0.06)', border: '1px solid rgba(58,134,255,0.15)', borderRadius: 9, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+              <Shield size={13} color="#3A86FF" style={{ marginTop: 1, flexShrink: 0 }} />
+              <p style={{ fontSize: 11, color: 'hsl(215,16%,60%)', lineHeight: 1.5, margin: 0 }}>
+                Os seus documentos são armazenados de forma segura e utilizados exclusivamente para verificação de identidade, em conformidade com o RGPD e regulamentação CySEC.
+              </p>
+            </div>
+          </>
         )}
       </div>
     </div>

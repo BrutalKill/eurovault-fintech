@@ -1063,6 +1063,53 @@ async def get_pending_kyc(admin = Depends(get_admin_user)):
     return docs
 
 
+# ── Documentos KYC por utilizador (para o drawer admin)
+@app.get("/api/admin/users/{user_id}/kyc-docs")
+async def get_user_kyc_docs(user_id: str, admin = Depends(get_admin_user)):
+    docs = []
+    async for d in db.kyc_documents.find({"user_id": user_id}).sort("created_at", -1):
+        docs.append(serialize_doc({
+            "id":           d["_id"],
+            "doc_type":     d.get("doc_type", ""),
+            "filename":     d.get("filename", ""),
+            "content_type": d.get("content_type", ""),
+            "status":       d.get("status", "pending"),
+            "created_at":   d.get("created_at"),
+        }))
+    return docs
+
+# ── Aprovar / Rejeitar KYC (reutiliza endpoint existente com alias)
+@app.put("/api/admin/users/{user_id}/kyc-docs/{doc_id}/status")
+async def update_user_kyc_status(user_id: str, doc_id: str, req: UpdateStatusRequest, admin = Depends(get_admin_user)):
+    doc = await db.kyc_documents.find_one({"_id": ObjectId(doc_id), "user_id": user_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento não encontrado")
+    await db.kyc_documents.update_one({"_id": ObjectId(doc_id)}, {"$set": {"status": req.status}})
+    # Atualizar kyc_status do utilizador com base no conjunto de docs
+    all_docs = [d async for d in db.kyc_documents.find({"user_id": user_id})]
+    if all_docs:
+        statuses = [d.get("status","pending") for d in all_docs]
+        if all(s == "approved" for s in statuses):
+            overall = "approved"
+        elif any(s == "rejected" for s in statuses):
+            overall = "rejected"
+        else:
+            overall = "pending"
+        await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": {"kyc_status": overall}})
+    await log_admin_action(user_id, f"kyc_{req.status}", {"doc_id": doc_id, "doc_type": doc.get("doc_type")})
+    return {"success": True}
+
+# ── Visualizar imagem KYC inline (base64) para o admin
+@app.get("/api/admin/kyc/{doc_id}/preview")
+async def preview_kyc(doc_id: str, admin = Depends(get_admin_user)):
+    from fastapi.responses import Response
+    doc = await db.kyc_documents.find_one({"_id": ObjectId(doc_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Não encontrado")
+    data = base64.b64decode(doc["data"])
+    return Response(content=data, media_type=doc["content_type"])
+
+
 # ════════════════════════════════════════════════════════════════
 #  NOTAS COM HISTÓRICO DE VERSÕES
 # ════════════════════════════════════════════════════════════════
