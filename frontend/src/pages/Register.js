@@ -126,49 +126,37 @@ export default function Register() {
 
           {/* Telemóvel com indicativo */}
           <div>
-            <label style={lbl}>{t('profile_phone')} <span style={{ fontWeight: 400, textTransform: 'none', fontSize: 11 }}>(opcional)</span></label>
+            <label style={lbl}>{t('profile_phone')}</label>
             <div style={{ display: 'flex', gap: 8 }}>
-              {/* Seletor de indicativo — bandeira sempre visível */}
-              <div style={{ position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                {/* Bandeira visível fixamente */}
-                <span style={{
-                  position: 'absolute', left: 10, fontSize: 20, lineHeight: 1,
-                  pointerEvents: 'none', zIndex: 1,
-                }}>
-                  {DIAL_CODES.find(d => d.code === dialCode)?.flag || '🌍'}
-                </span>
+              {/* Seletor de indicativo */}
+              <div style={{ position: 'relative', flexShrink: 0 }}>
                 <select
                   value={dialCode}
                   onChange={e => setDialCode(e.target.value)}
                   style={{
-                    paddingLeft: 38, paddingRight: 30, paddingTop: 12, paddingBottom: 12,
+                    padding: '12px 28px 12px 12px',
                     background: 'hsl(240,18%,12%)',
                     border: '1px solid hsl(240,16%,22%)',
-                    borderRadius: 10, color: '#f3f5ff', fontSize: 14,
+                    borderRadius: 10, color: '#f3f5ff', fontSize: 16,
                     outline: 'none', cursor: 'pointer',
                     appearance: 'none', WebkitAppearance: 'none',
-                    minWidth: 110,
+                    minWidth: 82,
                   }}>
                   {DIAL_CODES.map((d, i) => (
-                    <option key={i} value={d.code}>{d.flag} {d.code} — {d.name}</option>
+                    <option key={i} value={d.code}>{d.code}</option>
                   ))}
                 </select>
-                <ChevronDown size={12} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', color: '#7a8299', pointerEvents: 'none' }} />
+                <ChevronDown size={12} style={{ position: 'absolute', right: 7, top: '50%', transform: 'translateY(-50%)', color: '#7a8299', pointerEvents: 'none' }} />
               </div>
               {/* Número */}
               <input
                 data-testid="register-phone-input"
-                type="tel" inputMode="numeric"
+                type="tel" inputMode="numeric" required
                 value={form.phone}
                 onChange={e => setForm({ ...form, phone: e.target.value.replace(/[^0-9 ()+-]/g, '') })}
                 placeholder="912 345 678"
                 style={{ ...inp, flex: 1 }}
               />
-            </div>
-            {/* Preview do número completo */}
-            <div style={{ fontSize: 11, color: '#4a5068', marginTop: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ fontSize: 14 }}>{DIAL_CODES.find(d => d.code === dialCode)?.flag}</span>
-              <span>{dialCode} {form.phone || '000 000 000'}</span>
             </div>
           </div>
 
