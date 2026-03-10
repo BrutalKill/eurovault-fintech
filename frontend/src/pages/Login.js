@@ -21,17 +21,14 @@ const TICKER_ITEMS = [
   { label: 'SILVER',  price: '22,85',  change: '-0,21%', pos: false },
 ];
 
-/* ── Estatísticas hero ── */
-const STATS = [
-  { value: '€2.4B',  label: 'Volume gerido'   },
-  { value: '150k+',  label: 'Investidores'     },
-  { value: '99.9%',  label: 'Uptime'           },
-  { value: '24/7',   label: 'Suporte activo'   },
-];
+/* ── Estatísticas hero — valores estáticos, labels traduzidas dentro do componente ── */
+const STATS_VALUES = ['€2.4B', '150k+', '99.9%', '24/7'];
+const STATS_KEYS   = ['login_stat_volume', 'login_stat_investors', 'login_stat_uptime', 'login_stat_support'];
 
 export default function Login() {
   const navigate = useNavigate();
   const { t } = useLang();
+  const STATS = STATS_VALUES.map((value, i) => ({ value, label: t(STATS_KEYS[i]) }));
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
@@ -154,7 +151,7 @@ export default function Login() {
           }}>
             <div style={{ width: 7, height: 7, background: '#22c58b', borderRadius: '50%', animation: 'shimmer 2s ease infinite' }} />
             <span style={{ fontSize: 12, color: 'hsl(214,100%,75%)', fontWeight: 700, letterSpacing: '0.05em' }}>
-              MERCADOS ABERTOS · TEMPO REAL
+              {t('login_badge_live')}
             </span>
           </div>
 
@@ -218,7 +215,7 @@ export default function Login() {
           <div style={{ textAlign: 'center', marginBottom: 20, padding: '0 8px' }} className="mobile-hero-text">
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginBottom: 12, padding: '5px 14px', borderRadius: 20, background: 'rgba(58,134,255,0.15)', border: '1px solid rgba(58,134,255,0.35)' }}>
               <div style={{ width: 6, height: 6, background: '#22c58b', borderRadius: '50%', animation: 'shimmer 2s ease infinite' }} />
-              <span style={{ fontSize: 11, color: '#3A86FF', fontWeight: 700, letterSpacing: '0.05em' }}>MERCADOS EM TEMPO REAL</span>
+              <span style={{ fontSize: 11, color: '#3A86FF', fontWeight: 700, letterSpacing: '0.05em' }}>{t('login_badge_live')}</span>
             </div>
             <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 28, fontWeight: 900, color: '#fff', lineHeight: 1.1, margin: '0 0 8px', letterSpacing: '-0.02em', textShadow: '0 2px 16px rgba(0,0,0,0.9)' }}>
               {t('login_hero1')}<br />

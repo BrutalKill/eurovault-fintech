@@ -1,10 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Shield, Lock, TrendingUp, Phone, Mail, MapPin, ExternalLink } from 'lucide-react';
+import { useLang } from '../context/LangContext';
 
 const currentYear = new Date().getFullYear();
 
 export default function Footer() {
+  const { t } = useLang();
   const s = {
     section: { marginBottom: 0 },
     title: { fontSize: 12, fontWeight: 700, color: '#f3f5ff', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 },
@@ -47,7 +49,7 @@ export default function Footer() {
               </div>
             </div>
             <p style={{ fontSize: 12, color: '#4a5068', lineHeight: 1.7, marginBottom: 16, maxWidth: 280 }}>
-              A EuroVault Investments é uma plataforma de investimento regulamentada, focada em oferecer acesso a mercados globais com segurança, transparência e tecnologia de excelente.
+              {t('footer_desc')}
             </p>
             {/* Contactos */}
             {[
@@ -64,13 +66,13 @@ export default function Footer() {
 
           {/* Coluna 2 — Plataforma */}
           <div style={s.section}>
-            <div style={s.title}>Plataforma</div>
+            <div style={s.title}>{t('footer_links')}</div>
             {[
-              { to: '/app/trade',      label: 'Negociar' },
-              { to: '/app/deposit',    label: 'Depósito' },
-              { to: '/app/withdrawal', label: 'Levantamento' },
-              { to: '/app/news',       label: 'Notícias' },
-              { to: '/app/profile',    label: 'O Meu Perfil' },
+              { to: '/app/trade',      label: t('nav_trade')      },
+              { to: '/app/deposit',    label: t('nav_deposit')    },
+              { to: '/app/withdrawal', label: t('nav_withdrawal') },
+              { to: '/app/news',       label: t('nav_news')       },
+              { to: '/app/referral',   label: t('footer_referral')},
             ].map(({ to, label }) => (
               <Link key={to} to={to}
                 style={s.link}
@@ -83,15 +85,14 @@ export default function Footer() {
 
           {/* Coluna 3 — Legal */}
           <div style={s.section}>
-            <div style={s.title}>Legal</div>
+            <div style={s.title}>{t('footer_legal')}</div>
             {[
-              { label: 'Termos e Condições',    page: 'termos'    },
-              { label: 'Política de Privacidade',page: 'privacidade'},
-              { label: 'Política de Cookies',    page: 'cookies'   },
-              { label: 'Política AML/KYC',       page: 'aml'       },
-              { label: 'Conflitos de Interesse', page: 'conflitos' },
+              { label: t('footer_risk'),    page: 'termos'     },
+              { label: t('footer_privacy'), page: 'privacidade'},
+              { label: t('footer_terms'),   page: 'cookies'    },
+              { label: t('footer_aml'),     page: 'aml'        },
             ].map(({ label, page }) => (
-              <a key={label} href={`/legal?page=${page}`} target="_blank" rel="noreferrer"
+              <a key={page} href={`/legal?page=${page}`} target="_blank" rel="noreferrer"
                 style={{ ...s.link, display: 'flex', alignItems: 'center', gap: 4 }}
                 onMouseEnter={e => { e.currentTarget.style.color = '#3A86FF'; }}
                 onMouseLeave={e => { e.currentTarget.style.color = '#7a8299'; }}>
@@ -102,13 +103,13 @@ export default function Footer() {
 
           {/* Coluna 4 — Suporte */}
           <div style={s.section}>
-            <div style={s.title}>Suporte</div>
+            <div style={s.title}>{t('footer_support')}</div>
             {[
-              { label: 'Centro de Ajuda',          href: null,  action: 'chat' },
-              { label: 'FAQ — Perguntas Frequentes',href: null,  action: 'chat' },
-              { label: 'Tutoriais de Negociação',   href: '/app/trade', action: 'internal' },
-              { label: 'Reportar Problema',          href: null,  action: 'chat' },
-              { label: 'Programa de Parceiros',      href: '/app/referral', action: 'internal' },
+              { label: t('footer_help'),      href: null,  action: 'chat' },
+              { label: t('footer_faq'),       href: null,  action: 'chat' },
+              { label: t('footer_tutorials'), href: '/app/trade', action: 'internal' },
+              { label: t('footer_report'),    href: null,  action: 'chat' },
+              { label: t('footer_referral'),  href: '/app/referral', action: 'internal' },
             ].map(({ label, href, action }) => (
               <a key={label}
                 href={action === 'internal' ? href : '#'}
@@ -152,16 +153,16 @@ export default function Footer() {
         {/* Barra inferior */}
         <div style={{ borderTop: '1px solid #1a1a2a', paddingTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div style={{ fontSize: 11, color: '#4a5068' }}>
-            &copy; {currentYear} EuroVault Investments. Todos os direitos reservados.
+            &copy; {currentYear} EuroVault Investments. {t('footer_rights')}
           </div>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
             {[
-              { label: 'Termos',      page: 'termos' },
-              { label: 'Privacidade', page: 'privacidade' },
-              { label: 'Cookies',     page: 'cookies' },
-              { label: 'AML/KYC',    page: 'aml' },
+              { label: t('footer_terms_short'),   page: 'termos' },
+              { label: t('footer_privacy_short'), page: 'privacidade' },
+              { label: t('footer_cookies_short'), page: 'cookies' },
+              { label: t('footer_aml_short'),     page: 'aml' },
             ].map(({ label, page }) => (
-              <a key={label} href={`/legal?page=${page}`} target="_blank" rel="noreferrer"
+              <a key={page} href={`/legal?page=${page}`} target="_blank" rel="noreferrer"
                 style={{ fontSize: 11, color: '#4a5068', textDecoration: 'none' }}
                 onMouseEnter={e => e.target.style.color = '#3A86FF'}
                 onMouseLeave={e => e.target.style.color = '#4a5068'}>

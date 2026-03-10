@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Gift, Users, TrendingUp, Copy, CheckCircle, Star, ArrowRight, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUser } from '../context/UserContext';
+import { useLang } from '../context/LangContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 const fmt = (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v || 0);
@@ -25,6 +26,7 @@ const TIERS = [
 export default function ReferralPage() {
   const navigate = useNavigate();
   const { user } = useUser();
+  const { t }    = useLang();
   const [referral, setReferral] = useState(null);
   const [copied, setCopied] = useState(false);
 
@@ -64,7 +66,7 @@ export default function ReferralPage() {
       <div style={{ marginBottom: 28, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 24, fontWeight: 800, color: '#f3f5ff', margin: 0 }}>
-            Programa de Parceiros
+            {t('ref_title')}
           </h1>
           <p style={{ fontSize: 13, color: 'hsl(215,16%,60%)', margin: '5px 0 0' }}>
           Convide amigos e ganhe €{currentTier.bonus} por cada conversão no seu nível actual
@@ -101,7 +103,7 @@ export default function ReferralPage() {
       {/* Link de convite */}
       <div style={{ ...card, marginBottom: 20, background: 'linear-gradient(135deg, rgba(58,134,255,0.12), rgba(34,197,139,0.08))', borderColor: 'rgba(58,134,255,0.25)' }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: '#f3f5ff', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Share2 size={16} color="#3A86FF" />O seu link único de referido
+          <Share2 size={16} color="#3A86FF" />{t('login_hero2')} — Link único
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <div style={{ flex: 1, padding: '11px 14px', background: 'rgba(0,0,0,0.3)', borderRadius: 10, border: '1px solid rgba(58,134,255,0.2)', overflow: 'hidden' }}>
@@ -125,7 +127,7 @@ export default function ReferralPage() {
 
       {/* Como funciona */}
       <div style={{ ...card, marginBottom: 20 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#f3f5ff', marginBottom: 18 }}>Como Funciona</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#f3f5ff', marginBottom: 18 }}>{t('ref_how_title')}</div>
         <div style={{ display: 'grid', gap: 14 }} className="referral-how">
           {HOW_IT_WORKS.map(({ icon: Icon, color, title, desc }) => (
             <div key={title} style={{ display: 'flex', gap: 12, padding: '14px', background: `${color}08`, border: `1px solid ${color}20`, borderRadius: 12 }}>
@@ -144,8 +146,8 @@ export default function ReferralPage() {
       {/* Níveis de parceiro por depósito */}
       <div style={{ ...card, marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#f3f5ff' }}>Níveis de Parceiro</div>
-          <div style={{ fontSize: 11, color: '#7a8299' }}>Baseado no valor depositado</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#f3f5ff' }}>{t('ref_levels_title')}</div>
+          <div style={{ fontSize: 11, color: '#7a8299' }}>{t('ref_levels_sub')}</div>
         </div>
 
         {/* Progresso visual */}

@@ -185,28 +185,28 @@ export default function ProfilePage() {
 
           <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <label style={labelStyle}>Nome Completo</label>
+              <label style={labelStyle}>{t('profile_fullname')}</label>
               <input type="text" value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} style={inputStyle} />
             </div>
             <div>
-              <label style={labelStyle}>Endereço de E-mail</label>
+              <label style={labelStyle}>{t('profile_email')}</label>
               <input type="email" disabled value={user?.email || ''}
                 style={{ ...inputStyle, background: 'hsl(240,18%,10%)', color: 'hsl(215,16%,50%)', cursor: 'not-allowed' }} />
             </div>
             <div>
-              <label style={labelStyle}>Número de Telemóvel</label>
+              <label style={labelStyle}>{t('profile_phone')}</label>
               <input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
                 placeholder="+351 912 345 678" style={inputStyle} />
             </div>
             <div>
-              <label style={labelStyle}>País de Residência</label>
+              <label style={labelStyle}>{t('profile_country')}</label>
               <select value={form.country} onChange={e => setForm({ ...form, country: e.target.value })} style={inputStyle}>
                 {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <button data-testid="profile-save-button" type="submit" disabled={loading}
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '11px 24px', background: loading ? 'hsl(214,100%,60%,0.4)' : 'hsl(214,100%,60%)', border: 'none', borderRadius: 10, color: '#fff', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer' }}>
-              <Save size={15} />{loading ? 'A guardar…' : 'Guardar Alterações'}
+              <Save size={15} />{loading ? t('prof_saving_btn') : t('prof_save_btn')}
             </button>
           </form>
         </div>
@@ -214,10 +214,10 @@ export default function ProfilePage() {
         {/* Resumo da conta */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={card}>
-            <div style={{ fontSize: 12, color: 'hsl(215,16%,70%)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16, fontWeight: 700 }}>Resumo da Conta</div>
+            <div style={{ fontSize: 12, color: 'hsl(215,16%,70%)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16, fontWeight: 700 }}>{t('prof_account_summary')}</div>
             {[
-              { label: 'Saldo disponível', value: formatEur(safeBalance),       color: '#f3f5ff' },
-              { label: 'Lucro acumulado',  value: `+${formatEur(safeProfit)}`,  color: 'hsl(155,72%,45%)' },
+              { label: t('dash_available_balance'), value: formatEur(safeBalance), color: '#f3f5ff' },
+              { label: t('nav_profit'),              value: `+${formatEur(safeProfit)}`, color: 'hsl(155,72%,45%)' },
             ].map(({ label, value, color }) => (
               <div key={label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid hsl(240,16%,18%)' }}>
                 <span style={{ fontSize: 13, color: 'hsl(215,16%,70%)' }}>{label}</span>
@@ -225,7 +225,7 @@ export default function ProfilePage() {
               </div>
             ))}
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 13, color: 'hsl(215,16%,70%)' }}>Membro desde</span>
+              <span style={{ fontSize: 13, color: 'hsl(215,16%,70%)' }}>{t('prof_member_since')}</span>
               <span style={{ fontSize: 13, fontWeight: 600, color: '#f3f5ff' }}>
                 {user?.created_at ? new Date(user.created_at).toLocaleDateString('pt-PT') : '—'}
               </span>
@@ -234,10 +234,10 @@ export default function ProfilePage() {
 
           {/* Indicadores */}
           <div style={{ background: 'hsl(240,26%,8%)', border: '1px solid hsl(240,16%,18%)', borderRadius: 14, padding: '16px 18px' }}>
-            <div style={{ fontSize: 12, color: 'hsl(215,16%,70%)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14, fontWeight: 700 }}>Indicadores</div>
+            <div style={{ fontSize: 12, color: 'hsl(215,16%,70%)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14, fontWeight: 700 }}>{t('prof_indicators')}</div>
             {[
-              { icon: TrendingUp, label: 'Rendimento total', value: `+${formatEur(safeProfit)}`, color: 'hsl(155,72%,45%)' },
-              { icon: Shield,     label: 'Nível de segurança', value: '2FA activo', color: 'hsl(214,100%,60%)' },
+              { icon: TrendingUp, label: t('prof_total_return'),   value: `+${formatEur(safeProfit)}`, color: 'hsl(155,72%,45%)' },
+              { icon: Shield,     label: t('prof_security_label'), value: t('prof_2fa_active'),        color: 'hsl(214,100%,60%)' },
             ].map(({ icon: Icon, label, value, color }) => (
               <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                 <div style={{ width: 30, height: 30, background: `${color}18`, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -252,7 +252,7 @@ export default function ProfilePage() {
           </div>
           <button data-testid="profile-change-password-button"
             style={{ width: '100%', padding: '10px', background: 'transparent', border: '1px solid hsl(240,16%,26%)', borderRadius: 10, color: 'hsl(215,16%,60%)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-            Alterar Palavra-passe
+            {t('prof_change_pw')}
           </button>
         </div>
       </div>
