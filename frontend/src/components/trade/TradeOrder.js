@@ -100,32 +100,38 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
 
   return (
     <div style={{
-      background: '#111118',
-      border: '1px solid #26263a',
-      borderRadius: 14,
+      background: 'linear-gradient(180deg, hsl(240,26%,9%) 0%, hsl(240,26%,8%) 100%)',
+      border: `1px solid ${side === 'comprar' ? 'rgba(34,197,139,0.3)' : 'rgba(239,68,68,0.3)'}`,
+      borderRadius: 16,
       overflow: 'hidden',
+      boxShadow: side === 'comprar'
+        ? '0 0 30px rgba(34,197,139,0.08)'
+        : '0 0 30px rgba(239,68,68,0.08)',
+      transition: 'border-color 0.3s, box-shadow 0.3s',
     }}>
 
-      {/* ── Toggle COMPRAR / VENDER ── */}
-      <div style={{ display: 'flex' }}>
+      {/* ── Toggle COMPRAR / VENDER — Premium ── */}
+      <div style={{ display: 'flex', padding: '6px', gap: 6, background: '#0a0a18' }}>
         {[
-          { key: 'comprar', icon: <ChevronUp size={15} />,   label: t('trade_buy'),  color: '#22c58b' },
-          { key: 'vender',  icon: <ChevronDown size={15} />, label: t('trade_sell'), color: '#ef4444' },
+          { key: 'comprar', icon: <ChevronUp size={16} />,   label: t('trade_buy'),  color: '#22c58b', grad: 'linear-gradient(135deg,#16a34a,#22c58b)' },
+          { key: 'vender',  icon: <ChevronDown size={16} />, label: t('trade_sell'), color: '#ef4444', grad: 'linear-gradient(135deg,#b91c1c,#ef4444)' },
         ].map(btn => (
           <button
             key={btn.key}
             data-testid={`trade-${btn.key}-toggle`}
             onClick={() => { setSide(btn.key); setLastOrder(null); }}
             style={{
-              flex: 1, padding: '14px 0',
-              border: 'none', cursor: 'pointer',
+              flex: 1, padding: '12px 0',
+              border: `1px solid ${side === btn.key ? btn.color + '50' : 'transparent'}`,
+              borderRadius: 11, cursor: 'pointer',
               fontFamily: 'var(--font-heading)',
-              fontSize: 14, fontWeight: 800, letterSpacing: '0.04em',
-              background: side === btn.key ? btn.color : '#0e0e1a',
-              color:      side === btn.key ? '#fff'    : '#7a8299',
+              fontSize: 13, fontWeight: 900, letterSpacing: '0.05em',
+              background: side === btn.key ? btn.grad : 'transparent',
+              color: side === btn.key ? '#fff' : '#4a5068',
               display: 'flex', alignItems: 'center',
               justifyContent: 'center', gap: 6,
-              transition: 'background .15s, color .15s',
+              transition: 'all .2s',
+              boxShadow: side === btn.key ? `0 4px 16px ${btn.color}40` : 'none',
             }}
           >
             {btn.icon}{btn.label}
@@ -133,19 +139,21 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
         ))}
       </div>
 
-      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ padding: '14px 14px 14px', display: 'flex', flexDirection: 'column', gap: 11 }}>
 
         {/* Instrumento */}
-        <div>
-          <label style={lbl}>{t('trade_instrument')}</label>
-          <div style={{
-            ...inp({ display: 'flex', justifyContent: 'space-between',
-              alignItems: 'center', border: `1px solid ${col.border}` })
-          }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: col.active }}>
-              {asset.label}
-            </span>
-            <span style={{ fontSize: 11, color: '#7a8299' }}>{asset.name}</span>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '10px 12px', background: '#0a0a18',
+          border: `1px solid ${col.border}`, borderRadius: 10,
+        }}>
+          <div>
+            <div style={{ fontSize: 9, color: col.active, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, marginBottom: 1 }}>{t('trade_instrument')}</div>
+            <span style={{ fontSize: 14, fontWeight: 800, color: col.active, fontFamily: 'var(--font-heading)' }}>{asset.label}</span>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div className="numeric" style={{ fontSize: 16, fontWeight: 900, color: '#fff', fontFamily: 'var(--font-heading)' }}>{asset.price}</div>
+            <div className="numeric" style={{ fontSize: 10, fontWeight: 700, color: asset.pos ? '#22c58b' : '#ef4444' }}>{asset.change}</div>
           </div>
         </div>
 
@@ -153,32 +161,23 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
         <div>
           <label style={lbl}>{t('trade_amount')}</label>
           <div style={{ position: 'relative' }}>
-            <span style={{
-              position: 'absolute', left: 11, top: '50%',
-              transform: 'translateY(-50%)',
-              fontSize: 13, color: '#7a8299', fontWeight: 700,
-            }}>€</span>
+            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: side === 'comprar' ? '#22c58b' : '#ef4444', fontWeight: 900 }}>€</span>
             <input
               type="number" inputMode="decimal" min="10"
               value={amount}
               onChange={e => setAmount(e.target.value)}
-              style={inp({ paddingLeft: 26, fontSize: 14, fontWeight: 700 })}
+              style={inp({ paddingLeft: 28, fontSize: 16, fontWeight: 900, color: '#fff', border: `1px solid rgba(255,255,255,0.1)` })}
             />
           </div>
-          <div style={{ display: 'flex', gap: 5, marginTop: 6 }}>
+          <div style={{ display: 'flex', gap: 5, marginTop: 7 }}>
             {['50', '100', '250', '500'].map(v => (
-              <button
-                key={v} type="button"
-                onClick={() => setAmount(v)}
-                style={{
-                  flex: 1, padding: '5px 0',
-                  fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                  borderRadius: 7,
-                  border:      `1px solid ${amount === v ? col.border : '#26263a'}`,
-                  background:  amount === v ? col.bg     : '#0e0e1a',
-                  color:       amount === v ? col.active : '#7a8299',
-                }}
-              >
+              <button key={v} type="button" onClick={() => setAmount(v)}
+                style={{ flex: 1, padding: '6px 0', fontSize: 11, fontWeight: 800, cursor: 'pointer', borderRadius: 8,
+                  border: `1px solid ${amount === v ? col.border : 'rgba(255,255,255,0.06)'}`,
+                  background: amount === v ? col.bg : 'rgba(255,255,255,0.02)',
+                  color: amount === v ? col.active : '#4a5068',
+                  transition: 'all .15s',
+                }}>
                 €{v}
               </button>
             ))}
@@ -188,32 +187,21 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
         {/* Alavancagem */}
         <div>
           <label style={lbl}>{t('trade_leverage')}</label>
-          <select
-            value={leverage}
-            onChange={e => setLeverage(e.target.value)}
-            style={inp()}
-          >
-            {['1:1','1:2','1:5','1:10','1:20','1:50','1:100']
-              .map(l => <option key={l} value={l}>{l}</option>)}
+          <select value={leverage} onChange={e => setLeverage(e.target.value)} style={inp({ background: '#0a0a18', border: '1px solid rgba(255,255,255,0.08)' })}>
+            {['1:1','1:2','1:5','1:10','1:20','1:50','1:100'].map(l => <option key={l} value={l}>{l}</option>)}
           </select>
         </div>
 
         {/* Resumo */}
-        <div style={{
-          background: '#0e0e1a', borderRadius: 9,
-          padding: '10px 12px', border: '1px solid #1e1e30',
-        }}>
+        <div style={{ background: '#0a0a18', borderRadius: 10, padding: '10px 12px', border: '1px solid rgba(255,255,255,0.05)' }}>
           {[
             { label: t('trade_direction'), value: side === 'comprar' ? `↑ ${t('hist_buy')}` : `↓ ${t('hist_sell')}`, color: side === 'comprar' ? '#22c58b' : '#ef4444' },
             { label: t('trade_price'),     value: asset.price, color: '#f3f5ff' },
             { label: t('trade_amount').replace(' (€)',''), value: `€ ${parseFloat(amount || 0).toLocaleString('pt-PT', { minimumFractionDigits: 2 })}`, color: '#f3f5ff' },
             { label: t('trade_exposure'),  value: `€ ${exposure}`, color: col.active },
           ].map(({ label, value, color }) => (
-            <div key={label} style={{
-              display: 'flex', justifyContent: 'space-between',
-              marginBottom: 5, fontSize: 11,
-            }}>
-              <span style={{ color: '#7a8299' }}>{label}</span>
+            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5, fontSize: 11 }}>
+              <span style={{ color: '#4a5068' }}>{label}</span>
               <span className="numeric" style={{ fontWeight: 700, color }}>{value}</span>
             </div>
           ))}
@@ -221,49 +209,29 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
 
         {/* Última ordem */}
         {lastOrder && (
-          <div style={{
-            padding: '9px 12px', borderRadius: 9,
-            background: lastOrder.side === 'comprar'
-              ? 'rgba(34,197,139,0.08)'
-              : 'rgba(239,68,68,0.08)',
-            border: `1px solid ${lastOrder.side === 'comprar'
-              ? 'rgba(34,197,139,0.3)'
-              : 'rgba(239,68,68,0.3)'}`,
-          }}>
-            <div style={{
-              fontSize: 11, fontWeight: 700, marginBottom: 3,
-              color: lastOrder.side === 'comprar' ? '#22c58b' : '#ef4444',
-            }}>
+          <div style={{ padding: '8px 12px', borderRadius: 9, background: lastOrder.side === 'comprar' ? 'rgba(34,197,139,0.08)' : 'rgba(239,68,68,0.08)', border: `1px solid ${lastOrder.side === 'comprar' ? 'rgba(34,197,139,0.3)' : 'rgba(239,68,68,0.3)'}` }}>
+            <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 2, color: lastOrder.side === 'comprar' ? '#22c58b' : '#ef4444' }}>
               {lastOrder.side === 'comprar' ? t('trade_order_opened') : t('trade_order_closed')}
             </div>
-            <div style={{ fontSize: 10, color: '#7a8299' }}>
-              {lastOrder.label} · {fmt(lastOrder.amount)} · {lastOrder.leverage} · {lastOrder.time}
-            </div>
+            <div style={{ fontSize: 10, color: '#7a8299' }}>{lastOrder.label} · {fmt(lastOrder.amount)} · {lastOrder.leverage}</div>
           </div>
         )}
 
         {/* Botão principal */}
-        <button
-          data-testid="trade-submit-order-btn"
-          onClick={handleOrder}
-          disabled={loading}
+        <button data-testid="trade-submit-order-btn" onClick={handleOrder} disabled={loading}
           style={{
             width: '100%', padding: '14px 10px',
-            border: 'none', borderRadius: 11,
+            border: 'none', borderRadius: 12,
             cursor: loading ? 'not-allowed' : 'pointer',
-            background: loading
-              ? '#1e1e30'
-              : side === 'comprar' ? '#22c58b' : '#ef4444',
-            color: '#fff',
-            fontFamily: 'var(--font-heading)',
-            fontSize: 14, fontWeight: 800,
-            display: 'flex', alignItems: 'center',
-            justifyContent: 'center', gap: 7,
-            letterSpacing: '0.03em',
+            background: loading ? '#1e1e30' : side === 'comprar' ? 'linear-gradient(135deg,#16a34a,#22c58b)' : 'linear-gradient(135deg,#b91c1c,#ef4444)',
+            color: '#fff', fontFamily: 'var(--font-heading)',
+            fontSize: 14, fontWeight: 900,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+            letterSpacing: '0.04em',
+            boxShadow: loading ? 'none' : side === 'comprar' ? '0 4px 20px rgba(34,197,139,0.4)' : '0 4px 20px rgba(239,68,68,0.4)',
             opacity: loading ? 0.6 : 1,
-            transition: 'background .15s',
-          }}
-        >
+            transition: 'all .2s',
+          }}>
           {loading
             ? <><Activity size={15} style={{ animation: 'spin 1s linear infinite' }} /> {t('trade_processing')}</>
             : side === 'comprar'
@@ -272,10 +240,11 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
           }
         </button>
 
-        <p style={{ fontSize: 10, color: '#4a5068', textAlign: 'center', margin: 0 }}>
+        <p style={{ fontSize: 10, color: '#26263a', textAlign: 'center', margin: 0 }}>
           {t('trade_reg_info')}
         </p>
       </div>
     </div>
   );
 }
+

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Search, Star } from 'lucide-react';
+import { Search, Star, Globe, Zap, TrendingUp, Landmark, Droplets, BarChart2 } from 'lucide-react';
 import { ASSETS, CAT_COLORS } from './tradeData';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
+const CAT_ICONS = { Forex: Globe, Cripto: Zap, 'Acções': TrendingUp, Metais: Landmark, Commodities: Droplets };
 
 export default function TradeAssets({ activeCat, selectedAsset, onCatChange, onAssetSelect }) {
   const [search, setSearch] = useState('');
@@ -39,115 +40,95 @@ export default function TradeAssets({ activeCat, selectedAsset, onCatChange, onA
 
   return (
     <div style={{
-      background: '#111118',
-      border: '1px solid #26263a',
-      borderRadius: 14,
+      background: 'linear-gradient(180deg, hsl(240,26%,9%) 0%, hsl(240,26%,8%) 100%)',
+      border: '1px solid hsl(240,16%,18%)',
+      borderRadius: 16,
       overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',
-      minHeight: 540,
+      minHeight: 560,
     }}>
 
-      {/* ── Categorias + pesquisa ── */}
-      <div style={{ borderBottom: '1px solid #26263a', padding: '10px 10px 0' }}>
-        <div style={{
-          display: 'flex', gap: 4,
-          overflowX: 'auto', paddingBottom: 8,
-          scrollbarWidth: 'none',
-        }}>
+      {/* ── Categorias com ícones ── */}
+      <div style={{ padding: '8px 8px 0', background: '#0a0a18', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ display: 'flex', gap: 4, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}>
           {Object.keys(ASSETS).map(key => {
-            const c = CAT_COLORS[key];
+            const c    = CAT_COLORS[key];
             const active = activeCat === key;
+            const Icon = CAT_ICONS[key] || BarChart2;
             return (
-              <button
-                key={key}
-                onClick={() => { setSearch(''); onCatChange(key); }}
+              <button key={key} onClick={() => { setSearch(''); onCatChange(key); }}
                 style={{
-                  flexShrink: 0, padding: '5px 10px', borderRadius: 7,
-                  border: `1px solid ${active ? c.border : 'transparent'}`,
+                  flexShrink: 0, padding: '5px 9px', borderRadius: 8,
+                  border: `1px solid ${active ? c.border : 'rgba(255,255,255,0.05)'}`,
                   background: active ? c.bg : 'transparent',
-                  color: active ? c.active : '#7a8299',
-                  fontSize: 11, fontWeight: 700,
-                  cursor: 'pointer', whiteSpace: 'nowrap',
-                }}
-              >
-                {key}
+                  color: active ? c.active : '#4a5068',
+                  fontSize: 10, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap',
+                  display: 'flex', alignItems: 'center', gap: 4,
+                  transition: 'all .15s',
+                }}>
+                <Icon size={11} />{key}
               </button>
             );
           })}
         </div>
 
+        {/* Pesquisa */}
         <div style={{ position: 'relative', paddingBottom: 8 }}>
-          <Search size={12} style={{
-            position: 'absolute', left: 9, top: '50%',
-            transform: 'translateY(-60%)', color: '#7a8299',
-          }} />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
+          <Search size={11} style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-60%)', color: '#4a5068' }} />
+          <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Pesquisar…"
-            style={{
-              width: '100%', padding: '7px 10px 7px 28px',
-              background: '#0e0e1a', border: '1px solid #26263a',
-              borderRadius: 8, color: '#f3f5ff', fontSize: 11,
-              outline: 'none', boxSizing: 'border-box',
-            }}
-          />
+            style={{ width: '100%', padding: '7px 10px 7px 26px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, color: '#f3f5ff', fontSize: 11, outline: 'none', boxSizing: 'border-box' }} />
         </div>
       </div>
 
       {/* ── Cabeçalho ── */}
-      <div style={{
-        display: 'flex', justifyContent: 'space-between',
-        padding: '5px 12px', borderBottom: '1px solid #1a1a2a',
-      }}>
-        <span style={{ fontSize: 10, color: '#4a5068', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Instrumento</span>
-        <span style={{ fontSize: 10, color: '#4a5068', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Var.</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 12px', background: 'rgba(0,0,0,0.2)' }}>
+        <span style={{ fontSize: 9, color: '#26263a', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Par</span>
+        <span style={{ fontSize: 9, color: '#26263a', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Preço / Var.</span>
       </div>
 
-      {/* ── Lista de activos ── */}
+      {/* ── Lista ── */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {displayItems.length === 0 && (
-          <div style={{ padding: 24, textAlign: 'center', color: '#7a8299', fontSize: 12 }}>
-            Sem resultados
-          </div>
+          <div style={{ padding: 24, textAlign: 'center', color: '#4a5068', fontSize: 12 }}>Sem resultados</div>
         )}
         {displayItems.map((asset, i) => {
-          const sel = selectedAsset.symbol === asset.symbol;
+          const sel   = selectedAsset.symbol === asset.symbol;
           const isFav = favorites.includes(asset.symbol);
           const isFirstNonFav = !search && i === favItems.length && favItems.length > 0;
           return (
             <React.Fragment key={asset.symbol}>
               {isFirstNonFav && (
-                <div style={{ padding: '4px 12px', fontSize: 9, color: '#4a5068', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', background: '#0a0a18', borderTop: '1px solid #1e1e30' }}>
-                  Todos
+                <div style={{ padding: '4px 12px', fontSize: 8, color: '#26263a', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', background: 'rgba(0,0,0,0.2)', borderTop: '1px solid rgba(255,255,255,0.03)' }}>
+                  TODOS
                 </div>
               )}
-              <div
-                onClick={() => onAssetSelect(asset)}
+              <div onClick={() => onAssetSelect(asset)}
                 style={{
                   padding: '9px 12px', cursor: 'pointer',
                   background: sel ? col.bg : 'transparent',
-                  borderLeft: `2px solid ${sel ? col.active : 'transparent'}`,
-                  display: 'flex', alignItems: 'center',
-                  justifyContent: 'space-between',
+                  borderLeft: `3px solid ${sel ? col.active : 'transparent'}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  transition: 'background 0.15s',
                 }}
                 onMouseEnter={e => { if (!sel) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = sel ? col.bg : 'transparent'; }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                onMouseLeave={e => { e.currentTarget.style.background = sel ? col.bg : 'transparent'; }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                   <button onClick={(e) => toggleFav(asset.symbol, e)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, flexShrink: 0 }}>
-                    <Star size={11} color={isFav ? '#FFBE0B' : '#26263a'} fill={isFav ? '#FFBE0B' : 'none'} />
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, flexShrink: 0, lineHeight: 0 }}>
+                    <Star size={10} color={isFav ? '#FFBE0B' : '#26263a'} fill={isFav ? '#FFBE0B' : 'none'} />
                   </button>
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: sel ? col.active : '#e8eaf6' }}>{asset.label}</div>
-                    <div style={{ fontSize: 10, color: '#7a8299', marginTop: 1 }}>{asset.name}</div>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: sel ? col.active : '#e8eaf6', letterSpacing: '-0.01em' }}>{asset.label}</div>
+                    <div style={{ fontSize: 9, color: '#4a5068', marginTop: 1 }}>{asset.name}</div>
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div className="numeric" style={{ fontSize: 11, fontWeight: 700, color: '#e8eaf6' }}>{asset.price}</div>
-                  <div className="numeric" style={{ fontSize: 10, fontWeight: 600, color: asset.pos ? '#22c58b' : '#ef4444' }}>{asset.change}</div>
+                  <div className="numeric" style={{ fontSize: 11, fontWeight: 700, color: sel ? '#fff' : '#c8ccdd' }}>{asset.price}</div>
+                  <div className="numeric" style={{ fontSize: 10, fontWeight: 700, color: asset.pos ? '#22c58b' : '#ef4444', padding: '1px 4px', background: asset.pos ? 'rgba(34,197,139,0.1)' : 'rgba(239,68,68,0.1)', borderRadius: 3, marginTop: 1 }}>
+                    {asset.change}
+                  </div>
                 </div>
               </div>
             </React.Fragment>
@@ -157,3 +138,4 @@ export default function TradeAssets({ activeCat, selectedAsset, onCatChange, onA
     </div>
   );
 }
+
