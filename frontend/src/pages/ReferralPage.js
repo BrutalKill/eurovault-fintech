@@ -141,40 +141,85 @@ export default function ReferralPage() {
         </div>
       </div>
 
-      {/* Níveis de parceiro */}
+      {/* Níveis de parceiro por depósito */}
       <div style={{ ...card, marginBottom: 20 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#f3f5ff', marginBottom: 16 }}>Níveis de Parceiro</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#f3f5ff' }}>Níveis de Parceiro</div>
+          <div style={{ fontSize: 11, color: '#7a8299' }}>Baseado no valor depositado</div>
+        </div>
+
+        {/* Progresso visual */}
+        {depositedAmount > 0 && nextTier && (
+          <div style={{ marginBottom: 16, padding: '12px 14px', background: `${currentTier.color}08`, border: `1px solid ${currentTier.color}20`, borderRadius: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ fontSize: 12, color: 'hsl(215,16%,65%)' }}>
+                {currentTier.icon} {currentTier.label} → {nextTier.icon} {nextTier.label}
+              </span>
+              <span className="numeric" style={{ fontSize: 12, fontWeight: 700, color: currentTier.color }}>
+                {Math.min(100, Math.round((depositedAmount - currentTier.min) / (nextTier.min - currentTier.min) * 100))}%
+              </span>
+            </div>
+            <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
+              <div style={{
+                height: '100%',
+                width: `${Math.min(100, Math.round((depositedAmount - currentTier.min) / (nextTier.min - currentTier.min) * 100))}%`,
+                background: `linear-gradient(90deg, ${currentTier.color}, ${nextTier.color})`,
+                borderRadius: 3, transition: 'width 1s ease',
+              }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5 }}>
+              <span className="numeric" style={{ fontSize: 10, color: currentTier.color }}>
+                {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(depositedAmount)}
+              </span>
+              <span className="numeric" style={{ fontSize: 10, color: '#4a5068' }}>
+                Próximo: {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(nextTier.min)}
+              </span>
+            </div>
+          </div>
+        )}
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {TIERS.map(tier => {
             const isActive = tier.label === currentTier.label;
+            const isAchieved = depositedAmount >= tier.min;
             return (
               <div key={tier.label} style={{
                 display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px',
-                background: isActive ? `${tier.color}12` : 'transparent',
-                border: `1px solid ${isActive ? tier.color + '40' : 'hsl(240,16%,18%)'}`,
+                background: isActive ? `${tier.color}12` : isAchieved ? `${tier.color}06` : 'transparent',
+                border: `1px solid ${isActive ? tier.color + '40' : isAchieved ? tier.color + '20' : 'hsl(240,16%,18%)'}`,
                 borderRadius: 12, transition: 'all 0.2s',
+                opacity: isAchieved ? 1 : 0.5,
               }}>
                 <span style={{ fontSize: 24 }}>{tier.icon}</span>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 14, fontWeight: 800, color: tier.color }}>{tier.label}</span>
+                    <span style={{ fontSize: 14, fontWeight: 800, color: isAchieved ? tier.color : '#4a5068' }}>{tier.label}</span>
                     {isActive && <span style={{ fontSize: 10, padding: '2px 7px', background: `${tier.color}20`, border: `1px solid ${tier.color}40`, borderRadius: 5, color: tier.color, fontWeight: 700 }}>ACTUAL</span>}
+                    {isAchieved && !isActive && <span style={{ fontSize: 10, color: '#22c58b' }}>✓</span>}
                   </div>
                   <div style={{ fontSize: 12, color: 'hsl(215,16%,55%)' }}>
-                    {tier.max === Infinity ? `${tier.min}+ convertidos` : `${tier.min}–${tier.max} convertidos`}
+                    {tier.label_range}
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div className="numeric" style={{ fontSize: 16, fontWeight: 800, color: tier.color }}>€{tier.bonus}</div>
-                  <div style={{ fontSize: 10, color: 'hsl(215,16%,50%)' }}>por referido</div>
+                  <div className="numeric" style={{ fontSize: 16, fontWeight: 800, color: isAchieved ? tier.color : '#4a5068' }}>€{tier.bonus}</div>
+                  <div style={{ fontSize: 10, color: 'hsl(215,16%,50%)' }}>bónus/referido</div>
                 </div>
               </div>
             );
           })}
         </div>
+
         {nextTier && (
           <div style={{ marginTop: 14, padding: '10px 14px', background: 'rgba(58,134,255,0.06)', border: '1px solid rgba(58,134,255,0.15)', borderRadius: 9, fontSize: 12, color: 'hsl(215,16%,65%)' }}>
-            💡 Faltam <strong style={{ color: '#3A86FF' }}>{nextTier.min - (referral?.converted || 0)} convertidos</strong> para atingir o nível <strong style={{ color: nextTier.color }}>{nextTier.icon} {nextTier.label}</strong> (€{nextTier.bonus}/referido)
+            💡 Deposite mais <strong style={{ color: '#3A86FF' }}>
+              {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(Math.max(0, nextTier.min - depositedAmount))}
+            </strong> para atingir o nível <strong style={{ color: nextTier.color }}>{nextTier.icon} {nextTier.label}</strong> e ganhar <strong style={{ color: nextTier.color }}>€{nextTier.bonus}</strong>/referido
+          </div>
+        )}
+        {!nextTier && (
+          <div style={{ marginTop: 14, padding: '10px 14px', background: 'rgba(58,134,255,0.06)', border: '1px solid rgba(58,134,255,0.15)', borderRadius: 9, fontSize: 12, color: '#3A86FF', fontWeight: 700, textAlign: 'center' }}>
+            💎 Nível Platinum atingido — Bónus máximo de €{currentTier.bonus}/referido!
           </div>
         )}
       </div>
@@ -184,7 +229,7 @@ export default function ReferralPage() {
         style={{ width: '100%', padding: '16px', background: 'linear-gradient(135deg, #22c58b, #3A86FF)', border: 'none', borderRadius: 14, color: '#fff', fontSize: 15, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, fontFamily: 'var(--font-heading)', boxShadow: '0 4px 20px rgba(58,134,255,0.3)', transition: 'opacity 0.2s' }}
         onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
         onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
-        <Star size={18} fill="#fff" />Começar a Convidar e Ganhar Agora<ArrowRight size={18} />
+        <Star size={18} fill="#fff" />Depositar e Subir de Nível<ArrowRight size={18} />
       </button>
     </div>
   );
