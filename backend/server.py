@@ -1120,12 +1120,8 @@ async def get_my_sessions(current_user = Depends(get_current_user)):
 
 
 # ════════════════════════════════════════════════════════════════
-#  METAS DE INVESTIMENTO
+#  ACTIVIDADES DO UTILIZADOR
 # ════════════════════════════════════════════════════════════════
-class InvestmentGoalRequest(BaseModel):
-    goal_amount: float
-    goal_label: Optional[str] = "A minha meta"
-
 @app.get("/api/me/activity")
 async def get_my_activity(current_user = Depends(get_current_user)):
     """Últimas 5 actividades do utilizador para o Dashboard."""
@@ -1164,6 +1160,17 @@ async def get_my_activity(current_user = Depends(get_current_user)):
     # Ordenar por data e limitar a 5
     activities.sort(key=lambda x: x["created_at"] or "", reverse=True)
     return activities[:5]
+
+
+# ════════════════════════════════════════════════════════════════
+#  METAS DE INVESTIMENTO
+# ════════════════════════════════════════════════════════════════
+class InvestmentGoalRequest(BaseModel):
+    goal_amount: float
+    goal_label: Optional[str] = "A minha meta"
+
+@app.put("/api/me/goal")
+async def set_investment_goal(req: InvestmentGoalRequest, current_user = Depends(get_current_user)):
     await db.users.update_one(
         {"_id": ObjectId(current_user["sub"])},
         {"$set": {"goal_amount": req.goal_amount, "goal_label": req.goal_label}}
