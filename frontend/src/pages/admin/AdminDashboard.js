@@ -719,7 +719,14 @@ export default function AdminDashboard() {
       if (res.ok) {
         const data = await res.json();
         data.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-        setUsers(data);
+        // Só actualizar o estado se os dados mudaram (evita flicker)
+        setUsers(prev => {
+          if (prev.length === data.length &&
+              prev.every((u, i) => u.id === data[i]?.id && u.status === data[i]?.status && u.balance === data[i]?.balance)) {
+            return prev; // sem alterações — não re-renderizar
+          }
+          return data;
+        });
       }
     } catch (_) {}
     setLoading(false);

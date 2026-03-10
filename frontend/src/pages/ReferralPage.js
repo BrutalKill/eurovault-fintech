@@ -16,10 +16,10 @@ const HOW_IT_WORKS = [
 
 // Níveis baseados no valor total depositado — bónus proporcionais ao nível
 const TIERS = [
-  { min: 10,     max: 999,      label: 'Bronze',   color: '#cd7f32', bonus: 25,  icon: '🥉', label_range: 'A partir de €10'      },
-  { min: 1000,   max: 4999,     label: 'Prata',    color: '#c0c0c0', bonus: 75,  icon: '🥈', label_range: '€1.000 – €4.999'     },
-  { min: 5000,   max: 24999,    label: 'Ouro',     color: '#FFD700', bonus: 200, icon: '🥇', label_range: '€5.000 – €24.999'    },
-  { min: 25000,  max: Infinity, label: 'Platinum', color: '#3A86FF', bonus: 500, icon: '💎', label_range: 'A partir de €25.000' },
+  { min: 250,    max: 999,      label: 'Bronze',   color: '#cd7f32', bonus: 100,  icon: '🥉', label_range: 'A partir de €250'      },
+  { min: 1000,   max: 4999,     label: 'Prata',    color: '#c0c0c0', bonus: 500,  icon: '🥈', label_range: '€1.000 – €4.999'      },
+  { min: 5000,   max: 9999,     label: 'Ouro',     color: '#FFD700', bonus: 1000, icon: '🥇', label_range: '€5.000 – €10.000'     },
+  { min: 10000,  max: Infinity, label: 'Diamante', color: '#3A86FF', bonus: 2500, icon: '💎', label_range: 'A partir de €10.000'  },
 ];
 
 export default function ReferralPage() {
@@ -67,7 +67,7 @@ export default function ReferralPage() {
             Programa de Parceiros
           </h1>
           <p style={{ fontSize: 13, color: 'hsl(215,16%,60%)', margin: '5px 0 0' }}>
-            Convide amigos e ganhe €25 por cada conversão
+          Convide amigos e ganhe €{currentTier.bonus} por cada conversão no seu nível actual
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: `${currentTier.color}18`, border: `1px solid ${currentTier.color}40`, borderRadius: 12 }}>
@@ -80,7 +80,7 @@ export default function ReferralPage() {
       </div>
 
       {/* Estatísticas */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, marginBottom: 20 }} className="referral-stats">
+      <div style={{ display: 'grid', gap: 14, marginBottom: 20 }} className="referral-stats">
         {[
           { label: 'Convidados', value: referral?.count || 0,     color: '#3A86FF', icon: Users    },
           { label: 'Convertidos',value: referral?.converted || 0, color: '#22c58b', icon: CheckCircle },
@@ -126,7 +126,7 @@ export default function ReferralPage() {
       {/* Como funciona */}
       <div style={{ ...card, marginBottom: 20 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: '#f3f5ff', marginBottom: 18 }}>Como Funciona</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 14 }} className="referral-how">
+        <div style={{ display: 'grid', gap: 14 }} className="referral-how">
           {HOW_IT_WORKS.map(({ icon: Icon, color, title, desc }) => (
             <div key={title} style={{ display: 'flex', gap: 12, padding: '14px', background: `${color}08`, border: `1px solid ${color}20`, borderRadius: 12 }}>
               <div style={{ width: 36, height: 36, background: `${color}18`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>

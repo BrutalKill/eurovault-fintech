@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { BarChart2, CreditCard, ArrowDownToLine, Newspaper, User, Clock, LogOut, Menu, Home, ShieldCheck, TrendingUp as TrendLine } from 'lucide-react';
+import { BarChart2, CreditCard, ArrowDownToLine, Newspaper, User, Clock, LogOut, Menu, Home, ShieldCheck, TrendingUp as TrendLine, Users as UsersIcon } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 import { useLang } from '../context/LangContext';
 import { useCountUp } from '../hooks/useCountUp';
@@ -16,14 +16,14 @@ export default function ClientLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navItems = [
-    { to: '/app/dashboard',        icon: Home,      label: 'Dashboard'            },
-    { to: '/app/trade',            icon: BarChart2, label: t('nav_trade')          },
-    { to: '/app/deposit',          icon: CreditCard,label: t('nav_deposit')        },
+    { to: '/app/dashboard',        icon: Home,        label: 'Dashboard'            },
+    { to: '/app/trade',            icon: BarChart2,   label: t('nav_trade')          },
+    { to: '/app/deposit',          icon: CreditCard,  label: t('nav_deposit')        },
     { to: '/app/withdrawal',       icon: ArrowDownToLine, label: t('nav_withdrawal') },
-    { to: '/app/history',          icon: Clock,     label: t('nav_history')        },
-    { to: '/app/balance-history',  icon: TrendLine, label: 'Evolução'              },
-    { to: '/app/news',             icon: Newspaper, label: t('nav_news')           },
-    { to: '/app/profile',          icon: User,      label: t('nav_profile')        },
+    { to: '/app/history',          icon: Clock,       label: t('nav_history')        },
+    { to: '/app/referral',         icon: UsersIcon,   label: 'Parceiros'             },
+    { to: '/app/news',             icon: Newspaper,   label: t('nav_news')           },
+    { to: '/app/profile',          icon: User,        label: t('nav_profile')        },
   ];
 
   const handleLogout = () => {
