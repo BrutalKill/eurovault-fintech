@@ -1,27 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronUp, ChevronDown, Activity } from 'lucide-react';
+import { ChevronUp, ChevronDown, Activity, TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { CAT_COLORS } from './tradeData';
 import { useLang } from '../../context/LangContext';
+import { useUser } from '../../context/UserContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
-
-const fmt = (v) =>
-  new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v || 0);
+const fmt = (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v || 0);
 
 export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }) {
   const { t, lang } = useLang();
+  const { user, fetchUser } = useUser();
   const [side, setSide]           = useState(initialSide);
   const [amount, setAmount]       = useState('100');
   const [leverage, setLeverage]   = useState('1:10');
   const [loading, setLoading]     = useState(false);
   const [lastOrder, setLastOrder] = useState(null);
+  const [balanceResult, setBalanceResult] = useState(null); // {before, after, gain}
 
-  // Sempre que o modal abre com um lado diferente, actualizar o estado
-  useEffect(() => {
-    setSide(initialSide);
-    setLastOrder(null);
-  }, [initialSide]);
+  const safeBalance = Math.max(0, parseFloat(user?.balance) || 0);
+  const reqAmount   = parseFloat(amount) || 0;
+  const insufficient = side === 'comprar' && reqAmount > safeBalance && reqAmount > 0;
+
+  useEffect(() => { setSide(initialSide); setLastOrder(null); setBalanceResult(null); }, [initialSide]);
 
   const col        = CAT_COLORS[activeCat] || CAT_COLORS['Forex'];
   const assetName  = (asset.name || '').split(' / ')[0];
@@ -32,56 +33,56 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
     ? `${t('trade_open_btn')} ${assetName}`
     : `${t('trade_close_btn')} ${assetName}`;
 
-  const handleOrder = () => {
+  const handleOrder = async () => {
     const amt = parseFloat(amount);
     if (!amt || isNaN(amt) || amt < 10) {
       toast.error('Montante inválido', { description: 'Mínimo €10,00.' });
       return;
     }
+    if (insufficient) {
+      toast.error('Saldo insuficiente', { description: `Disponível: ${fmt(safeBalance)}` });
+      return;
+    }
     setLoading(true);
-
-    // Registar a ordem no backend — fire-and-forget (não bloqueia a UI)
-    const token = localStorage.getItem('token');
-    if (token) {
-      fetch(`${BACKEND_URL}/api/orders`, {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${BACKEND_URL}/api/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          asset_label: asset.label,
-          asset_name:  asset.name,
-          side,
-          amount:      amt,
-          leverage,
-          price:       asset.price,
-          category:    activeCat,
+          asset_label: asset.label, asset_name: asset.name,
+          side, amount: amt, leverage, price: asset.price, category: activeCat,
         }),
-      }).catch(() => {});
-    }
-
-    setTimeout(() => {
-      setLoading(false);
-      setLastOrder({
-        side, label: asset.label, name: assetName,
-        amount: amt, leverage,
-        time: new Date().toLocaleTimeString('pt-PT'),
       });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Erro ao executar ordem');
+
+      await fetchUser();
+
+      const balBefore = data.balance_before || 0;
+      const balAfter  = data.balance_after  || 0;
+      const gain      = balAfter - balBefore;
+
+      setBalanceResult({ before: balBefore, after: balAfter, gain });
+      setLastOrder({ side, label: asset.label, name: assetName, amount: amt, leverage, time: new Date().toLocaleTimeString('pt-PT') });
+
       if (side === 'comprar') {
-        toast.success('Operação aberta com sucesso', {
-          description: `${assetName} · ${fmt(amt)} · ${leverage}`,
-          duration: 6000,
+        toast.success('Operação aberta!', {
+          description: `${fmt(amt)} debitados · Novo saldo: ${fmt(balAfter)}`,
+          duration: 7000, icon: '📉',
         });
       } else {
-        toast.success('Operação encerrada com sucesso', {
-          description: `${assetName} · ${fmt(amt)} · ${leverage}`,
-          duration: 6000,
-          style: {
-            background: '#180a0a',
-            border: '1px solid rgba(248,113,113,0.35)',
-            color: '#f3f5ff',
-          },
+        toast.success('Operação encerrada!', {
+          description: `${fmt(amt + Math.abs(gain))} creditados · Novo saldo: ${fmt(balAfter)}`,
+          duration: 7000, icon: '📈',
+          style: { background: '#050f0a', border: '1px solid rgba(34,197,139,0.35)', color: '#f3f5ff' },
         });
       }
-    }, 700);
+    } catch (e) {
+      toast.error(e.message || 'Erro ao executar ordem');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const inp = (extra) => ({
@@ -182,6 +183,22 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
               </button>
             ))}
           </div>
+          {/* Alerta saldo insuficiente */}
+          {insufficient && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 7, padding: '7px 10px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8 }}>
+              <AlertTriangle size={12} color="#ef4444" />
+              <span style={{ fontSize: 11, color: '#ef4444', fontWeight: 700 }}>
+                Saldo insuficiente — disponível {fmt(safeBalance)}
+              </span>
+            </div>
+          )}
+          {/* Saldo disponível */}
+          {!insufficient && safeBalance > 0 && side === 'comprar' && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 10, color: '#4a5068' }}>
+              <span>Saldo disponível</span>
+              <span className="numeric" style={{ color: '#22c58b', fontWeight: 700 }}>{fmt(safeBalance)}</span>
+            </div>
+          )}
         </div>
 
         {/* Alavancagem */}
@@ -207,36 +224,57 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
           ))}
         </div>
 
-        {/* Última ordem */}
+        {/* Última ordem + resultado do saldo */}
         {lastOrder && (
-          <div style={{ padding: '8px 12px', borderRadius: 9, background: lastOrder.side === 'comprar' ? 'rgba(34,197,139,0.08)' : 'rgba(239,68,68,0.08)', border: `1px solid ${lastOrder.side === 'comprar' ? 'rgba(34,197,139,0.3)' : 'rgba(239,68,68,0.3)'}` }}>
-            <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 2, color: lastOrder.side === 'comprar' ? '#22c58b' : '#ef4444' }}>
+          <div style={{ padding: '10px 12px', borderRadius: 9, background: lastOrder.side === 'comprar' ? 'rgba(34,197,139,0.08)' : 'rgba(239,68,68,0.08)', border: `1px solid ${lastOrder.side === 'comprar' ? 'rgba(34,197,139,0.3)' : 'rgba(239,68,68,0.3)'}` }}>
+            <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 4, color: lastOrder.side === 'comprar' ? '#22c58b' : '#ef4444', display: 'flex', alignItems: 'center', gap: 5 }}>
+              {lastOrder.side === 'comprar' ? <TrendingDown size={12} /> : <TrendingUp size={12} />}
               {lastOrder.side === 'comprar' ? t('trade_order_opened') : t('trade_order_closed')}
             </div>
-            <div style={{ fontSize: 10, color: '#7a8299' }}>{lastOrder.label} · {fmt(lastOrder.amount)} · {lastOrder.leverage}</div>
+            <div style={{ fontSize: 10, color: '#7a8299', marginBottom: balanceResult ? 6 : 0 }}>{lastOrder.label} · {fmt(lastOrder.amount)} · {lastOrder.leverage} · {lastOrder.time}</div>
+            {balanceResult && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', background: 'rgba(0,0,0,0.2)', borderRadius: 6 }}>
+                <div>
+                  <div style={{ fontSize: 9, color: '#4a5068' }}>Antes</div>
+                  <div className="numeric" style={{ fontSize: 11, fontWeight: 700, color: '#7a8299' }}>{fmt(balanceResult.before)}</div>
+                </div>
+                <div style={{ fontSize: 14, color: balanceResult.gain >= 0 ? '#22c58b' : '#ef4444' }}>→</div>
+                <div>
+                  <div style={{ fontSize: 9, color: '#4a5068' }}>Depois</div>
+                  <div className="numeric" style={{ fontSize: 12, fontWeight: 900, color: balanceResult.gain >= 0 ? '#22c58b' : '#ef4444', fontFamily: 'var(--font-heading)' }}>{fmt(balanceResult.after)}</div>
+                </div>
+                {balanceResult.gain > 0 && (
+                  <div style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 800, color: '#22c58b', background: 'rgba(34,197,139,0.12)', padding: '3px 8px', borderRadius: 5 }}>
+                    +{fmt(balanceResult.gain)} lucro
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
         {/* Botão principal */}
-        <button data-testid="trade-submit-order-btn" onClick={handleOrder} disabled={loading}
+        <button data-testid="trade-submit-order-btn" onClick={handleOrder} disabled={loading || insufficient}
           style={{
             width: '100%', padding: '14px 10px',
             border: 'none', borderRadius: 12,
-            cursor: loading ? 'not-allowed' : 'pointer',
-            background: loading ? '#1e1e30' : side === 'comprar' ? 'linear-gradient(135deg,#16a34a,#22c58b)' : 'linear-gradient(135deg,#b91c1c,#ef4444)',
+            cursor: loading || insufficient ? 'not-allowed' : 'pointer',
+            background: insufficient ? '#1e1e30' : loading ? '#1e1e30' : side === 'comprar' ? 'linear-gradient(135deg,#16a34a,#22c58b)' : 'linear-gradient(135deg,#b91c1c,#ef4444)',
             color: '#fff', fontFamily: 'var(--font-heading)',
             fontSize: 14, fontWeight: 900,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
             letterSpacing: '0.04em',
-            boxShadow: loading ? 'none' : side === 'comprar' ? '0 4px 20px rgba(34,197,139,0.4)' : '0 4px 20px rgba(239,68,68,0.4)',
-            opacity: loading ? 0.6 : 1,
+            boxShadow: loading || insufficient ? 'none' : side === 'comprar' ? '0 4px 20px rgba(34,197,139,0.4)' : '0 4px 20px rgba(239,68,68,0.4)',
+            opacity: loading || insufficient ? 0.5 : 1,
             transition: 'all .2s',
           }}>
           {loading
             ? <><Activity size={15} style={{ animation: 'spin 1s linear infinite' }} /> {t('trade_processing')}</>
-            : side === 'comprar'
-              ? <><ChevronUp size={16} />{btnLabel}</>
-              : <><ChevronDown size={16} />{btnLabel}</>
+            : insufficient
+              ? <><AlertTriangle size={15} />Saldo Insuficiente</>
+              : side === 'comprar'
+                ? <><ChevronUp size={16} />{btnLabel}</>
+                : <><ChevronDown size={16} />{btnLabel}</>
           }
         </button>
 

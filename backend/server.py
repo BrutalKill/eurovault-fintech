@@ -952,20 +952,84 @@ class OrderRequest(BaseModel):
 
 @app.post("/api/orders")
 async def create_order(req: OrderRequest, current_user = Depends(get_current_user)):
+    user_id = current_user["sub"]
+    amount  = max(0.0, float(req.amount or 0))
+
+    # ── Buscar saldo actual ────────────────────────────────────────────────
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        raise HTTPException(status_code=404, detail="Utilizador não encontrado")
+
+    balance = max(0.0, float(user.get("balance", 0)))
+    profit  = max(0.0, float(user.get("profit",  0)))
+
+    new_balance = balance
+    new_profit  = profit
+
+    if amount > 0:
+        if req.side == "comprar":
+            # ── COMPRAR → deduzir do saldo (dinheiro "investido") ──────────
+            if amount > balance:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Saldo insuficiente. Disponível: {balance:.2f}€. Necessário: {amount:.2f}€."
+                )
+            new_balance = round(balance - amount, 2)
+
+        elif req.side == "vender":
+            # ── VENDER → devolver o montante + lucro simulado (±0.5-3%) ────
+            import random
+            pct = random.uniform(0.005, 0.03)   # lucro simulado de 0.5% a 3%
+            gain = round(amount * pct, 2)
+            new_balance = round(balance + amount + gain, 2)
+            new_profit  = round(profit + gain, 2)
+
+        # Actualizar saldo do utilizador
+        await db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {
+                "balance":          new_balance,
+                "profit":           new_profit,
+                "updated_at":       datetime.utcnow(),
+                "profit_last_updated": datetime.utcnow(),
+            }}
+        )
+
     order = {
-        "user_id": current_user["sub"],
+        "user_id":     user_id,
         "asset_label": req.asset_label,
-        "asset_name": req.asset_name,
-        "category": req.category,
-        "side": req.side,
-        "amount": req.amount,
-        "leverage": req.leverage,
-        "price": req.price,
-        "status": "executada",
-        "created_at": datetime.utcnow(),
+        "asset_name":  req.asset_name,
+        "category":    req.category,
+        "side":        req.side,
+        "amount":      amount,
+        "leverage":    req.leverage,
+        "price":       req.price,
+        "balance_before": balance,
+        "balance_after":  new_balance,
+        "status":      "executada",
+        "created_at":  datetime.utcnow(),
     }
     result = await db.orders.insert_one(order)
-    return {"success": True, "id": str(result.inserted_id)}
+
+    # Notificar o cliente via WebSocket (actualização de saldo em tempo real)
+    try:
+        await manager.broadcast({
+            "type": "balance_updated",
+            "user_id": user_id,
+            "balance": new_balance,
+            "profit":  new_profit,
+        })
+    except Exception:
+        pass
+
+    return {
+        "success":        True,
+        "id":             str(result.inserted_id),
+        "balance_before": balance,
+        "balance_after":  new_balance,
+        "side":           req.side,
+        "amount":         amount,
+    }
 
 @app.get("/api/orders")
 async def get_orders(current_user = Depends(get_current_user)):
