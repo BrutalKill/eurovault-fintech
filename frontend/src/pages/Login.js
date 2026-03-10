@@ -239,14 +239,7 @@ export default function Login() {
                 <input data-testid="login-email-input" type="email" required value={form.email}
                   onChange={e => setForm({ ...form, email: e.target.value })}
                   placeholder="o_seu_email@exemplo.pt"
-                  style={{
-                    width: '100%', padding: '12px 14px',
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    borderRadius: 12, color: '#f3f5ff', fontSize: 14,
-                    outline: 'none', boxSizing: 'border-box',
-                    transition: 'border-color .2s',
-                  }}
+                  style={{ width: '100%', padding: '12px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, color: '#f3f5ff', fontSize: 16, outline: 'none', boxSizing: 'border-box', transition: 'border-color .2s' }}
                   onFocus={e => e.target.style.borderColor = 'rgba(58,134,255,0.6)'}
                   onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.12)'}
                 />
@@ -257,14 +250,7 @@ export default function Login() {
                   <input data-testid="login-password-input" type={showPass ? 'text' : 'password'} required
                     value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
                     placeholder="••••••••"
-                    style={{
-                      width: '100%', padding: '12px 44px 12px 14px',
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid rgba(255,255,255,0.12)',
-                      borderRadius: 12, color: '#f3f5ff', fontSize: 14,
-                      outline: 'none', boxSizing: 'border-box',
-                      transition: 'border-color .2s',
-                    }}
+                    style={{ width: '100%', padding: '12px 44px 12px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, color: '#f3f5ff', fontSize: 16, outline: 'none', boxSizing: 'border-box', transition: 'border-color .2s' }}
                     onFocus={e => e.target.style.borderColor = 'rgba(58,134,255,0.6)'}
                     onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.12)'}
                   />
