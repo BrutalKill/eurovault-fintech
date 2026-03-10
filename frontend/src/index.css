@@ -64,7 +64,13 @@ h1, h2, h3, h4, h5, h6 {
 /* Card number formatting */
 .card-input { letter-spacing: 0.15em; }
 
-/* ── Legal page layout ── */
+/* ── Referral page ── */
+.referral-stats { grid-template-columns: repeat(3,1fr); }
+.referral-how   { grid-template-columns: repeat(2,1fr); }
+@media (max-width: 600px) {
+  .referral-stats { grid-template-columns: 1fr !important; }
+  .referral-how   { grid-template-columns: 1fr !important; }
+}
 .legal-layout { display: flex; gap: 32px; align-items: flex-start; }
 .legal-nav    { width: 220px; flex-shrink: 0; position: sticky; top: 24px; }
 @media (max-width: 700px) {

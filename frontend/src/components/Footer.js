@@ -108,7 +108,7 @@ export default function Footer() {
               { label: 'FAQ — Perguntas Frequentes',href: null,  action: 'chat' },
               { label: 'Tutoriais de Negociação',   href: '/app/trade', action: 'internal' },
               { label: 'Reportar Problema',          href: null,  action: 'chat' },
-              { label: 'Programa de Parceiros',      href: null,  action: 'referral' },
+              { label: 'Programa de Parceiros',      href: '/app/referral', action: 'internal' },
             ].map(({ label, href, action }) => (
               <a key={label}
                 href={action === 'internal' ? href : '#'}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Save, Shield, TrendingUp, Upload, CheckCircle, Clock, AlertCircle, Target, Monitor, Smartphone, Globe } from 'lucide-react';
+import { Save, Shield, TrendingUp, Upload, CheckCircle, Clock, AlertCircle, Target, Monitor, Smartphone, Globe, Edit2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUser } from '../context/UserContext';
 
@@ -21,6 +21,7 @@ export default function ProfilePage() {
   const [goalAmount, setGoalAmount]   = useState('');
   const [goalLabel, setGoalLabel]     = useState('A minha meta');
   const [savingGoal, setSavingGoal]   = useState(false);
+  const [editingGoal, setEditingGoal] = useState(false); // modo de edição da meta
 
   // Sessions
   const [sessions, setSessions]       = useState([]);
@@ -153,9 +154,13 @@ export default function ProfilePage() {
   };
 
   const kycIcon = !kycStatus ? null
-    : kycStatus.status === 'aprovado' ? <CheckCircle size={15} color="#22c58b" />
-    : kycStatus.status === 'pendente' ? <Clock size={15} color="#FFBE0B" />
+    : kycStatus.kyc_status === 'approved' ? <CheckCircle size={15} color="#22c58b" />
+    : kycStatus.kyc_status === 'pending'  ? <Clock size={15} color="#FFBE0B" />
     : <AlertCircle size={15} color="#ef4444" />;
+
+  const kycBadgeLabel = kycStatus?.kyc_status === 'approved' ? 'Verificado'
+    : kycStatus?.kyc_status === 'pending' ? 'Em Revisão'
+    : kycStatus?.kyc_status === 'rejected' ? 'Rejeitado' : null;
 
   return (
     <div>
@@ -254,33 +259,35 @@ export default function ProfilePage() {
 
       {/* ── Metas de Investimento ── */}
       <div style={{ marginTop: 20, ...card }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
           <div style={{ width: 36, height: 36, background: 'rgba(255,190,11,0.1)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Target size={17} color="#FFBE0B" />
           </div>
-          <div>
+          <div style={{ flex: 1 }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: '#f3f5ff' }}>Meta de Investimento</div>
             <div style={{ fontSize: 12, color: 'hsl(215,16%,55%)' }}>Define um objetivo e acompanha o progresso</div>
           </div>
+          {/* Botão editar / cancelar */}
+          {user?.goal_amount > 0 && (
+            <button
+              onClick={() => setEditingGoal(e => !e)}
+              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', background: editingGoal ? 'rgba(239,68,68,0.1)' : 'rgba(255,190,11,0.1)', border: `1px solid ${editingGoal ? 'rgba(239,68,68,0.3)' : 'rgba(255,190,11,0.3)'}`, borderRadius: 8, color: editingGoal ? '#ef4444' : '#FFBE0B', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+              {editingGoal ? <><X size={12} />Cancelar</> : <><Edit2 size={12} />Editar</>}
+            </button>
+          )}
         </div>
 
-        {/* Barra de progresso */}
-        {user?.goal_amount > 0 && (
-          <div style={{ marginBottom: 20 }}>
+        {/* Barra de progresso (só quando há meta e não está a editar) */}
+        {user?.goal_amount > 0 && !editingGoal && (
+          <div style={{ marginBottom: 14 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ fontSize: 12, color: 'hsl(215,16%,70%)' }}>{user.goal_label || 'A minha meta'}</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#f3f5ff' }}>{user.goal_label || 'A minha meta'}</span>
               <span className="numeric" style={{ fontSize: 12, fontWeight: 700, color: '#FFBE0B' }}>
                 {Math.min(100, Math.round((safeBalance / user.goal_amount) * 100))}%
               </span>
             </div>
-            <div style={{ height: 8, background: 'hsl(240,18%,14%)', borderRadius: 4, overflow: 'hidden' }}>
-              <div style={{
-                height: '100%',
-                width: `${Math.min(100, (safeBalance / user.goal_amount) * 100)}%`,
-                background: 'linear-gradient(90deg, #FFBE0B, #22c58b)',
-                borderRadius: 4,
-                transition: 'width 0.8s ease',
-              }} />
+            <div style={{ height: 10, background: 'hsl(240,18%,14%)', borderRadius: 5, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${Math.min(100, (safeBalance / user.goal_amount) * 100)}%`, background: 'linear-gradient(90deg, #FFBE0B, #22c58b)', borderRadius: 5, transition: 'width 0.8s ease' }} />
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
               <span className="numeric" style={{ fontSize: 11, color: '#22c58b' }}>{formatEur(safeBalance)}</span>
@@ -289,24 +296,25 @@ export default function ProfilePage() {
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <div style={{ flex: 1, minWidth: 180 }}>
-            <label style={labelStyle}>Nome da Meta</label>
-            <input type="text" value={goalLabel} onChange={e => setGoalLabel(e.target.value)}
-              placeholder="Ex: Reforma, Férias, Casa…"
-              style={inputStyle} data-testid="goal-label-input" />
+        {/* Formulário (editar ou criar) */}
+        {(editingGoal || !user?.goal_amount) && (
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <div style={{ flex: 1, minWidth: 170 }}>
+              <label style={labelStyle}>Nome da Meta</label>
+              <input type="text" value={goalLabel} onChange={e => setGoalLabel(e.target.value)}
+                placeholder="Ex: Casa, Reforma, Viagem…" style={inputStyle} data-testid="goal-label-input" />
+            </div>
+            <div style={{ flex: 1, minWidth: 130 }}>
+              <label style={labelStyle}>Valor Alvo (€)</label>
+              <input type="number" inputMode="decimal" min="1" value={goalAmount} onChange={e => setGoalAmount(e.target.value)}
+                placeholder="Ex: 10000" style={inputStyle} data-testid="goal-amount-input" />
+            </div>
+            <button onClick={async () => { await handleSaveGoal(); setEditingGoal(false); }} disabled={savingGoal} data-testid="goal-save-btn"
+              style={{ padding: '11px 18px', background: savingGoal ? 'rgba(255,190,11,0.3)' : '#FFBE0B', border: 'none', borderRadius: 10, color: '#06061a', fontSize: 13, fontWeight: 800, cursor: savingGoal ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+              <Target size={14} />{savingGoal ? 'A guardar…' : user?.goal_amount ? 'Actualizar' : 'Definir Meta'}
+            </button>
           </div>
-          <div style={{ flex: 1, minWidth: 140 }}>
-            <label style={labelStyle}>Valor Alvo (€)</label>
-            <input type="number" inputMode="decimal" min="1" value={goalAmount} onChange={e => setGoalAmount(e.target.value)}
-              placeholder="Ex: 10000"
-              style={inputStyle} data-testid="goal-amount-input" />
-          </div>
-          <button onClick={handleSaveGoal} disabled={savingGoal} data-testid="goal-save-btn"
-            style={{ padding: '11px 20px', background: savingGoal ? 'rgba(255,190,11,0.3)' : '#FFBE0B', border: 'none', borderRadius: 10, color: '#06061a', fontSize: 13, fontWeight: 800, cursor: savingGoal ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-            <Target size={14} />{savingGoal ? 'A guardar…' : 'Guardar Meta'}
-          </button>
-        </div>
+        )}
       </div>
 
       {/* ── Histórico de Sessões ── */}
@@ -366,13 +374,13 @@ export default function ProfilePage() {
             <div style={{ fontSize: 12, color: 'hsl(215,16%,55%)' }}>Envie a frente e o verso do documento para activar saques completos</div>
           </div>
           {kycStatus?.kyc_status && (
-            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700,
+            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700,
               background: kycStatus.kyc_status === 'approved' ? 'rgba(34,197,139,0.12)' : kycStatus.kyc_status === 'pending' ? 'rgba(255,190,11,0.12)' : 'rgba(239,68,68,0.12)',
               color:      kycStatus.kyc_status === 'approved' ? '#22c58b'              : kycStatus.kyc_status === 'pending' ? '#FFBE0B'              : '#ef4444',
               border:    `1px solid ${kycStatus.kyc_status === 'approved' ? 'rgba(34,197,139,0.25)' : kycStatus.kyc_status === 'pending' ? 'rgba(255,190,11,0.25)' : 'rgba(239,68,68,0.25)'}`,
             }}>
               {kycIcon}
-              {kycStatus.kyc_status === 'approved' ? 'Verificado' : kycStatus.kyc_status === 'pending' ? 'Em revisão' : 'Rejeitado'}
+              {kycBadgeLabel}
             </div>
           )}
         </div>

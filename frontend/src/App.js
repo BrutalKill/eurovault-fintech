@@ -20,6 +20,7 @@ import AdminWithdrawals from './pages/admin/AdminWithdrawals';
 import AccessPage from './pages/AccessPage';
 import NotFoundPage from './pages/NotFoundPage';
 import LegalPage from './pages/LegalPage';
+import ReferralPage from './pages/ReferralPage';
 import AdminLayout from './components/AdminLayout';
 
 const PrivateRoute = ({ children }) => {
@@ -55,6 +56,7 @@ export default function App() {
           <Route path="history" element={<HistoryPage />} />
           <Route path="news" element={<NewsPage />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="referral" element={<ReferralPage />} />
         </Route>
 
         {/* Admin Area */}
