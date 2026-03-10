@@ -61,7 +61,10 @@ export default function Login() {
       toast.success('Sessão iniciada com sucesso!');
       navigate('/app/dashboard');
     } catch (err) {
-      toast.error(err.message);
+      // Suprimir erro técnico de race condition do browser
+      const msg = err?.message || '';
+      if (msg.includes('body stream') || msg.includes('json') || msg.includes('Failed to execute')) return;
+      toast.error(msg || 'Erro de ligação. Tente novamente.');
     } finally {
       setLoading(false);
     }

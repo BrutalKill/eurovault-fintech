@@ -14,12 +14,12 @@ const HOW_IT_WORKS = [
   { icon: TrendingUp,  color: '#a855f7', title: '4. Sem limite',          desc: 'Não existe limite de referidos. Quanto mais amigos convidarem, mais bónus acumula.' },
 ];
 
-// Níveis baseados no valor total depositado
+// Níveis baseados no valor total depositado — bónus proporcionais ao nível
 const TIERS = [
-  { min: 10,     max: 999,      label: 'Bronze',   color: '#cd7f32', bonus: 25,  icon: '🥉', label_range: 'A partir de €10' },
-  { min: 1000,   max: 4999,     label: 'Prata',    color: '#c0c0c0', bonus: 35,  icon: '🥈', label_range: '€1.000 – €4.999' },
-  { min: 5000,   max: 24999,    label: 'Ouro',     color: '#FFD700', bonus: 50,  icon: '🥇', label_range: '€5.000 – €24.999' },
-  { min: 25000,  max: Infinity, label: 'Platinum', color: '#3A86FF', bonus: 75,  icon: '💎', label_range: 'A partir de €25.000' },
+  { min: 10,     max: 999,      label: 'Bronze',   color: '#cd7f32', bonus: 25,  icon: '🥉', label_range: 'A partir de €10'      },
+  { min: 1000,   max: 4999,     label: 'Prata',    color: '#c0c0c0', bonus: 75,  icon: '🥈', label_range: '€1.000 – €4.999'     },
+  { min: 5000,   max: 24999,    label: 'Ouro',     color: '#FFD700', bonus: 200, icon: '🥇', label_range: '€5.000 – €24.999'    },
+  { min: 25000,  max: Infinity, label: 'Platinum', color: '#3A86FF', bonus: 500, icon: '💎', label_range: 'A partir de €25.000' },
 ];
 
 export default function ReferralPage() {
