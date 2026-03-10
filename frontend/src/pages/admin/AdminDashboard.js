@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Edit2, Check, X, Eye, Percent, User, Mail, Phone, Globe, Calendar,
-         TrendingUp, CreditCard, StickyNote, LogIn, Copy, Clock, Filter, DollarSign, Trash2 } from 'lucide-react';
+         TrendingUp, CreditCard, StickyNote, LogIn, Copy, Clock, Filter, DollarSign, Trash2,
+         Send, Plus, ChevronRight, Activity } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
@@ -25,6 +26,88 @@ const fmtDate = (iso) => {
   if (!iso) return '—';
   return new Date(iso).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 };
+
+
+/* ══════════════════════════════════════════════════════════════
+   MODAL DE EMAIL
+══════════════════════════════════════════════════════════════ */
+function EmailModal({ lead, token, onClose }) {
+  const [subject, setSubject] = useState('');
+  const [body, setBody]       = useState('');
+  const [sending, setSending] = useState(false);
+  const [sent, setSent]       = useState(false);
+
+  const TEMPLATES = [
+    { label: 'Boas-vindas',       subject: 'Bem-vindo à EuroVault Investments', body: `Olá ${lead.full_name},\n\nBem-vindo à EuroVault Investments!\n\nA sua conta está activa e pode começar a investir.\n\nAtenciosamente,\nEquipa EuroVault` },
+    { label: 'Pedir KYC',         subject: 'Verificação de Identidade', body: `Olá ${lead.full_name},\n\nPara activar todos os serviços, envie o seu documento de identificação no perfil.\n\nAtenciosamente,\nEquipa EuroVault` },
+    { label: 'Depósito recebido', subject: 'Depósito processado', body: `Olá ${lead.full_name},\n\nO seu depósito foi processado e está disponível na conta.\n\nAtenciosamente,\nEquipa EuroVault` },
+    { label: 'Levantamento',      subject: 'Pedido de levantamento em processamento', body: `Olá ${lead.full_name},\n\nO seu pedido está a ser processado (1-2 dias úteis).\n\nAtenciosamente,\nEquipa EuroVault` },
+  ];
+
+  const sendEmail = async () => {
+    if (!subject.trim() || !body.trim()) { toast.error('Preencha o assunto e o corpo'); return; }
+    setSending(true);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/admin/users/${lead.id}/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ subject, body }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail);
+      setSent(true);
+      toast.success(`Email registado para ${lead.email}!`);
+      setTimeout(onClose, 1500);
+    } catch (e) { toast.error(e.message); }
+    setSending(false);
+  };
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 300, backdropFilter: 'blur(3px)' }} />
+      <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 301, background: '#111118', border: '1px solid rgba(58,134,255,0.3)', borderRadius: 20, width: 520, maxWidth: '95vw', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 32px 80px rgba(0,0,0,0.8)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid #26263a' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 36, height: 36, background: 'rgba(58,134,255,0.12)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Send size={16} color="#3A86FF" /></div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#f3f5ff' }}>Enviar Email</div>
+              <div style={{ fontSize: 11, color: '#7a8299' }}>Para: {lead.email}</div>
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7a8299', padding: 4 }}><X size={18} /></button>
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {TEMPLATES.map(tpl => (
+              <button key={tpl.label} onClick={() => { setSubject(tpl.subject); setBody(tpl.body); }}
+                style={{ padding: '5px 11px', background: 'rgba(58,134,255,0.08)', border: '1px solid rgba(58,134,255,0.2)', borderRadius: 7, color: '#3A86FF', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+                {tpl.label}
+              </button>
+            ))}
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#7a8299', marginBottom: 5 }}>ASSUNTO</label>
+            <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="Assunto do email..."
+              style={{ width: '100%', padding: '10px 12px', background: '#0e0e1a', border: '1px solid #26263a', borderRadius: 9, color: '#f3f5ff', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#7a8299', marginBottom: 5 }}>MENSAGEM</label>
+            <textarea value={body} onChange={e => setBody(e.target.value)} placeholder="Corpo do email..." rows={7}
+              style={{ width: '100%', padding: '10px 12px', background: '#0e0e1a', border: '1px solid #26263a', borderRadius: 9, color: '#f3f5ff', fontSize: 13, outline: 'none', fontFamily: 'inherit', lineHeight: 1.6, resize: 'vertical', boxSizing: 'border-box' }} />
+          </div>
+        </div>
+        <div style={{ padding: '14px 22px', borderTop: '1px solid #26263a', display: 'flex', gap: 10 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '10px', background: 'transparent', border: '1px solid #26263a', borderRadius: 10, color: '#7a8299', fontSize: 13, cursor: 'pointer' }}>Cancelar</button>
+          <button onClick={sendEmail} disabled={sending || sent}
+            style={{ flex: 2, padding: '10px', background: sent ? 'rgba(34,197,139,0.15)' : sending ? '#1e1e30' : 'linear-gradient(135deg,#2563eb,#3A86FF)', border: `1px solid ${sent ? 'rgba(34,197,139,0.3)':'transparent'}`, borderRadius: 10, color: sent ? '#22c58b' : '#fff', fontSize: 13, fontWeight: 700, cursor: sending||sent?'not-allowed':'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, boxShadow: sending||sent?'none':'0 3px 12px rgba(58,134,255,0.3)' }}>
+            <Send size={14} />{sent ? 'Enviado!' : sending ? 'A enviar…' : `Enviar para ${lead.email}`}
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
 
 /* ══════════════════════════════════════════════════════════════════
    DRAWER DE DETALHES DO LEAD
@@ -55,15 +138,24 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
   const [kycDocs, setKycDocs]       = useState([]);
   const [loadingKyc, setLoadingKyc] = useState(false);
   const [updatingKyc, setUpdatingKyc] = useState({});
+  // ── NOVAS: timeline de notas + email ──
+  const [notesTimeline, setNotesTimeline] = useState([]);
+  const [newNoteText, setNewNoteText]     = useState('');
+  const [addingNote, setAddingNote]       = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
 
   const ss = STATUS_STYLES[lead.status] || STATUS_STYLES['Novo'];
   const token = localStorage.getItem('adminToken');
 
-  // Carregar notas
+  // Carregar notas + timeline
   useEffect(() => {
     fetch(`${BACKEND_URL}/api/admin/users/${lead.id}/notes`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.ok ? r.json() : { notes: '' })
       .then(d => setNotes(d.notes || ''))
+      .catch(() => {});
+    fetch(`${BACKEND_URL}/api/admin/users/${lead.id}/notes/timeline`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : [])
+      .then(setNotesTimeline)
       .catch(() => {});
   }, [lead.id, token]);
 
@@ -134,6 +226,35 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
     }
   };
 
+  const handleAddNoteTimeline = async () => {
+    if (!newNoteText.trim()) return;
+    setAddingNote(true);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/admin/users/${lead.id}/notes/timeline`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ text: newNoteText.trim() }),
+      });
+      if (res.ok) {
+        const newEntry = { id: Date.now(), text: newNoteText.trim(), created_at: new Date().toISOString() };
+        setNotesTimeline(prev => [newEntry, ...prev]);
+        setNotes(newNoteText.trim());
+        setNewNoteText('');
+        toast.success('Nota adicionada!');
+      }
+    } catch (_) { toast.error('Erro ao adicionar nota'); }
+    setAddingNote(false);
+  };
+
+  const handleDeleteNoteTimeline = async (noteId) => {
+    try {
+      await fetch(`${BACKEND_URL}/api/admin/users/${lead.id}/notes/timeline/${noteId}`, {
+        method: 'DELETE', headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotesTimeline(prev => prev.filter(n => n.id !== noteId));
+    } catch (_) {}
+  };
+
   const handleKycStatus = async (docId, status) => {
     setUpdatingKyc(p => ({ ...p, [docId]: true }));
     try {
@@ -185,8 +306,23 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
               <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 5, background: ss.bg, color: ss.color, border: `1px solid ${ss.border}`, fontWeight: 700 }}>{lead.status || 'Novo'}</span>
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#7a8299', padding: 4 }}><X size={20} /></button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => setShowEmailModal(true)} title="Enviar email"
+              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', background: 'rgba(58,134,255,0.1)', border: '1px solid rgba(58,134,255,0.25)', borderRadius: 8, color: '#3A86FF', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+              <Send size={12} />Email
+            </button>
+            <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#7a8299', padding: 4 }}><X size={20} /></button>
+          </div>
         </div>
+
+        {/* Modal de Email */}
+        {showEmailModal && (
+          <EmailModal
+            lead={lead}
+            token={token}
+            onClose={() => setShowEmailModal(false)}
+          />
+        )}
 
         {/* Dados pessoais */}
         <div style={{ padding: '16px 24px', borderBottom: '1px solid #1e1e30' }}>
@@ -293,21 +429,68 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
             </div>
           )}
 
-          {/* ── Tab: Notas ── */}
+          {/* ── Tab: Notas (Timeline) ── */}
           {activeTab === 'notes' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ fontSize: 12, color: '#7a8299' }}>Observações internas sobre este lead (visíveis apenas na área admin).</div>
-              <textarea
-                value={notes}
-                onChange={e => setNotes(e.target.value)}
-                placeholder="Escreva notas sobre este cliente…"
-                data-testid="lead-notes-textarea"
-                style={{ width: '100%', minHeight: 200, padding: '12px', background: '#0e0e1a', border: '1px solid #26263a', borderRadius: 10, color: '#f3f5ff', fontSize: 13, resize: 'vertical', outline: 'none', fontFamily: 'inherit', lineHeight: 1.6, boxSizing: 'border-box' }}
-              />
-              <button onClick={handleSaveNotes} disabled={savingNotes}
-                style={{ padding: '10px', background: savingNotes ? '#1e1e30' : '#22c58b', border: 'none', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, cursor: savingNotes ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                <Check size={14} />{savingNotes ? 'A guardar…' : 'Guardar Notas'}
-              </button>
+              {/* Caixa de nova nota */}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <textarea
+                  value={newNoteText}
+                  onChange={e => setNewNoteText(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && e.ctrlKey) handleAddNoteTimeline(); }}
+                  placeholder="Escreva uma nota... (Ctrl+Enter para guardar)"
+                  rows={3}
+                  style={{ flex: 1, padding: '10px 12px', background: '#0e0e1a', border: '1px solid #26263a', borderRadius: 10, color: '#f3f5ff', fontSize: 13, resize: 'none', outline: 'none', fontFamily: 'inherit', lineHeight: 1.6, boxSizing: 'border-box' }}
+                />
+                <button onClick={handleAddNoteTimeline} disabled={addingNote || !newNoteText.trim()}
+                  style={{ width: 40, background: newNoteText.trim() ? '#22c58b' : '#1e1e30', border: 'none', borderRadius: 10, cursor: newNoteText.trim() ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Plus size={16} color="#fff" />
+                </button>
+              </div>
+
+              {/* Timeline */}
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#4a5068', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                {notesTimeline.length > 0 ? `${notesTimeline.length} nota${notesTimeline.length !== 1 ? 's' : ''}` : 'Sem notas ainda'}
+              </div>
+
+              {notesTimeline.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '24px 0', color: '#4a5068' }}>
+                  <StickyNote size={24} style={{ opacity: 0.2, marginBottom: 8 }} />
+                  <p style={{ fontSize: 12, margin: 0 }}>Adicione a primeira nota sobre este lead</p>
+                </div>
+              ) : (
+                <div style={{ position: 'relative' }}>
+                  {/* Linha vertical da timeline */}
+                  <div style={{ position: 'absolute', left: 14, top: 8, bottom: 8, width: 2, background: 'linear-gradient(180deg,#3A86FF,rgba(58,134,255,0.1))', borderRadius: 1 }} />
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                    {notesTimeline.map((n, i) => (
+                      <div key={n.id || i} style={{ display: 'flex', gap: 12, paddingBottom: 14 }}>
+                        {/* Ponto da timeline */}
+                        <div style={{ width: 30, height: 30, background: i === 0 ? '#3A86FF' : '#1e1e30', border: `2px solid ${i === 0 ? '#3A86FF' : '#26263a'}`, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, zIndex: 1 }}>
+                          <StickyNote size={12} color={i === 0 ? '#fff' : '#7a8299'} />
+                        </div>
+                        {/* Conteúdo */}
+                        <div style={{ flex: 1, background: i === 0 ? 'rgba(58,134,255,0.06)' : '#0e0e1a', border: `1px solid ${i === 0 ? 'rgba(58,134,255,0.2)' : '#1e1e30'}`, borderRadius: 10, padding: '10px 12px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                            <span style={{ fontSize: 10, color: '#4a5068', display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <Clock size={9} />
+                              {n.created_at ? new Date(n.created_at).toLocaleString('pt-PT', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' }) : '—'}
+                            </span>
+                            <button onClick={() => handleDeleteNoteTimeline(n.id)}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#26263a', padding: 2 }}
+                              onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+                              onMouseLeave={e => e.currentTarget.style.color = '#26263a'}>
+                              <X size={11} />
+                            </button>
+                          </div>
+                          <p style={{ fontSize: 13, color: '#e8eaf6', margin: 0, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{n.text}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

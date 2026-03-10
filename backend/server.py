@@ -1104,7 +1104,7 @@ async def update_lead_notes(user_id: str, req: LeadNotesRequest, admin = Depends
         {"_id": ObjectId(user_id)},
         {"$set": {"notes": req.notes, "notes_updated_at": datetime.utcnow()}}
     )
-    # Guardar histórico de versões no audit log
+    # Guardar no histórico de timeline
     try:
         await db.audit_logs.insert_one({
             "user_id": user_id, "action": "notes_updated",
@@ -1112,6 +1112,44 @@ async def update_lead_notes(user_id: str, req: LeadNotesRequest, admin = Depends
         })
     except Exception:
         pass
+    return {"success": True}
+
+# Nova API: Adicionar nota de timeline (preserva histórico)
+class NoteAddRequest(BaseModel):
+    text: str
+
+@app.post("/api/admin/users/{user_id}/notes/timeline")
+async def add_note_timeline(user_id: str, req: NoteAddRequest, admin = Depends(get_admin_user)):
+    """Adiciona uma nota à timeline sem apagar as anteriores."""
+    entry = {
+        "user_id": user_id,
+        "text": req.text,
+        "created_at": datetime.utcnow(),
+        "type": "note"
+    }
+    result = await db.notes_timeline.insert_one(entry)
+    # Actualizar também o campo notes principal com a última nota
+    await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"notes": req.text, "notes_updated_at": datetime.utcnow()}}
+    )
+    return {"success": True, "id": str(result.inserted_id)}
+
+@app.get("/api/admin/users/{user_id}/notes/timeline")
+async def get_notes_timeline(user_id: str, admin = Depends(get_admin_user)):
+    """Retorna todas as notas da timeline ordenadas por data."""
+    entries = []
+    async for e in db.notes_timeline.find({"user_id": user_id}).sort("created_at", -1).limit(50):
+        entries.append(serialize_doc({
+            "id": e["_id"],
+            "text": e.get("text", ""),
+            "created_at": e.get("created_at"),
+        }))
+    return entries
+
+@app.delete("/api/admin/users/{user_id}/notes/timeline/{note_id}")
+async def delete_note_timeline(user_id: str, note_id: str, admin = Depends(get_admin_user)):
+    await db.notes_timeline.delete_one({"_id": ObjectId(note_id), "user_id": user_id})
     return {"success": True}
 
 @app.get("/api/admin/users/{user_id}/notes")
@@ -1474,6 +1512,129 @@ async def get_notes_history(user_id: str, admin = Depends(get_admin_user)):
         logs.append(serialize_doc({"created_at": l.get("created_at"),
             "notes_preview": l.get("details", {}).get("notes", "")[:100]}))
     return logs
+
+
+# ════════════════════════════════════════════════════════════════
+#  EMAIL PARA O LEAD
+# ════════════════════════════════════════════════════════════════
+class EmailRequest(BaseModel):
+    subject: str
+    body: str
+
+@app.post("/api/admin/users/{user_id}/send-email")
+async def send_email_to_lead(user_id: str, req: EmailRequest, admin = Depends(get_admin_user)):
+    """Envia email ao lead e regista no histórico."""
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        raise HTTPException(status_code=404, detail="Utilizador não encontrado")
+
+    recipient = user.get("email", "")
+    if not recipient:
+        raise HTTPException(status_code=400, detail="Lead sem email")
+
+    # Registar o email enviado na DB independentemente do envio real
+    email_log = {
+        "user_id": user_id,
+        "to": recipient,
+        "subject": req.subject,
+        "body": req.body,
+        "sent_at": datetime.utcnow(),
+        "status": "sent"
+    }
+
+    # Tentar enviar via SMTP se configurado
+    smtp_host = os.environ.get("SMTP_HOST", "")
+    smtp_user = os.environ.get("SMTP_USER", "")
+    smtp_pass = os.environ.get("SMTP_PASS", "")
+    smtp_from = os.environ.get("SMTP_FROM", smtp_user)
+
+    if smtp_host and smtp_user and smtp_pass:
+        try:
+            import smtplib
+            from email.mime.text import MIMEText
+            from email.mime.multipart import MIMEMultipart
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = req.subject
+            msg["From"]    = f"EuroVault Investments <{smtp_from}>"
+            msg["To"]      = recipient
+            html_body = req.body.replace("\n", "<br>")
+            html = f"""<html><body style="font-family:sans-serif;background:#06061a;color:#f3f5ff;padding:32px">
+                <div style="max-width:560px;margin:0 auto;background:#111118;border:1px solid #26263a;border-radius:16px;padding:32px">
+                    <img src="https://invest-dashboard-eu.preview.emergentagent.com/logo-eurovault.png" height="48" alt="EuroVault"/>
+                    <h2 style="color:#3A86FF;margin:20px 0 10px">{req.subject}</h2>
+                    <div style="color:#e8eaf6;line-height:1.7">{html_body}</div>
+                    <hr style="border-color:#26263a;margin:24px 0"/>
+                    <p style="color:#4a5068;font-size:11px">EuroVault Investments · Regulamentado CySEC · Este email é confidencial.</p>
+                </div></body></html>"""
+            msg.attach(MIMEText(html, "html"))
+            with smtplib.SMTP_SSL(smtp_host, 465) as s:
+                s.login(smtp_user, smtp_pass)
+                s.sendmail(smtp_from, [recipient], msg.as_string())
+            email_log["status"] = "sent_smtp"
+        except Exception as e:
+            email_log["status"] = f"smtp_error: {str(e)[:100]}"
+    else:
+        email_log["status"] = "logged_only"
+
+    await db.email_logs.insert_one(email_log)
+    await log_admin_action(user_id, "email_sent", {"subject": req.subject, "to": recipient})
+
+    return {
+        "success": True,
+        "to": recipient,
+        "status": email_log["status"],
+        "note": "Email registado. Configure SMTP_HOST, SMTP_USER, SMTP_PASS no .env para envio real."
+    }
+
+@app.get("/api/admin/users/{user_id}/email-logs")
+async def get_email_logs(user_id: str, admin = Depends(get_admin_user)):
+    logs = []
+    async for e in db.email_logs.find({"user_id": user_id}).sort("sent_at", -1).limit(20):
+        logs.append(serialize_doc({
+            "id": e["_id"], "to": e.get("to"), "subject": e.get("subject"),
+            "body": e.get("body","")[:200], "sent_at": e.get("sent_at"), "status": e.get("status")
+        }))
+    return logs
+
+
+# ════════════════════════════════════════════════════════════════
+#  CALENDÁRIO DE FOLLOW-UPS
+# ════════════════════════════════════════════════════════════════
+@app.get("/api/admin/calendar")
+async def get_calendar(month: Optional[int] = None, year: Optional[int] = None, admin = Depends(get_admin_user)):
+    """Retorna todos os follow-ups agendados, opcionalmente filtrados por mês/ano."""
+    now = datetime.utcnow()
+    m = month or now.month
+    y = year  or now.year
+    # Primeiro e último dia do mês
+    from calendar import monthrange
+    first_day = datetime(y, m, 1)
+    last_day  = datetime(y, m, monthrange(y, m)[1], 23, 59, 59)
+    results = []
+    async for u in db.users.find({"followup_date": {"$ne": None}}).sort("followup_date", 1):
+        fd = u.get("followup_date")
+        if not fd:
+            continue
+        try:
+            # followup_date pode ser string ISO
+            if isinstance(fd, str):
+                fd_dt = datetime.fromisoformat(fd.replace("Z",""))
+            else:
+                fd_dt = fd
+            if first_day <= fd_dt <= last_day:
+                results.append({
+                    "user_id": str(u["_id"]),
+                    "full_name": u.get("full_name",""),
+                    "email": u.get("email",""),
+                    "phone": u.get("phone",""),
+                    "followup_date": fd if isinstance(fd, str) else fd.isoformat(),
+                    "followup_note": u.get("followup_note",""),
+                    "status": u.get("status","Novo"),
+                    "day": fd_dt.day,
+                })
+        except Exception:
+            continue
+    return {"month": m, "year": y, "events": results}
 
 
 # ════════════════════════════════════════════════════════════════

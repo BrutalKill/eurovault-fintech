@@ -1,14 +1,26 @@
 [
   {
-    "content": "ProfilePage: editar Meta de Investimento (modo edit/view) + KYC badge 'Verificado'",
-    "status": "in_progress"
+    "content": "Backend: timeline de notas (array) + endpoint email + histórico saldo",
+    "status": "completed"
   },
   {
-    "content": "Dashboard: redesign mais bonito e impactante",
-    "status": "pending"
+    "content": "Admin Dashboard: redesign completo mais caprichado",
+    "status": "completed"
   },
   {
-    "content": "Programa de Parceiros: criar página dedicada /app/referral",
-    "status": "pending"
+    "content": "Admin Drawer: notas em formato timeline com data/hora",
+    "status": "completed"
+  },
+  {
+    "content": "AdminCalendar.js: calendário mensal de follow-ups",
+    "status": "completed"
+  },
+  {
+    "content": "Email modal: enviar email ao lead do painel",
+    "status": "completed"
+  },
+  {
+    "content": "Cliente: gráfico de evolução do saldo",
+    "status": "completed"
   }
 ]

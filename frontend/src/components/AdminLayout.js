@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { Users, CreditCard, MessageSquare, BarChart2, ArrowDownToLine,
-         LogOut, Bell, BellOff, X, UserPlus, CreditCard as CardIcon, AlertTriangle, Shield } from 'lucide-react';
+         LogOut, Bell, BellOff, X, UserPlus, CreditCard as CardIcon, AlertTriangle, Shield, CalendarDays } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
@@ -270,7 +270,8 @@ export default function AdminLayout() {
             { to: '/adm/withdrawals',  icon: ArrowDownToLine, label: 'Levantamentos', exact: false, badge: pendingWd, badgeColor: '#ef4444' },
             { to: '/adm/cards',        icon: CreditCard,      label: 'Cartões',       exact: false },
             { to: '/adm/chat',         icon: MessageSquare,   label: 'Chat',          exact: false, badge: chatUnread, badgeColor: '#ef4444' },
-            { to: '/adm/honeypot',     icon: Shield,          label: 'Honeypot',      exact: false },
+            { to: '/adm/honeypot',     icon: Shield,        label: 'Honeypot',      exact: false },
+            { to: '/adm/calendar',     icon: CalendarDays,  label: 'Calendário',    exact: false },
           ].map(({ to, icon: Icon, label, exact, badge, badgeColor }) => (
             <NavLink key={to} to={to} end={exact}
               style={({ isActive }) => ({

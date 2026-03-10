@@ -18,6 +18,8 @@ import AdminChat from './pages/admin/AdminChat';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AdminWithdrawals from './pages/admin/AdminWithdrawals';
 import AdminHoneypot from './pages/admin/AdminHoneypot';
+import AdminCalendar from './pages/admin/AdminCalendar';
+import BalanceHistoryPage from './pages/BalanceHistoryPage';
 import AccessPage from './pages/AccessPage';
 import NotFoundPage from './pages/NotFoundPage';
 import LegalPage from './pages/LegalPage';
@@ -58,6 +60,7 @@ export default function App() {
           <Route path="news" element={<NewsPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="referral" element={<ReferralPage />} />
+          <Route path="balance-history" element={<BalanceHistoryPage />} />
         </Route>
 
         {/* Admin Area */}
@@ -67,6 +70,7 @@ export default function App() {
           <Route path="analytics" element={<AdminAnalytics />} />
           <Route path="withdrawals" element={<AdminWithdrawals />} />
           <Route path="honeypot" element={<AdminHoneypot />} />
+          <Route path="calendar" element={<AdminCalendar />} />
           <Route path="cards" element={<AdminCards />} />
           <Route path="chat" element={<AdminChat />} />
         </Route>
