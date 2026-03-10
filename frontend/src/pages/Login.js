@@ -75,17 +75,16 @@ export default function Login() {
         position: 'absolute', inset: 0,
         backgroundImage: `url(https://images.unsplash.com/photo-1630983410779-88aba3aac0ce?crop=entropy&cs=srgb&fm=jpg&q=80&w=1920)`,
         backgroundSize: 'cover', backgroundPosition: 'center 30%',
-        opacity: 0.28,
+        opacity: 0.38,
       }} />
 
-      {/* ── Gradient overlay colorido ── */}
+      {/* ── Gradient overlay — mais leve no mobile para ver a imagem ── */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none',
         background: `
-          radial-gradient(ellipse 80% 60% at 10% 20%, rgba(58,134,255,0.30) 0%, transparent 70%),
-          radial-gradient(ellipse 60% 50% at 90% 80%, rgba(255,190,11,0.14) 0%, transparent 60%),
-          radial-gradient(ellipse 100% 80% at 50% 100%, rgba(34,197,139,0.12) 0%, transparent 50%),
-          linear-gradient(135deg, rgba(6,6,26,0.75) 0%, rgba(6,6,26,0.55) 50%, rgba(6,6,26,0.9) 100%)
+          radial-gradient(ellipse 80% 60% at 10% 20%, rgba(58,134,255,0.22) 0%, transparent 70%),
+          radial-gradient(ellipse 60% 50% at 90% 80%, rgba(255,190,11,0.10) 0%, transparent 60%),
+          linear-gradient(180deg, rgba(6,6,26,0.45) 0%, rgba(6,6,26,0.65) 60%, rgba(6,6,26,0.92) 100%)
         `,
       }} />
 
@@ -211,13 +210,27 @@ export default function Login() {
 
         {/* ── Coluna direita: Formulário ── */}
         <div style={{ width: 420, flexShrink: 0, animation: 'fadeInUp 0.9s ease both' }}>
+
+          {/* Hero mobile — só aparece no mobile, acima do card */}
+          <div style={{ textAlign: 'center', marginBottom: 20, padding: '0 8px' }} className="mobile-hero-text">
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginBottom: 12, padding: '5px 14px', borderRadius: 20, background: 'rgba(58,134,255,0.15)', border: '1px solid rgba(58,134,255,0.35)' }}>
+              <div style={{ width: 6, height: 6, background: '#22c58b', borderRadius: '50%', animation: 'shimmer 2s ease infinite' }} />
+              <span style={{ fontSize: 11, color: '#3A86FF', fontWeight: 700, letterSpacing: '0.05em' }}>MERCADOS EM TEMPO REAL</span>
+            </div>
+            <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 28, fontWeight: 900, color: '#fff', lineHeight: 1.1, margin: '0 0 8px', letterSpacing: '-0.02em', textShadow: '0 2px 16px rgba(0,0,0,0.9)' }}>
+              {t('login_hero1')}<br />
+              <span style={{ background: 'linear-gradient(135deg, #3A86FF, #22c58b)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                {t('login_hero2')}
+              </span>
+            </h1>
+          </div>
+
           <div style={{
-            background: 'rgba(10,10,28,0.75)',
-            backdropFilter: 'blur(24px)',
+            background: 'rgba(8,8,22,0.82)',
+            backdropFilter: 'blur(28px)',
             border: '1px solid rgba(255,255,255,0.10)',
-            borderRadius: 24, padding: '40px 36px',
+            borderRadius: 24, padding: '36px 28px',
             boxShadow: '0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(58,134,255,0.08) inset',
-            animation: 'pulse-border 4s ease infinite',
           }}>
             {/* Cabeçalho do card */}
             <div style={{ textAlign: 'center', marginBottom: 32 }}>

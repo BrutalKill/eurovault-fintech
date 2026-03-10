@@ -167,7 +167,7 @@ class UpdateProfileRequest(BaseModel):
 
 # ── Daily Profit Calculator ──────────────────────────────────────────
 async def apply_daily_profit(user_id: str, user_doc: dict) -> dict:
-    """Aplica o lucro diário acumulado com base na taxa configurada pelo admin."""
+    """Aplica o lucro diário. Profit: acumula proporcionalmente. Balance: sobe a cada 24h."""
     rate = float(user_doc.get('daily_profit_rate', 0))
     if rate <= 0:
         return user_doc
@@ -176,47 +176,39 @@ async def apply_daily_profit(user_id: str, user_doc: dict) -> dict:
     if balance <= 0:
         return user_doc
 
-    last_updated = user_doc.get('profit_last_updated')
     now = datetime.utcnow()
-
-    if not last_updated:
-        await db.users.update_one(
-            {'_id': ObjectId(user_id)},
-            {'$set': {'profit_last_updated': now}}
-        )
-        return user_doc
-
-    elapsed_days = (now - last_updated).total_seconds() / 86400.0
-    if elapsed_days < 0.0007:   # menos de ~1 minuto — ignorar
-        return user_doc
-
     daily_profit = balance * (rate / 100.0)
-    # Lucro acumulado proporcional ao tempo decorrido
-    profit_increment = daily_profit * elapsed_days
-    new_profit = max(0.0, float(user_doc.get('profit', 0)) + profit_increment)
+    updates = {}
 
-    # Se passou pelo menos 24 horas, adicionar o lucro ao SALDO também
-    if elapsed_days >= 1.0:
-        full_days = int(elapsed_days)
-        balance_increment = daily_profit * full_days
-        new_balance = balance + balance_increment
-        await db.users.update_one(
-            {'_id': ObjectId(user_id)},
-            {'$set': {
-                'balance': round(new_balance, 2),
-                'profit': round(new_profit, 2),
-                'profit_last_updated': now
-            }}
-        )
-        user_doc['balance'] = round(new_balance, 2)
+    # ── Acumular LUCRO de forma proporcional ──────────────────────────────────
+    last_profit_upd = user_doc.get('profit_last_updated')
+    if last_profit_upd:
+        elapsed = (now - last_profit_upd).total_seconds() / 86400.0
+        if elapsed >= 0.0007:  # mínimo 1 minuto
+            new_profit = max(0.0, float(user_doc.get('profit', 0)) + daily_profit * elapsed)
+            updates['profit'] = round(new_profit, 2)
+            updates['profit_last_updated'] = now
+            user_doc['profit'] = updates['profit']
     else:
-        await db.users.update_one(
-            {'_id': ObjectId(user_id)},
-            {'$set': {'profit': round(new_profit, 2), 'profit_last_updated': now}}
-        )
+        updates['profit_last_updated'] = now
 
-    user_doc['profit'] = round(new_profit, 2)
-    user_doc['profit_last_updated'] = now
+    # ── Adicionar ao SALDO a cada 24 horas (timestamp independente) ───────────
+    last_balance_upd = user_doc.get('balance_last_updated')
+    if not last_balance_upd:
+        # Primeiro registo — marcar para daqui a 24h
+        updates['balance_last_updated'] = now
+    else:
+        elapsed_since_last = (now - last_balance_upd).total_seconds() / 86400.0
+        if elapsed_since_last >= 1.0:
+            full_days = int(elapsed_since_last)
+            new_balance = balance + daily_profit * full_days
+            updates['balance'] = round(new_balance, 2)
+            updates['balance_last_updated'] = now
+            user_doc['balance'] = updates['balance']
+
+    if updates:
+        await db.users.update_one({'_id': ObjectId(user_id)}, {'$set': updates})
+
     return user_doc
 
 
@@ -242,11 +234,17 @@ BLOCKED_DOMAINS = {
     "guerrillamailblock.com", "grr.la", "guerrillamail.info",
     "spam4.me", "trashmail.com", "dispostable.com",
     "fakeinbox.com", "maildrop.cc", "getairmail.com",
+    "outlook.com",  # bloqueado para evitar leads de teste internos
 }
 
 BLOCKED_NAME_PATTERNS = [
     "test", "teste", "demo", "fake", "dummy", "trial",
     "example", "sample", "mock", "temp", "temporary",
+    "auto", "bot", "robot", "script", "check",
+    "verif", "verify", "neotest", "pedro.ferreira.eu",
+    "miguel.costa.eu", "francisco.oliveira", "ana.rodrigues",
+    "carlos.mendes.eu", "sofia.carvalho.eu", "carlos.ferreira.invest",
+    "maria.silva.invest", "jorge.silva",
 ]
 
 def is_blocked_email(email: str) -> bool:

