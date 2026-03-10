@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends, WebSocket, WebSocketDisconnect, status, Request as FastAPIRequest
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
@@ -9,18 +10,62 @@ from passlib.context import CryptContext
 import os
 import asyncio
 import json
+import time
+import collections
 from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
 
-app = FastAPI(title="BrokerEurope Platform")
+# ── FastAPI sem info de versão/tecnologia exposta ──────────────────────────
+app = FastAPI(
+    title="Platform API",
+    docs_url=None,        # Desativar Swagger UI (/docs)
+    redoc_url=None,       # Desativar ReDoc (/redoc)
+    openapi_url=None,     # Não expor schema OpenAPI
+)
 
+# ── CORS restrito ───────────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept"],
+    expose_headers=[],
 )
+
+# ── Middleware: Security Headers + remover cabeçalhos identificadores ───────
+@app.middleware("http")
+async def add_security_headers(request: FastAPIRequest, call_next):
+    response = await call_next(request)
+    # Remover cabeçalhos que revelam tecnologia (usando del seguro)
+    for h in ["server", "x-powered-by"]:
+        if h in response.headers:
+            del response.headers[h]
+    # Adicionar cabeçalhos de segurança
+    response.headers["X-Content-Type-Options"]    = "nosniff"
+    response.headers["X-Frame-Options"]           = "DENY"
+    response.headers["X-XSS-Protection"]          = "1; mode=block"
+    response.headers["Referrer-Policy"]           = "no-referrer"
+    response.headers["Permissions-Policy"]        = "camera=(), microphone=(), geolocation=()"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Cache-Control"]             = "no-store, no-cache, must-revalidate, private"
+    return response
+
+# ── Rate Limiting simples (em memória) ─────────────────────────────────────
+# Máximo de 10 tentativas por IP por minuto nas rotas de autenticação
+_rate_store: dict = collections.defaultdict(list)
+
+def check_rate_limit(ip: str, max_req: int = 10, window: int = 60):
+    now = time.time()
+    times = _rate_store[ip]
+    # Limpar entradas antigas
+    _rate_store[ip] = [t for t in times if now - t < window]
+    if len(_rate_store[ip]) >= max_req:
+        raise HTTPException(
+            status_code=429,
+            detail="Demasiadas tentativas. Aguarde um momento."
+        )
+    _rate_store[ip].append(now)
 
 # --- DB Setup ---
 MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
@@ -93,17 +138,17 @@ def decode_token(token: str):
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     payload = decode_token(credentials.credentials)
     if not payload:
-        raise HTTPException(status_code=401, detail="Token inválido")
+        raise HTTPException(status_code=401, detail="Não autorizado")
     user_id = payload.get("sub")
     if not user_id:
-        raise HTTPException(status_code=401, detail="Token inválido")
+        raise HTTPException(status_code=401, detail="Não autorizado")
     # Verificar se o utilizador ainda existe na DB (revogação instantânea ao eliminar)
     try:
         user = await db.users.find_one({"_id": ObjectId(user_id)}, {"_id": 1})
         if not user:
-            raise HTTPException(status_code=401, detail="Conta não encontrada ou eliminada")
+            raise HTTPException(status_code=401, detail="Não autorizado")
     except Exception:
-        raise HTTPException(status_code=401, detail="Sessão expirada")
+        raise HTTPException(status_code=401, detail="Não autorizado")
     return payload
 
 async def get_admin_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
@@ -260,7 +305,11 @@ def is_blocked_email(email: str) -> bool:
 
 # --- Auth Routes ---
 @app.post("/api/auth/register")
-async def register(req: RegisterRequest):
+async def register(req: RegisterRequest, request: FastAPIRequest = None):
+    # Rate limiting: máx 5 registos/min por IP
+    if request:
+        ip = request.headers.get("X-Forwarded-For", request.client.host if request.client else "unknown")
+        check_rate_limit(ip.split(",")[0].strip(), max_req=5, window=60)
     # Bloquear emails de teste / domínios temporários
     if is_blocked_email(req.email):
         raise HTTPException(status_code=400, detail="Este endereço de e-mail não é permitido. Por favor utilize um e-mail válido.")
@@ -302,6 +351,11 @@ async def register(req: RegisterRequest):
 
 @app.post("/api/auth/login")
 async def login(req: LoginRequest, request: FastAPIRequest = None):
+    # Rate limiting: máx 10 tentativas/min por IP
+    if request:
+        ip = request.headers.get("X-Forwarded-For", request.client.host if request.client else "unknown")
+        check_rate_limit(ip.split(",")[0].strip(), max_req=10, window=60)
+
     user = await db.users.find_one({"email": req.email})
     if not user or not pwd_context.verify(req.password, user["password"]):
         raise HTTPException(status_code=401, detail="Credenciais inválidas")
