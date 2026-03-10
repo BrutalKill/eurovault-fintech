@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, RefreshCw, TrendingUp, BarChart2, Globe, Zap, Bitcoin, Droplets,
+import { Search, RefreshCw, TrendingUp, BarChart2, Globe, Zap, Droplets,
          Landmark, ExternalLink, Clock, Tag } from 'lucide-react';
+import { useLang } from '../context/LangContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -100,6 +101,7 @@ function NewsCard({ article, isNew }) {
 }
 
 export default function NewsPage() {
+  const { t } = useLang();
   const [news, setNews]           = useState([]);
   const [loading, setLoading]     = useState(true);
   const [search, setSearch]       = useState('');
@@ -183,7 +185,7 @@ export default function NewsPage() {
         </div>
         <button onClick={() => fetchNews(true)}
           style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 16px', background: 'hsl(240,18%,14%)', border: '1px solid hsl(240,16%,22%)', borderRadius: 10, color: 'hsl(215,16%,70%)', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
-          <RefreshCw size={14} />{loading ? 'A actualizar…' : 'Actualizar'}
+          <RefreshCw size={14} />{loading ? (t('news_loading').replace('…','…')) : t('news_refresh')}
         </button>
       </div>
 

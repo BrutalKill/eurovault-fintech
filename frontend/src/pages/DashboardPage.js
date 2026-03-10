@@ -6,6 +6,7 @@ import {
   Zap, BarChart2, Users, ChevronRight,
 } from 'lucide-react';
 import { useUser } from '../context/UserContext';
+import { useLang } from '../context/LangContext';
 import { useCountUp } from '../hooks/useCountUp';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
@@ -38,6 +39,7 @@ function Sparkline({ data, color = '#3A86FF', height = 56 }) {
 
 export default function DashboardPage() {
   const { user } = useUser();
+  const { t }    = useLang();
   const navigate  = useNavigate();
   const [history, setHistory]       = useState([]);
   const [referral, setReferral]     = useState(null);
@@ -68,7 +70,7 @@ export default function DashboardPage() {
   }, []);
 
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
+  const greeting = hour < 12 ? t('dash_good_morning') : hour < 18 ? t('dash_good_afternoon') : t('dash_good_evening');
   const firstName = user?.full_name?.split(' ')[0] || 'Investidor';
 
   return (
@@ -89,8 +91,7 @@ export default function DashboardPage() {
             <p style={{ fontSize: 13, color: 'hsl(215,16%,60%)', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: 6 }}>
               {greeting}, <strong style={{ color: '#f3f5ff' }}>{firstName}</strong>
               {isVerified && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, padding: '2px 8px', background: 'rgba(34,197,139,0.15)', border: '1px solid rgba(34,197,139,0.3)', borderRadius: 5, color: '#22c58b', fontWeight: 700 }}><ShieldCheck size={9} />VERIFICADO</span>}
-            </p>
-            <div className="numeric" style={{ fontSize: 'clamp(28px,6vw,44px)', fontWeight: 900, color: '#ffffff', fontFamily: 'var(--font-heading)', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
+            </p>            <div className="numeric" style={{ fontSize: 'clamp(28px,6vw,44px)', fontWeight: 900, color: '#ffffff', fontFamily: 'var(--font-heading)', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
               {fmt(animBalance)}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
@@ -131,10 +132,10 @@ export default function DashboardPage() {
       {/* ── Ações rápidas ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }} className="dash-actions">
         {[
-          { icon: CreditCard,      label: 'Depositar', color: '#3A86FF', bg: 'rgba(58,134,255,0.1)',  path: '/app/deposit'    },
-          { icon: TrendingUp,      label: 'Negociar',  color: '#22c58b', bg: 'rgba(34,197,139,0.1)',  path: '/app/trade'      },
-          { icon: ArrowDownToLine, label: 'Levantar',  color: '#FFBE0B', bg: 'rgba(255,190,11,0.1)',  path: '/app/withdrawal' },
-          { icon: Clock,           label: 'Histórico', color: '#F59E0B', bg: 'rgba(245,158,11,0.1)', path: '/app/history'    },
+          { icon: CreditCard,      label: t('nav_deposit'),    color: '#3A86FF', bg: 'rgba(58,134,255,0.1)',  path: '/app/deposit'    },
+          { icon: TrendingUp,      label: t('nav_trade'),      color: '#22c58b', bg: 'rgba(34,197,139,0.1)',  path: '/app/trade'      },
+          { icon: ArrowDownToLine, label: t('nav_withdrawal'), color: '#FFBE0B', bg: 'rgba(255,190,11,0.1)',  path: '/app/withdrawal' },
+          { icon: Clock,           label: t('nav_history'),    color: '#F59E0B', bg: 'rgba(245,158,11,0.1)', path: '/app/history'    },
         ].map(({ icon: Icon, label, color, bg, path }) => (
           <button key={path} onClick={() => navigate(path)}
             style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '16px 10px', background: bg, border: `1px solid ${color}25`, borderRadius: 14, cursor: 'pointer', transition: 'transform 0.15s, border-color 0.2s' }}
@@ -155,7 +156,7 @@ export default function DashboardPage() {
         <div style={{ background: 'hsl(240,26%,8%)', border: '1px solid hsl(240,16%,18%)', borderRadius: 16, padding: '18px 20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: '#f3f5ff', display: 'flex', alignItems: 'center', gap: 7 }}>
-              <Activity size={15} color="#3A86FF" />Actividades Recentes
+              <Activity size={15} color="#3A86FF" />{t('dash_recent_activity')}
             </div>
             <button onClick={() => navigate('/app/history')}
               style={{ fontSize: 11, color: '#3A86FF', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -165,7 +166,7 @@ export default function DashboardPage() {
           {activities.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '20px 0', color: 'hsl(215,16%,40%)' }}>
               <BarChart2 size={24} style={{ marginBottom: 8, opacity: 0.3 }} />
-              <p style={{ fontSize: 12, margin: 0 }}>Sem actividades ainda.<br />Comece por fazer um depósito.</p>
+              <p style={{ fontSize: 12, margin: 0 }}>{t('dash_no_activity').replace('\n','')}</p>
             </div>
           ) : activities.map((act, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: i < activities.length - 1 ? '1px solid hsl(240,16%,14%)' : 'none' }}>
@@ -196,7 +197,7 @@ export default function DashboardPage() {
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#f3f5ff' }}>Programa de Parceiros</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
-                {[{ label: 'Convidados', value: referral.count }, { label: 'Bónus Total', value: fmt(referral.bonus) }].map(({ label, value }) => (
+                {[{ label: t('dash_referral_guests'), value: referral.count }, { label: t('dash_referral_bonus'), value: fmt(referral.bonus) }].map(({ label, value }) => (
                   <div key={label} style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 10, padding: '10px 12px' }}>
                     <div className="numeric" style={{ fontSize: 18, fontWeight: 800, color: '#22c58b', fontFamily: 'var(--font-heading)' }}>{value}</div>
                     <div style={{ fontSize: 11, color: 'hsl(215,16%,55%)', marginTop: 2 }}>{label}</div>
@@ -225,7 +226,7 @@ export default function DashboardPage() {
                   {isVerified ? '✓ Identidade Verificada' : 'KYC Pendente'}
                 </div>
                 <div style={{ fontSize: 11, color: 'hsl(215,16%,55%)', marginTop: 2 }}>
-                  {isVerified ? 'Acesso completo à plataforma' : 'Envie os seus documentos'}
+                  {isVerified ? t('dash_kyc_verified_sub') : t('dash_kyc_pending_sub')}
                 </div>
               </div>
             </div>

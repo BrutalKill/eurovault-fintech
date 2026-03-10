@@ -1661,6 +1661,67 @@ async def get_email_logs(user_id: str, admin = Depends(get_admin_user)):
     return logs
 
 
+# ── Email para qualquer endereço (campanhas)
+class GenericEmailRequest(BaseModel):
+    to: str
+    subject: str
+    body: str
+    recipient_name: Optional[str] = ""
+
+@app.post("/api/admin/email/send")
+async def send_generic_email(req: GenericEmailRequest, admin = Depends(get_admin_user)):
+    """Envia email para qualquer endereço com assinatura profissional."""
+    email_log = {
+        "to": req.to, "subject": req.subject, "body": req.body,
+        "sent_at": datetime.utcnow(), "status": "sent"
+    }
+    smtp_host = os.environ.get("SMTP_HOST", "")
+    smtp_user = os.environ.get("SMTP_USER", "")
+    smtp_pass = os.environ.get("SMTP_PASS", "")
+    smtp_from = os.environ.get("SMTP_FROM", smtp_user)
+
+    if smtp_host and smtp_user and smtp_pass:
+        try:
+            import smtplib
+            from email.mime.text import MIMEText
+            from email.mime.multipart import MIMEMultipart
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = req.subject
+            msg["From"]    = f"EuroVault Investments <{smtp_from}>"
+            msg["To"]      = req.to
+            html_body = req.body.replace("\n", "<br>")
+            greeting = f"<p style='color:#7a8299;font-size:13px;margin:0 0 20px;'>Olá, <strong style='color:#f3f5ff;'>{req.recipient_name}</strong></p>" if req.recipient_name else ""
+            html = f"""<html><body style="margin:0;padding:0;background:#06061a;font-family:'Helvetica Neue',Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#06061a;padding:32px 16px;">
+<tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+<tr><td style="background:linear-gradient(135deg,#111118,#1a1a2e);border:1px solid #26263a;border-bottom:none;border-radius:16px 16px 0 0;padding:28px 32px;">
+<span style="font-size:22px;font-weight:900;color:#f3f5ff;">EuroVault</span>
+<span style="display:block;font-size:10px;color:#FFBE0B;font-weight:700;letter-spacing:0.15em;margin-top:2px;">INVESTMENTS</span>
+</td></tr>
+<tr><td style="background:#111118;border:1px solid #26263a;border-top:2px solid #3A86FF;padding:32px;color:#e8eaf6;">
+{greeting}<div style="font-size:15px;line-height:1.75;">{html_body}</div>
+</td></tr>
+<tr><td style="background:#0a0a18;border:1px solid #26263a;border-top:none;border-radius:0 0 16px 16px;padding:20px 32px;">
+<p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#f3f5ff;">EuroVault Investments</p>
+<p style="margin:0;font-size:11px;color:#4a5068;">Regulamentado pela CySEC · Licença 409/22 · MiFID II · ICF</p>
+<hr style="border:none;border-top:1px solid #1a1a2a;margin:12px 0;">
+<p style="margin:0;font-size:10px;color:#26263a;">© {datetime.utcnow().year} EuroVault Investments Ltd. Todos os direitos reservados.</p>
+</td></tr>
+</table></td></tr></table></body></html>"""
+            msg.attach(MIMEText(html, "html"))
+            with smtplib.SMTP_SSL(smtp_host, 465) as s:
+                s.login(smtp_user, smtp_pass)
+                s.sendmail(smtp_from, [req.to], msg.as_string())
+            email_log["status"] = "sent_smtp"
+        except Exception as e:
+            email_log["status"] = f"error: {str(e)[:100]}"
+    else:
+        email_log["status"] = "logged_only"
+
+    await db.email_logs.insert_one(email_log)
+    return {"success": True, "to": req.to, "status": email_log["status"]}
+
+
 # ════════════════════════════════════════════════════════════════
 #  CALENDÁRIO DE FOLLOW-UPS
 # ════════════════════════════════════════════════════════════════

@@ -1,26 +1,14 @@
 [
   {
-    "content": "Backend: timeline de notas (array) + endpoint email + histórico saldo",
-    "status": "completed"
+    "content": "1. Otimização mobile: viewport, inputs, navegação, páginas principais",
+    "status": "in_progress"
   },
   {
-    "content": "Admin Dashboard: redesign completo mais caprichado",
-    "status": "completed"
+    "content": "2. Traduções completas: aplicar t() em todas as páginas que ainda têm português fixo",
+    "status": "pending"
   },
   {
-    "content": "Admin Drawer: notas em formato timeline com data/hora",
-    "status": "completed"
-  },
-  {
-    "content": "AdminCalendar.js: calendário mensal de follow-ups",
-    "status": "completed"
-  },
-  {
-    "content": "Email modal: enviar email ao lead do painel",
-    "status": "completed"
-  },
-  {
-    "content": "Cliente: gráfico de evolução do saldo",
-    "status": "completed"
+    "content": "3. Sistema de email com assinatura profissional + página de campanhas",
+    "status": "pending"
   }
 ]

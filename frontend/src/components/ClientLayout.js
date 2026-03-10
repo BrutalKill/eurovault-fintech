@@ -8,6 +8,7 @@ import Footer from './Footer';
 import FloatingChat from './FloatingChat';
 import LangSwitcher from './LangSwitcher';
 import NotificationBell from './NotificationBell';
+import MobileBottomNav from './MobileBottomNav';
 
 export default function ClientLayout() {
   const navigate = useNavigate();
@@ -135,7 +136,7 @@ export default function ClientLayout() {
           <div style={{ flex: 1 }} />
 
           {/* Saldo no topbar */}
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 10 }} className="topbar-balance">
             <div style={{ background: 'hsl(240,18%,14%)', border: '1px solid hsl(240,16%,22%)', borderRadius: 9, padding: '5px 12px', textAlign: 'right' }}>
               <div style={{ fontSize: 10, color: 'hsl(215,16%,60%)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('nav_balance')}</div>
               <div className="numeric" style={{ fontSize: 13, fontWeight: 700, color: '#f3f5ff' }}>{formatEur(animBalance)}</div>
@@ -175,6 +176,9 @@ export default function ClientLayout() {
 
         {/* Chat de suporte flutuante */}
         <FloatingChat />
+
+        {/* Navegação inferior mobile */}
+        <MobileBottomNav />
       </div>
     </div>
   );
