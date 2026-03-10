@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Gift, Users, TrendingUp, Copy, CheckCircle, Star, ArrowRight, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useUser } from '../context/UserContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 const fmt = (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v || 0);
@@ -23,6 +24,7 @@ const TIERS = [
 
 export default function ReferralPage() {
   const navigate = useNavigate();
+  const { user } = useUser();
   const [referral, setReferral] = useState(null);
   const [copied, setCopied] = useState(false);
 
