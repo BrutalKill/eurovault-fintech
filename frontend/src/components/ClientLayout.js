@@ -8,7 +8,6 @@ import Footer from './Footer';
 import FloatingChat from './FloatingChat';
 import LangSwitcher from './LangSwitcher';
 import NotificationBell from './NotificationBell';
-import MobileBottomNav from './MobileBottomNav';
 
 export default function ClientLayout() {
   const navigate = useNavigate();
@@ -124,18 +123,53 @@ export default function ClientLayout() {
 
         {/* Topbar */}
         <header style={{
-          height: 60, background: 'hsl(240,26%,8%)',
+          height: 56, background: 'hsl(240,26%,8%)',
           borderBottom: '1px solid hsl(240,16%,18%)',
-          display: 'flex', alignItems: 'center', padding: '0 20px', gap: 12,
+          display: 'flex', alignItems: 'center', padding: '0 16px', gap: 10,
           position: 'sticky', top: 0, zIndex: 30,
         }}>
+          {/* Botão menu hambúrguer — melhorado para mobile */}
           <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg-hidden"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'hsl(215,16%,70%)', padding: 4 }}>
-            <Menu size={22} />
+            style={{
+              width: 38, height: 38, background: sidebarOpen ? 'rgba(58,134,255,0.15)' : 'hsl(240,18%,14%)',
+              border: `1px solid ${sidebarOpen ? 'rgba(58,134,255,0.3)' : 'hsl(240,16%,22%)'}`,
+              borderRadius: 10, cursor: 'pointer',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
+              transition: 'all 0.2s', padding: 0, flexShrink: 0,
+            }}>
+            {/* 3 linhas animadas */}
+            {[0, 1, 2].map(i => (
+              <div key={i} style={{
+                width: sidebarOpen && i === 1 ? 0 : 18,
+                height: 2,
+                background: sidebarOpen ? '#3A86FF' : 'hsl(215,16%,65%)',
+                borderRadius: 2,
+                transition: 'all 0.2s',
+                transformOrigin: 'center',
+                transform: sidebarOpen
+                  ? i === 0 ? 'rotate(45deg) translate(4px, 4px)'
+                  : i === 2 ? 'rotate(-45deg) translate(4px, -4px)'
+                  : 'scaleX(0)'
+                  : 'none',
+              }} />
+            ))}
           </button>
+
+          {/* Logo no topbar (só mobile) */}
+          <div className="lg-hidden" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <img src="/logo-eurovault.png" alt="EV" style={{ width: 28, height: 28, objectFit: 'contain' }} />
+            <span style={{ fontFamily: 'var(--font-heading)', fontSize: 14, fontWeight: 800, color: '#f3f5ff' }}>EuroVault</span>
+          </div>
+
           <div style={{ flex: 1 }} />
 
-          {/* Saldo no topbar */}
+          {/* Saldo compacto no topbar mobile */}
+          <div className="lg-hidden" style={{ background: 'linear-gradient(135deg,rgba(58,134,255,0.12),rgba(34,197,139,0.08))', border: '1px solid rgba(58,134,255,0.2)', borderRadius: 9, padding: '5px 10px', textAlign: 'right' }}>
+            <div style={{ fontSize: 9, color: '#3A86FF', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Saldo</div>
+            <div className="numeric" style={{ fontSize: 13, fontWeight: 800, color: '#f3f5ff', fontFamily: 'var(--font-heading)' }}>{formatEur(animBalance)}</div>
+          </div>
+
+          {/* Saldo no topbar desktop */}
           <div style={{ display: 'flex', gap: 10 }} className="topbar-balance">
             <div style={{ background: 'hsl(240,18%,14%)', border: '1px solid hsl(240,16%,22%)', borderRadius: 9, padding: '5px 12px', textAlign: 'right' }}>
               <div style={{ fontSize: 10, color: 'hsl(215,16%,60%)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('nav_balance')}</div>
@@ -176,9 +210,6 @@ export default function ClientLayout() {
 
         {/* Chat de suporte flutuante */}
         <FloatingChat />
-
-        {/* Navegação inferior mobile */}
-        <MobileBottomNav />
       </div>
     </div>
   );

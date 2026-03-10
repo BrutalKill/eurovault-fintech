@@ -13,11 +13,12 @@ const HOW_IT_WORKS = [
   { icon: TrendingUp,  color: '#a855f7', title: '4. Sem limite',          desc: 'Não existe limite de referidos. Quanto mais amigos convidarem, mais bónus acumula.' },
 ];
 
+// Níveis baseados no valor total depositado
 const TIERS = [
-  { min: 0,   max: 4,   label: 'Bronze',   color: '#cd7f32', bonus: 25,   icon: '🥉' },
-  { min: 5,   max: 14,  label: 'Prata',    color: '#c0c0c0', bonus: 30,   icon: '🥈' },
-  { min: 15,  max: 29,  label: 'Ouro',     color: '#FFD700', bonus: 40,   icon: '🥇' },
-  { min: 30,  max: Infinity, label: 'Platinum', color: '#3A86FF', bonus: 50, icon: '💎' },
+  { min: 10,     max: 999,      label: 'Bronze',   color: '#cd7f32', bonus: 25,  icon: '🥉', label_range: 'A partir de €10' },
+  { min: 1000,   max: 4999,     label: 'Prata',    color: '#c0c0c0', bonus: 35,  icon: '🥈', label_range: '€1.000 – €4.999' },
+  { min: 5000,   max: 24999,    label: 'Ouro',     color: '#FFD700', bonus: 50,  icon: '🥇', label_range: '€5.000 – €24.999' },
+  { min: 25000,  max: Infinity, label: 'Platinum', color: '#3A86FF', bonus: 75,  icon: '💎', label_range: 'A partir de €25.000' },
 ];
 
 export default function ReferralPage() {
@@ -49,7 +50,8 @@ export default function ReferralPage() {
     } else { copyLink(); }
   };
 
-  const currentTier = TIERS.find(t => (referral?.converted || 0) >= t.min && (referral?.converted || 0) <= t.max) || TIERS[0];
+  const depositedAmount = Math.max(0, parseFloat(user?.balance) || 0) + Math.max(0, parseFloat(user?.profit) || 0);
+  const currentTier = TIERS.slice().reverse().find(t => depositedAmount >= t.min) || TIERS[0];
   const nextTier    = TIERS[TIERS.indexOf(currentTier) + 1];
 
   const card = { background: 'hsl(240,26%,8%)', border: '1px solid hsl(240,16%,18%)', borderRadius: 16, padding: '22px 24px' };

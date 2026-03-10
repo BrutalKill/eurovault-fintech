@@ -64,28 +64,29 @@ h1, h2, h3, h4, h5, h6 {
 /* Card number formatting */
 .card-input { letter-spacing: 0.15em; }
 
-/* ── Mobile bottom nav ── */
-.mobile-bottom-nav { display: none; }
+/* ── Mobile improvements (sidebar drawer) ── */
 @media (max-width: 1023px) {
-  .mobile-bottom-nav { display: flex !important; }
-  /* Espaço para a bottom nav não tapar o conteúdo */
-  main { padding-bottom: calc(70px + env(safe-area-inset-bottom)) !important; }
+  main { padding-bottom: 20px !important; }
 }
 
-/* ── Melhorias gerais mobile ── */
 @media (max-width: 768px) {
-  /* Esconder sidebar no mobile (usa bottom nav) */
-  .lg-sidebar { display: none !important; }
-  .main-content { margin-left: 0 !important; }
   /* Topbar mais compacto */
-  header { padding: 0 12px !important; gap: 8px !important; }
+  header { padding: 0 14px !important; gap: 8px !important; height: 52px !important; }
   /* Conteúdo com padding lateral menor */
   main { padding: 14px 12px !important; }
-  /* Cards mais compactos */
+  /* Grids mais compactos */
   .dash-cards { grid-template-columns: 1fr !important; }
   .dash-actions { grid-template-columns: repeat(2,1fr) !important; }
   .dash-meta { grid-template-columns: 1fr !important; }
-  /* Ocultar topbar balance no mobile (está na sidebar) */
+  .kyc-grid { grid-template-columns: 1fr !important; }
+  .analytics-grid { grid-template-columns: repeat(2,1fr) !important; }
+  .analytics-charts { grid-template-columns: 1fr !important; }
+  /* Sidebar com overlay ao abrir */
+  .lg-sidebar {
+    box-shadow: 4px 0 40px rgba(0,0,0,0.7) !important;
+    width: 280px !important;
+  }
+  /* Ocultar saldo desktop, mostrar compacto */
   .topbar-balance { display: none !important; }
 }
 @media (max-width: 900px) {
