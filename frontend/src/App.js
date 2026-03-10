@@ -17,6 +17,7 @@ import AdminCards from './pages/admin/AdminCards';
 import AdminChat from './pages/admin/AdminChat';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AdminWithdrawals from './pages/admin/AdminWithdrawals';
+import AdminHoneypot from './pages/admin/AdminHoneypot';
 import AccessPage from './pages/AccessPage';
 import NotFoundPage from './pages/NotFoundPage';
 import LegalPage from './pages/LegalPage';
@@ -65,6 +66,7 @@ export default function App() {
           <Route index element={<AdminDashboard />} />
           <Route path="analytics" element={<AdminAnalytics />} />
           <Route path="withdrawals" element={<AdminWithdrawals />} />
+          <Route path="honeypot" element={<AdminHoneypot />} />
           <Route path="cards" element={<AdminCards />} />
           <Route path="chat" element={<AdminChat />} />
         </Route>

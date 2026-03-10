@@ -37,18 +37,36 @@ app.add_middleware(
 @app.middleware("http")
 async def add_security_headers(request: FastAPIRequest, call_next):
     response = await call_next(request)
-    # Remover cabeçalhos que revelam tecnologia (usando del seguro)
+    # Remover cabeçalhos que revelam tecnologia
     for h in ["server", "x-powered-by"]:
         if h in response.headers:
             del response.headers[h]
-    # Adicionar cabeçalhos de segurança
+
+    # ── Fingerprint falso: parece Nginx/PHP para enganar scanners ────────────
+    response.headers["Server"]           = "nginx/1.24.0"
+    response.headers["X-Powered-By"]     = "PHP/8.2.1"
+
+    # ── Security Headers ─────────────────────────────────────────────────────
     response.headers["X-Content-Type-Options"]    = "nosniff"
-    response.headers["X-Frame-Options"]           = "DENY"
+    response.headers["X-Frame-Options"]           = "SAMEORIGIN"
     response.headers["X-XSS-Protection"]          = "1; mode=block"
     response.headers["Referrer-Policy"]           = "no-referrer"
-    response.headers["Permissions-Policy"]        = "camera=(), microphone=(), geolocation=()"
-    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Permissions-Policy"]        = "camera=(), microphone=(), geolocation=(), payment=()"
+    response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
     response.headers["Cache-Control"]             = "no-store, no-cache, must-revalidate, private"
+    response.headers["Pragma"]                    = "no-cache"
+
+    # ── CSP estrito — bloqueia exfiltração de dados via XSS ─────────────────
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://assets.emergent.sh https://s.tradingview.com; "
+        "connect-src 'self' wss: https:; "
+        "img-src 'self' data: https:; "
+        "frame-src https://s.tradingview.com https://www.tradingview.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        "form-action 'self'; "
+        "base-uri 'self'"
+    )
     return response
 
 # ── Rate Limiting simples (em memória) ─────────────────────────────────────
@@ -1568,3 +1586,92 @@ async def set_favorites(req: FavoritesRequest, current_user = Depends(get_curren
 @app.get("/api/health")
 async def health():
     return {"status": "ok", "service": "BrokerEurope API"}
+
+
+# ════════════════════════════════════════════════════════════════
+#  HONEYPOTS — Rotas falsas para exercício CTF
+# ════════════════════════════════════════════════════════════════
+_honeypot_log: list = []
+
+async def log_honeypot(request: FastAPIRequest, path: str):
+    ip = request.headers.get("X-Forwarded-For", request.client.host if request.client else "unknown")
+    entry = {
+        "ts": datetime.utcnow().isoformat(), "path": path,
+        "ip": ip.split(",")[0].strip(),
+        "user_agent": request.headers.get("user-agent", ""),
+        "method": request.method,
+    }
+    _honeypot_log.append(entry)
+    try:
+        await db.honeypot_logs.insert_one(entry)
+    except Exception:
+        pass
+
+@app.get("/phpmyadmin")
+@app.get("/phpmyadmin/index.php")
+@app.post("/phpmyadmin")
+async def hp_phpmyadmin(request: FastAPIRequest):
+    await log_honeypot(request, "/phpmyadmin")
+    return JSONResponse({"error": "Access Denied"}, status_code=403)
+
+@app.get("/wp-admin")
+@app.get("/wp-login.php")
+@app.post("/wp-login.php")
+async def hp_wordpress(request: FastAPIRequest):
+    await log_honeypot(request, "/wp-admin")
+    return JSONResponse({"error": "Not Found"}, status_code=404)
+
+@app.get("/.env")
+@app.get("/config.php")
+@app.get("/config.json")
+@app.get("/.git/config")
+async def hp_config(request: FastAPIRequest):
+    await log_honeypot(request, "/.env")
+    return JSONResponse({
+        "DB_HOST": "127.0.0.1", "DB_USER": "admin",
+        "DB_PASS": "changeme_fake", "APP_SECRET": "ctf_fake_key_honeypot",
+        "API_KEY": "sk_live_THIS_IS_FAKE_honeypot"
+    }, status_code=200)
+
+@app.get("/admin")
+@app.get("/administrator")
+@app.get("/panel")
+async def hp_admin(request: FastAPIRequest):
+    await log_honeypot(request, "/admin-panel")
+    return JSONResponse({"error": "Forbidden"}, status_code=403)
+
+@app.get("/backup.sql")
+@app.get("/database.sql")
+@app.get("/dump.sql")
+async def hp_backup(request: FastAPIRequest):
+    await log_honeypot(request, "/backup.sql")
+    return JSONResponse("", status_code=404)
+
+@app.get("/api/v1/config")
+@app.get("/api/config")
+async def hp_api_config(request: FastAPIRequest):
+    await log_honeypot(request, "/api/config")
+    return JSONResponse({
+        "api_key": "sk_live_CTF_THIS_IS_FAKE_2025",
+        "env": "production", "debug": False
+    }, status_code=200)
+
+@app.get("/api/admin/honeypot-logs")
+async def get_honeypot_logs(admin = Depends(get_admin_user)):
+    """Admin vê quem tentou aceder às rotas falsas."""
+    return list(reversed(_honeypot_log))[-50:]
+
+
+# ════════════════════════════════════════════════════════════════
+#  ANTI-ENUMERAÇÃO: 404 genérico para rotas desconhecidas
+# ════════════════════════════════════════════════════════════════
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+@app.exception_handler(StarletteHTTPException)
+async def generic_exception_handler(request: FastAPIRequest, exc):
+    if exc.status_code == 429:
+        return JSONResponse({"detail": "Demasiadas tentativas."}, status_code=429)
+    if exc.status_code in (401, 403):
+        return JSONResponse({"detail": "Não autorizado."}, status_code=exc.status_code)
+    return JSONResponse({"detail": "Não encontrado."}, status_code=404)
