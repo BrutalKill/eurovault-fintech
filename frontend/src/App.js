@@ -42,7 +42,7 @@ const AdminRoute = ({ children }) => {
 export default function App() {
   return (
     <BrowserRouter>
-      <Toaster position="top-right" richColors theme="dark" />
+      <Toaster position="bottom-right" richColors theme="dark" />
       <Routes>
         {/* Public */}
         <Route path="/" element={<Navigate to="/login" replace />} />
