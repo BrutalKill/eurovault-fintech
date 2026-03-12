@@ -711,6 +711,18 @@ export default function AdminDashboard() {
   const [applyingBulk, setApplyingBulk] = useState(false);
   // Delete confirmation
   const [confirmDelete, setConfirmDelete] = useState(null); // { id, name }
+  // Assign agent
+  const [agents, setAgents] = useState([]);
+  const [assignModal, setAssignModal] = useState(null); // { id, name, current_agent }
+
+  // Carregar lista de agentes
+  useEffect(() => {
+    const token = localStorage.getItem('adminToken');
+    fetch(`${BACKEND_URL}/api/admin/agents`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : [])
+      .then(setAgents)
+      .catch(() => {});
+  }, []);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -852,6 +864,26 @@ export default function AdminDashboard() {
     setApplyingBulk(false);
   };
 
+  const handleAssignAgent = async (userId, agentId) => {
+    const token = localStorage.getItem('adminToken');
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/admin/leads/${userId}/assign`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ agent_id: agentId || null }),
+      });
+      if (!res.ok) throw new Error('Erro ao atribuir');
+      setUsers(prev => prev.map(u => u.id === userId
+        ? { ...u, assigned_agent: agentId, assigned_agent_name: agents.find(a => a.id === agentId)?.full_name || '' }
+        : u
+      ));
+      toast.success(agentId ? `Lead enviado para ${agents.find(a => a.id === agentId)?.full_name}!` : 'Atribuição removida!');
+    } catch (e) {
+      toast.error(e.message || 'Erro ao atribuir lead');
+    }
+    setAssignModal(null);
+  };
+
   const handleExportCSV = () => {
     const token = localStorage.getItem('adminToken');
     fetch(`${BACKEND_URL}/api/admin/export/leads`, { headers: { Authorization: `Bearer ${token}` } })
@@ -923,6 +955,67 @@ export default function AdminDashboard() {
       {selectedLead && (
         <LeadDrawer lead={selectedLead} onClose={() => setSelectedLead(null)} onStatusChange={updateStatus} onBalanceSave={saveBalance} />
       )}
+
+
+      {/* Modal de atribuição de agente */}
+      {assignModal && (
+        <>
+          <div onClick={() => setAssignModal(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 200, backdropFilter: 'blur(3px)' }} />
+          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 201, background: '#111118', border: '1px solid rgba(58,134,255,0.3)', borderRadius: 20, padding: '28px 26px', width: 400, maxWidth: '95vw', boxShadow: '0 32px 80px rgba(0,0,0,0.8)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 22 }}>
+              <div style={{ width: 40, height: 40, background: 'rgba(58,134,255,0.1)', borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <LogIn size={18} color="#3A86FF" />
+              </div>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#f3f5ff' }}>Enviar Lead para Agente</div>
+                <div style={{ fontSize: 12, color: '#7a8299' }}>{assignModal.name}</div>
+              </div>
+              <button onClick={() => setAssignModal(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#7a8299' }}><X size={18} /></button>
+            </div>
+            {assignModal.assigned_agent_name && (
+              <div style={{ padding: '9px 13px', background: 'rgba(255,190,11,0.08)', border: '1px solid rgba(255,190,11,0.2)', borderRadius: 10, marginBottom: 14 }}>
+                <div style={{ fontSize: 10, color: '#FFBE0B', fontWeight: 700, marginBottom: 2 }}>Agente actual</div>
+                <div style={{ fontSize: 13, color: '#f3f5ff' }}>{assignModal.assigned_agent_name}</div>
+              </div>
+            )}
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#7a8299', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+              {agents.length === 0 ? 'Nenhum agente criado' : 'Escolher agente'}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 14, maxHeight: 240, overflowY: 'auto' }}>
+              {agents.map(agent => (
+                <button key={agent.id} onClick={() => handleAssignAgent(assignModal.id, agent.id)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px',
+                    background: assignModal.assigned_agent === agent.id ? 'rgba(58,134,255,0.12)' : 'rgba(255,255,255,0.03)',
+                    border: `1px solid ${assignModal.assigned_agent === agent.id ? 'rgba(58,134,255,0.4)' : '#26263a'}`,
+                    borderRadius: 11, cursor: 'pointer', textAlign: 'left', width: '100%', transition: 'all 0.15s' }}>
+                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#3A86FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+                    {agent.full_name?.[0]?.toUpperCase()}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#f3f5ff' }}>{agent.full_name}</div>
+                    <div style={{ fontSize: 11, color: '#4a5068' }}>{agent.email} · {agent.leads_count || 0} leads</div>
+                  </div>
+                  {assignModal.assigned_agent === agent.id && (
+                    <span style={{ fontSize: 10, padding: '2px 7px', background: 'rgba(58,134,255,0.2)', borderRadius: 5, color: '#3A86FF', fontWeight: 700 }}>ACTUAL</span>
+                  )}
+                </button>
+              ))}
+              {agents.length === 0 && (
+                <p style={{ fontSize: 12, color: '#4a5068', textAlign: 'center', padding: '16px 0', margin: 0 }}>
+                  Crie agentes em <strong style={{ color: '#3A86FF' }}>/adm/agents</strong> primeiro.
+                </p>
+              )}
+            </div>
+            {assignModal.assigned_agent && (
+              <button onClick={() => handleAssignAgent(assignModal.id, null)}
+                style={{ width: '100%', padding: '10px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 11, color: '#ef4444', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+                <X size={14} />Remover Atribuição
+              </button>
+            )}
+          </div>
+        </>
+      )}
+
 
       {/* Modal de confirmação de eliminação */}
       {confirmDelete && (
@@ -1156,7 +1249,7 @@ export default function AdminDashboard() {
                           </button>
                         </div>
                       ) : (
-                        <div style={{ display: 'flex', gap: 5 }}>
+                        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                           <button onClick={() => setSelectedLead(user)} title="Ver detalhes"
                             style={{ padding: '6px 10px', background: 'rgba(58,134,255,0.08)', border: '1px solid rgba(58,134,255,0.2)', borderRadius: 7, color: '#3A86FF', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
                             <Eye size={12} />Ver
@@ -1164,6 +1257,13 @@ export default function AdminDashboard() {
                           <button data-testid="admin-edit-balance-button" onClick={() => startEdit(user)}
                             style={{ padding: '6px 10px', background: 'rgba(255,190,11,0.08)', border: '1px solid rgba(255,190,11,0.2)', borderRadius: 7, color: '#FFBE0B', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
                             <Edit2 size={12} />Editar
+                          </button>
+                          {/* Botão enviar para agente */}
+                          <button
+                            onClick={() => setAssignModal({ id: user.id, name: user.full_name, assigned_agent: user.assigned_agent, assigned_agent_name: user.assigned_agent_name })}
+                            title={user.assigned_agent_name ? `Agente: ${user.assigned_agent_name}` : 'Enviar para agente'}
+                            style={{ padding: '6px 10px', background: user.assigned_agent ? 'rgba(168,85,247,0.12)' : 'rgba(122,130,153,0.08)', border: `1px solid ${user.assigned_agent ? 'rgba(168,85,247,0.3)' : 'rgba(122,130,153,0.2)'}`, borderRadius: 7, color: user.assigned_agent ? '#a855f7' : '#7a8299', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <LogIn size={12} />{user.assigned_agent_name ? user.assigned_agent_name.split(' ')[0] : 'Agente'}
                           </button>
                           <button
                             data-testid="admin-delete-lead-btn"
