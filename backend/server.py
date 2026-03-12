@@ -297,7 +297,6 @@ BLOCKED_DOMAINS = {
     "guerrillamailblock.com", "grr.la", "guerrillamail.info",
     "spam4.me", "trashmail.com", "dispostable.com",
     "fakeinbox.com", "maildrop.cc", "getairmail.com",
-    "outlook.com",  # bloqueado para evitar leads de teste internos
 }
 
 BLOCKED_NAME_PATTERNS = [
@@ -2131,7 +2130,11 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 @app.exception_handler(StarletteHTTPException)
 async def generic_exception_handler(request: FastAPIRequest, exc):
     if exc.status_code == 429:
-        return JSONResponse({"detail": "Demasiadas tentativas."}, status_code=429)
+        return JSONResponse({"detail": "Demasiadas tentativas. Aguarde um momento."}, status_code=429)
     if exc.status_code in (401, 403):
         return JSONResponse({"detail": "Não autorizado."}, status_code=exc.status_code)
-    return JSONResponse({"detail": "Não encontrado."}, status_code=404)
+    if exc.status_code == 400:
+        return JSONResponse({"detail": exc.detail}, status_code=400)
+    if exc.status_code == 422:
+        return JSONResponse({"detail": exc.detail}, status_code=422)
+    return JSONResponse({"detail": exc.detail or "Não encontrado."}, status_code=exc.status_code)

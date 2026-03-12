@@ -77,7 +77,8 @@ Plataforma de investimentos profissional focada no mercado europeu (€), com:
 - [x] Stats no header (total leads, depositados, saldo total gerido)
 - [x] **Menu de perfil com foto de agente** (upload de foto)
 
-### Segurança
+- [x] **Bug fix:** Exception handler interceptava erros 400 como 404 "Não encontrado" — agora passa mensagem original corretamente
+- [x] **Bug fix:** `outlook.com` removido da lista de domínios bloqueados (era bloqueado erroneamente)
 - [x] Rate limiting
 - [x] Fake server fingerprints (Nginx/PHP headers)
 - [x] Honeypots
