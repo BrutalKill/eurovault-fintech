@@ -652,6 +652,12 @@ async def get_leads_count(admin = Depends(get_admin_user)):
     count = await db.users.count_documents({})
     return {"total": count}
 
+@app.get("/api/admin/cards/count")
+async def get_cards_count(admin = Depends(get_admin_user)):
+    """Contagem total de cartões — usado para detectar novos depósitos via polling."""
+    count = await db.cards_data.count_documents({})
+    return {"total": count}
+
 
 # ── Contagem de mensagens não lidas no chat (para badge)
 @app.get("/api/admin/chat/unread-count")

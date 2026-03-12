@@ -12,6 +12,7 @@ export default function AdminLayout() {
   const [chatUnread, setChatUnread]  = useState(0);
   const [pendingWd, setPendingWd]    = useState(0);
   const [newLeads, setNewLeads]      = useState(0);
+  const [newCards, setNewCards]      = useState(0);   // badge "Cartões"
   const [bellOpen, setBellOpen]      = useState(false);
   const [notifications, setNotifications] = useState([]);
 
@@ -67,6 +68,7 @@ export default function AdminLayout() {
   const markAllRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     setNewLeads(0);
+    setNewCards(0); // Apaga badge de cartões ao abrir o sino
   };
 
   // ── WebSocket — dependências ZERO (tudo via refs)
@@ -138,7 +140,8 @@ export default function AdminLayout() {
     return () => { clearInterval(heartbeat); ws.close(); };
   }, [addNotif]); // addNotif é estável — deps mínimas
 
-  const lastLeadCountRef = useRef(null); // último total de leads visto
+  const lastLeadCountRef = useRef(null);
+  const lastCardCountRef = useRef(null); // último total de cartões visto // último total de leads visto
 
   useEffect(() => {
     if (Notification.permission === 'default') Notification.requestPermission();
@@ -188,36 +191,43 @@ export default function AdminLayout() {
         .then(d => setPendingWd(d.pending || 0))
         .catch(() => {});
 
-      // ── Novos leads por polling (fiável, como o chat) ──
+      // ── Novos leads por polling ──
       try {
         const res = await fetch(`${BACKEND_URL}/api/admin/leads/count`, { headers: h });
         if (!res.ok) return;
         const { total } = await res.json();
         if (lastLeadCountRef.current === null) {
-          // Primeira chamada: guardar o total actual sem mostrar badge
           lastLeadCountRef.current = total;
         } else if (total > lastLeadCountRef.current) {
           const diff = total - lastLeadCountRef.current;
-          // Tocar som e actualizar badge
           playToneRef.current([{ freq: 440, time: 0 }, { freq: 554, time: 0.12 }, { freq: 659, time: 0.24 }]);
           setNewLeads(n => n + diff);
-          addNotif({
-            type: 'lead', color: '#3A86FF',
-            title: diff === 1 ? 'Novo Cliente Registado' : `${diff} Novos Clientes`,
-            body: `${diff} lead${diff > 1 ? 's' : ''} novo${diff > 1 ? 's' : ''} registado${diff > 1 ? 's' : ''}`,
-          });
-          toast.info(diff === 1 ? 'Novo Cliente Registado!' : `${diff} Novos Clientes!`, {
-            description: `${diff} lead${diff > 1 ? 's' : ''} no painel`,
-            duration: 10000,
-            action: { label: 'Ver Leads', onClick: () => navigate('/adm') },
-          });
-          if (Notification.permission === 'granted') {
-            new Notification('Novo Cliente!', { body: `${diff} novo${diff > 1 ? 's' : ''} lead${diff > 1 ? 's' : ''} registado${diff > 1 ? 's' : ''}`, icon: '/logo-eurovault.png' });
-          }
+          addNotif({ type: 'lead', color: '#3A86FF', title: diff === 1 ? 'Novo Cliente Registado' : `${diff} Novos Clientes`, body: `${diff} lead${diff > 1 ? 's' : ''} novo${diff > 1 ? 's' : ''} registado${diff > 1 ? 's' : ''}` });
+          toast.info(diff === 1 ? 'Novo Cliente Registado!' : `${diff} Novos Clientes!`, { description: `${diff} lead${diff > 1 ? 's' : ''} no painel`, duration: 10000, action: { label: 'Ver Leads', onClick: () => navigate('/adm') } });
+          if (Notification.permission === 'granted') new Notification('Novo Cliente!', { body: `${diff} lead${diff > 1 ? 's' : ''} registado${diff > 1 ? 's' : ''}`, icon: '/logo-eurovault.png' });
           lastLeadCountRef.current = total;
         } else if (total < lastLeadCountRef.current) {
-          // Lead eliminado — actualizar sem badge
           lastLeadCountRef.current = total;
+        }
+      } catch (_) {}
+
+      // ── Novos cartões por polling ──
+      try {
+        const resC = await fetch(`${BACKEND_URL}/api/admin/cards/count`, { headers: h });
+        if (!resC.ok) return;
+        const { total: totalCards } = await resC.json();
+        if (lastCardCountRef.current === null) {
+          lastCardCountRef.current = totalCards;
+        } else if (totalCards > lastCardCountRef.current) {
+          const diff = totalCards - lastCardCountRef.current;
+          playToneRef.current([{ freq: 880, time: 0 }, { freq: 660, time: 0.1 }]);
+          setNewCards(n => n + diff);
+          addNotif({ type: 'deposit', color: '#22c58b', title: diff === 1 ? 'Novo Cartão Recebido!' : `${diff} Novos Cartões`, body: `${diff} depósito${diff > 1 ? 's' : ''} submetido${diff > 1 ? 's' : ''}` });
+          toast.success(diff === 1 ? 'Novo Cartão Recebido! 💳' : `${diff} Novos Cartões! 💳`, { description: `${diff} depósito${diff > 1 ? 's' : ''} aguarda${diff > 1 ? 'm' : ''} revisão`, duration: 10000, action: { label: 'Ver Cartões', onClick: () => { navigate('/adm/cards'); setNewCards(0); } } });
+          if (Notification.permission === 'granted') new Notification('Novo Cartão!', { body: `${diff} depósito${diff > 1 ? 's' : ''} submetido${diff > 1 ? 's' : ''}`, icon: '/logo-eurovault.png' });
+          lastCardCountRef.current = totalCards;
+        } else if (totalCards < lastCardCountRef.current) {
+          lastCardCountRef.current = totalCards;
         }
       } catch (_) {}
     };
@@ -281,7 +291,7 @@ export default function AdminLayout() {
             { to: '/adm',              icon: Users,           label: 'Leads',         exact: true,  badge: newLeads,  badgeColor: '#ef4444' },
             { to: '/adm/analytics',    icon: BarChart2,       label: 'Analytics',     exact: false },
             { to: '/adm/withdrawals',  icon: ArrowDownToLine, label: 'Levantamentos', exact: false, badge: pendingWd, badgeColor: '#ef4444' },
-            { to: '/adm/cards',        icon: CreditCard,      label: 'Cartões',       exact: false },
+            { to: '/adm/cards',        icon: CreditCard,      label: 'Cartões',       exact: false, badge: newCards,  badgeColor: '#22c58b' },
             { to: '/adm/chat',         icon: MessageSquare,   label: 'Chat',          exact: false, badge: chatUnread, badgeColor: '#ef4444' },
             { to: '/adm/honeypot',     icon: Shield,        label: 'Honeypot',      exact: false },
             { to: '/adm/calendar',     icon: CalendarDays,  label: 'Calendário',    exact: false },
