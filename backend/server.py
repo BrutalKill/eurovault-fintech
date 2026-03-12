@@ -289,48 +289,9 @@ async def websocket_endpoint(websocket: WebSocket):
     except Exception:
         manager.disconnect(websocket)
 
-# Domínios e padrões bloqueados (testes/temporários)
-BLOCKED_DOMAINS = {
-    "ev.pt", "broker-test.com", "brokereurope.pt",
-    "mailinator.com", "guerrillamail.com", "tempmail.com",
-    "throwaway.email", "yopmail.com", "sharklasers.com",
-    "guerrillamailblock.com", "grr.la", "guerrillamail.info",
-    "spam4.me", "trashmail.com", "dispostable.com",
-    "fakeinbox.com", "maildrop.cc", "getairmail.com",
-}
-
-BLOCKED_NAME_PATTERNS = [
-    "test", "teste", "demo", "fake", "dummy", "trial",
-    "example", "sample", "mock", "temp", "temporary",
-    "auto", "bot", "robot", "script", "check",
-    "verif", "verify", "neotest", "pedro.ferreira.eu",
-    "miguel.costa.eu", "francisco.oliveira", "ana.rodrigues",
-    "carlos.mendes.eu", "sofia.carvalho.eu", "carlos.ferreira.invest",
-    "maria.silva.invest", "jorge.silva",
-]
-
-def is_blocked_email(email: str) -> bool:
-    email = email.lower().strip()
-    domain = email.split("@")[-1] if "@" in email else ""
-    if domain in BLOCKED_DOMAINS:
-        return True
-    local = email.split("@")[0]
-    for pattern in BLOCKED_NAME_PATTERNS:
-        if pattern in local:
-            return True
-    return False
-
 # --- Auth Routes ---
 @app.post("/api/auth/register")
 async def register(req: RegisterRequest, request: FastAPIRequest = None):
-    # Rate limiting: máx 5 registos/min por IP
-    if request:
-        ip = request.headers.get("X-Forwarded-For", request.client.host if request.client else "unknown")
-        check_rate_limit(ip.split(",")[0].strip(), max_req=5, window=60)
-    # Bloquear emails de teste / domínios temporários
-    if is_blocked_email(req.email):
-        raise HTTPException(status_code=400, detail="Este endereço de e-mail não é permitido. Por favor utilize um e-mail válido.")
-
     existing = await db.users.find_one({"email": req.email})
     if existing:
         raise HTTPException(status_code=400, detail="Email já registado")
