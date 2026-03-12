@@ -7,7 +7,7 @@ from datetime import datetime
 
 class BrokerEuropeAPITester:
     def __init__(self):
-        self.base_url = "https://invest-dashboard-eu.preview.emergentagent.com"
+        self.base_url = "https://vault-invest.preview.emergentagent.com"
         self.client_token = None
         self.admin_token = None
         self.test_user_id = None

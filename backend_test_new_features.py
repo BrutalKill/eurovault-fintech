@@ -9,7 +9,7 @@ import sys
 from datetime import datetime
 import json
 
-BACKEND_URL = "https://invest-dashboard-eu.preview.emergentagent.com"
+BACKEND_URL = "https://vault-invest.preview.emergentagent.com"
 
 # Test credentials from review request
 ADMIN_USERNAME = "brokereurope"

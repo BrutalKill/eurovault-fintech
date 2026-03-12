@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, WebSocket, WebSocketDisconnect, status, Request as FastAPIRequest
+from fastapi import FastAPI, HTTPException, Depends, WebSocket, WebSocketDisconnect, status, Request as FastAPIRequest, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -737,7 +737,8 @@ async def get_agent_leads(agent_id: str, admin = Depends(get_admin_user)):
         leads.append(serialize_doc({
             "id": u["_id"], "full_name": u.get("full_name"), "email": u.get("email"),
             "country": u.get("country",""), "status": u.get("status","Novo"),
-            "balance": u.get("balance",0), "created_at": u.get("created_at"),
+            "balance": u.get("balance",0), "profit": u.get("profit",0.0),
+            "last_seen": u.get("last_seen"), "created_at": u.get("created_at"),
             "comment_count": comment_count,
         }))
     return leads
@@ -768,7 +769,23 @@ async def agent_me(current_agent = Depends(get_current_agent)):
     agent = await db.agents.find_one({"_id": ObjectId(current_agent["sub"])})
     if not agent:
         raise HTTPException(status_code=404, detail="Não encontrado")
-    return serialize_doc({"id": agent["_id"], "full_name": agent.get("full_name"), "email": agent.get("email"), "phone": agent.get("phone","")})
+    return serialize_doc({"id": agent["_id"], "full_name": agent.get("full_name"), "email": agent.get("email"), "phone": agent.get("phone",""), "photo_url": agent.get("photo_url","")})
+
+@app.post("/api/agent/profile/photo")
+async def upload_agent_photo(photo: UploadFile = File(...), current_agent = Depends(get_current_agent)):
+    allowed = {"image/jpeg", "image/png", "image/webp", "image/jpg"}
+    if photo.content_type not in allowed:
+        raise HTTPException(status_code=400, detail="Formato inválido. Use JPG, PNG ou WebP.")
+    content = await photo.read()
+    if len(content) > 2 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Imagem demasiado grande. Máximo 2MB.")
+    b64 = base64.b64encode(content).decode("utf-8")
+    photo_url = f"data:{photo.content_type};base64,{b64}"
+    await db.agents.update_one(
+        {"_id": ObjectId(current_agent["sub"])},
+        {"$set": {"photo_url": photo_url}}
+    )
+    return {"success": True, "photo_url": photo_url}
 
 @app.get("/api/agent/leads")
 async def agent_leads(current_agent = Depends(get_current_agent)):
@@ -780,6 +797,7 @@ async def agent_leads(current_agent = Depends(get_current_agent)):
             "id": u["_id"], "full_name": u.get("full_name"), "email": u.get("email"),
             "country": u.get("country",""), "phone": u.get("phone",""),
             "status": u.get("status","Novo"), "balance": u.get("balance",0),
+            "profit": u.get("profit", 0.0), "last_seen": u.get("last_seen"),
             "created_at": u.get("created_at"), "comment_count": comment_count,
             "followup_date": u.get("followup_date"), "followup_note": u.get("followup_note",""),
         }))
@@ -1780,7 +1798,7 @@ async def send_email_to_lead(user_id: str, req: EmailRequest, admin = Depends(ge
             html_body = req.body.replace("\n", "<br>")
             html = f"""<html><body style="font-family:sans-serif;background:#06061a;color:#f3f5ff;padding:32px">
                 <div style="max-width:560px;margin:0 auto;background:#111118;border:1px solid #26263a;border-radius:16px;padding:32px">
-                    <img src="https://invest-dashboard-eu.preview.emergentagent.com/logo-eurovault.png" height="48" alt="EuroVault"/>
+                    <img src="https://vault-invest.preview.emergentagent.com/logo-eurovault.png" height="48" alt="EuroVault"/>
                     <h2 style="color:#3A86FF;margin:20px 0 10px">{req.subject}</h2>
                     <div style="color:#e8eaf6;line-height:1.7">{html_body}</div>
                     <hr style="border-color:#26263a;margin:24px 0"/>

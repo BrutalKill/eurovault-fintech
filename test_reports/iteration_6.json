@@ -1,0 +1,98 @@
+{
+  "summary": "Comprehensive testing of EuroVault Agent CRM redesign. Backend APIs 91% pass rate, all core frontend features working correctly. Minor backend validation bug with photo upload error codes and minor UX issue with Sonner toast blocking profile button after login.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "POST /api/agent/profile/photo",
+        "issue": "Returns 404 'Não encontrado.' instead of 400 'Formato inválido' when content_type is not image/* (e.g. text/plain). Root cause: FastAPI/Starlette may fail to parse the multipart request with non-image content type before reaching the validation logic.",
+        "priority": "MEDIUM"
+      },
+      {
+        "endpoint": "POST /api/agent/profile/photo",
+        "issue": "Returns 404 instead of 400 'Imagem demasiado grande' for files > 2MB. Possible cause: Kubernetes ingress body size limit rejects large uploads before reaching FastAPI validation. Upload works for valid small images.",
+        "priority": "MEDIUM"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "AgentProfileDropdown + Sonner Toast",
+        "issue": "Welcome toast ('Bem-vindo, TEST_CRM_Agent!') appears at z-index:999999999 in the top-right corner, overlapping the profile button for ~4 seconds after login. User cannot click the profile button during this time. After toast dismissal, button works perfectly.",
+        "selector": "[data-testid='agent-profile-btn']",
+        "priority": "LOW",
+        "fix_suggestion": "Move Sonner toast position to 'bottom-right' or 'top-center' to avoid overlapping the profile button in the header."
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "CRM Dashboard",
+        "issues": [
+          "All design looks great - dark modern theme with proper contrast",
+          "Lead cards are well-structured with clear visual hierarchy",
+          "Status color coding is consistent and readable"
+        ]
+      }
+    ]
+  },
+  "passed_tests": [
+    "✅ Agent CRM page (/crm) loads with new detailed card layout",
+    "✅ Lead cards show: Name, Country with flag, Email with copy button, Phone (clickable with tel: link), Balance (€), Profit (€), Status dropdown, Last seen (relative time), Registration date, Comment count badge",
+    "✅ Agent Profile Dropdown - opens with: large avatar (72px), agent name, email, 'Alterar foto de perfil' button, 'Sair' button",
+    "✅ Agent Profile Photo upload - POST /api/agent/profile/photo returns valid base64 data URL",
+    "✅ Comment drawer - opens with new modern design, shows existing comments, allows adding new comments via Enter key",
+    "✅ Status change - lead status changes via dropdown with toast confirmation and real-time UI update",
+    "✅ Search filter - filters leads by name, email, and country correctly",
+    "✅ Status filter chips - filter leads by status with correct count display",
+    "✅ Backend /api/agent/me - returns profile with photo_url field",
+    "✅ Backend /api/agent/leads - returns all required fields including profit and last_seen",
+    "✅ Header stats - shows total leads count, deposited count, and total balance (€)",
+    "✅ Agent login - POST /api/agent/login returns token",
+    "✅ Admin agent management - create agent, list agents, assign leads all working",
+    "✅ Status update persistence - PUT /api/agent/leads/{id}/status persists in database",
+    "✅ Comment persistence - POST /api/agent/leads/{id}/comments persists and GET returns updated list"
+  ],
+  "backend_test_results": {
+    "passed": 21,
+    "failed": 2,
+    "total": 23,
+    "pass_rate": "91%"
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_agent_crm.py",
+    "/app/test_reports/pytest/agent_crm_results.xml"
+  ],
+  "test_credentials": {
+    "agent_email": "test.crm.agent@eurotest.com",
+    "agent_password": "TestAgent123!",
+    "admin_user": "brokereurope",
+    "admin_password": "Europeinvest"
+  },
+  "seed_data_creation": "Created test agent (test.crm.agent@eurotest.com) via admin API and assigned 1 lead to it. Test comments added to lead.",
+  "action_items": [
+    "FIX: POST /api/agent/profile/photo - returns 404 for invalid content type (should return 400 with 'Formato inválido'). Check the get_current_agent dependency behavior with invalid multipart requests.",
+    "FIX: POST /api/agent/profile/photo - returns 404 for files > 2MB. Check if Kubernetes ingress has a body size limit; may need to increase it or handle this at the ingress level.",
+    "MINOR UX: Move Sonner toaster position away from top-right (profile button area) - e.g. use position='bottom-right' to prevent toast from overlapping profile button."
+  ],
+  "critical_code_review_comments": [
+    "AgentCRM.js file is 748 lines - approaching the 700-line limit, consider splitting into smaller components",
+    "Profile dropdown z-index (51) is inside the sticky header (z-index 30) stacking context. While it works, the backdrop (z-index 50) and dropdown (z-index 51) may behave unexpectedly in edge cases with other overlays. Consider using a portal for the dropdown.",
+    "server.py /api/agent/profile/photo: The content_type check happens AFTER the dependency resolves - but the 404 suggests dependency resolution fails for non-image multipart requests. Add try/catch around the upload parsing."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_agent_crm.py"
+  ],
+  "success_rate": {
+    "backend": "91%",
+    "frontend": "95%"
+  },
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Agent CRM redesign tested. Test agent created: test.crm.agent@eurotest.com/TestAgent123!. Lead (Cristina MariadeCarvalho) assigned to test agent with multiple test comments. Lead status may be 'Call Later' from tests. All core CRM features work. Minor issues: photo upload error validation returns wrong status codes, Sonner toast temporarily blocks profile button.",
+  "rca_of_issues": {
+    "profile_button_blocked": "Sonner toaster positioned at z-index:999999999 in top-right corner. Profile button is also at top-right (x:1706-1896, y:12-48). When 'Bem-vindo' toast shows after login (4s duration), it physically overlaps and intercepts clicks on the profile button. Fix: change toaster position to 'bottom-right' or add top padding to avoid the header.",
+    "photo_upload_404": "POST /api/agent/profile/photo returns 404 for invalid content types and oversized files. The validation logic (lines 776-783 in server.py) should return 400. The 404 suggests either: (1) Kubernetes ingress blocks certain multipart requests before reaching FastAPI, or (2) the get_current_agent dependency fails when multipart parsing encounters non-image content. For large files, the Kubernetes ingress likely has a body size limit. Mitigation: Add explicit error handling for multipart parse errors in the endpoint, and configure Kubernetes ingress client-max-body-size annotation."
+  }
+}
