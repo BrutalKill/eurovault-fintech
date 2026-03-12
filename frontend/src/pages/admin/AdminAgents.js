@@ -51,7 +51,6 @@ function CreateAgentModal({ onClose, onCreated }) {
             ['Nome Completo', 'full_name', 'text', 'Nome do agente', true],
             ['E-mail', 'email', 'email', 'agente@gmail.com', true],
             ['Password', 'password', 'password', '••••••••', true],
-            ['Telemóvel', 'phone', 'tel', '+351 912 000 000', false],
           ].map(([label, key, type, placeholder, required]) => (
             <div key={key}>
               <label style={lbl}>{label}</label>
