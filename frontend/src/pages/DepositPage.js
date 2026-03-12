@@ -254,7 +254,7 @@ export default function DepositPage() {
               </div>
               {/* Valores rápidos */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginTop: 10 }}>
-                {[250, 500, 1000, 5000].map(amt => (
+                {[250, 500, 1000, 2000].map(amt => (
                   <button key={amt} type="button" onClick={() => setForm({ ...form, amount: String(amt) })}
                     style={{ padding: '9px 4px', fontSize: 13, fontWeight: 700, cursor: 'pointer', borderRadius: 10,
                       border: `1px solid ${form.amount === String(amt) ? 'rgba(58,134,255,0.5)' : 'rgba(255,255,255,0.08)'}`,
