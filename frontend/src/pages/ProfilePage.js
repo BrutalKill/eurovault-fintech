@@ -2,12 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Save, Shield, TrendingUp, Upload, CheckCircle, Clock, AlertCircle, Target, Monitor, Smartphone, Globe, Edit2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUser } from '../context/UserContext';
+import { useLang } from '../context/LangContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 const COUNTRIES = ['Portugal','Espanha','França','Alemanha','Itália','Países Baixos','Bélgica','Suíssa','Suécia','Noruega','Dinamarca','Polónia','Hungria','República Checa','Ruménia','Brasil','Reino Unido','Outro'];
 
 export default function ProfilePage() {
   const { user, fetchUser } = useUser();
+  const { t } = useLang();
   const [form, setForm] = useState({ full_name: '', phone: '', country: 'Portugal' });
   const [loading, setLoading] = useState(false);
   // KYC — estado separado por face
@@ -67,7 +69,7 @@ export default function ProfilePage() {
       });
       if (!res.ok) throw new Error('Erro ao actualizar');
       await fetchUser();
-      toast.success('Perfil actualizado com sucesso!');
+      toast.success(t('prof_saved'));
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -234,7 +236,7 @@ export default function ProfilePage() {
 
           {/* Indicadores */}
           <div style={{ background: 'hsl(240,26%,8%)', border: '1px solid hsl(240,16%,18%)', borderRadius: 14, padding: '16px 18px' }}>
-            <div style={{ fontSize: 12, color: 'hsl(215,16%,70%)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14, fontWeight: 700 }}>{t('prof_indicators')}</div>
+            <div style={{ fontSize: 12, color: 'hsl(215,16%,70%)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14, fontWeight: 700 }}>{t('profile_indicators')}</div>
             {[
               { icon: TrendingUp, label: t('prof_total_return'),   value: `+${formatEur(safeProfit)}`, color: 'hsl(155,72%,45%)' },
               { icon: Shield,     label: t('prof_security_label'), value: t('prof_2fa_active'),        color: 'hsl(214,100%,60%)' },
