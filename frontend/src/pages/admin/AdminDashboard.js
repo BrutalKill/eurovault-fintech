@@ -1036,16 +1036,16 @@ export default function AdminDashboard() {
                     onChange={toggleSelectAll}
                     style={{ cursor: 'pointer', accentColor: '#3A86FF' }} />
                 </th>
-                {['#', 'Nome / E-mail', 'País', 'Estado', 'Saldo', 'Lucro', '% Dia', 'Acções'].map(h => (
+                {['#', 'Nome / E-mail', 'País', 'Saldo', 'Lucro', '% Dia', 'Acções'].map(h => (
                   <th key={h} style={{ padding: '11px 14px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: '#4a5068', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={9} style={{ padding: 40, textAlign: 'center', color: '#7a8299', fontSize: 13 }}>A carregar…</td></tr>
+                <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#7a8299', fontSize: 13 }}>A carregar…</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={9} style={{ padding: 40, textAlign: 'center', color: '#7a8299', fontSize: 13 }}>Nenhum lead encontrado</td></tr>
+                <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#7a8299', fontSize: 13 }}>Nenhum lead encontrado</td></tr>
               ) : filtered.map((user, idx) => {
                 const ss = STATUS_STYLES[user.status] || STATUS_STYLES['Novo'];
                 const isEd = editing === user.id;
@@ -1066,13 +1066,20 @@ export default function AdminDashboard() {
                       <span style={{ fontSize: 11, color: '#4a5068', fontWeight: 700 }}>{idx + 1}</span>
                     </td>
 
-                    {/* Nome / Email + botões de impersonation */}
+                    {/* Nome / Email com estado à esquerda + botões impersonation */}
                     <td style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {/* Estado integrado no lado esquerdo */}
+                        <select data-testid="admin-lead-status-button"
+                          value={user.status || 'Novo'} onChange={e => updateStatus(user.id, e.target.value)}
+                          disabled={updatingStatus[user.id]}
+                          onClick={e => e.stopPropagation()}
+                          style={{ padding: '4px 7px', background: ss.bg, border: `1px solid ${ss.border}`, borderRadius: 6, color: ss.color, fontSize: 10, fontWeight: 700, cursor: 'pointer', outline: 'none', appearance: 'none', minWidth: 90, flexShrink: 0 }}>
+                          {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <span style={{ fontSize: 13, fontWeight: 600, color: '#f3f5ff' }}>{user.full_name}</span>
-                            {/* Indicador online */}
                             {user.is_online && (
                               <div title="Online agora" style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '1px 6px', background: 'rgba(34,197,139,0.12)', border: '1px solid rgba(34,197,139,0.3)', borderRadius: 4 }}>
                                 <span style={{ width: 6, height: 6, background: '#22c58b', borderRadius: '50%', display: 'inline-block', animation: 'shimmer 2s ease infinite' }} />
@@ -1083,19 +1090,12 @@ export default function AdminDashboard() {
                           <div style={{ fontSize: 11, color: '#4a5068' }}>{user.email}</div>
                           <div style={{ fontSize: 10, color: '#26263a', marginTop: 1 }}>{fmtDate(user.created_at)}</div>
                         </div>
-                        {/* Botões: login como + copiar link */}
                         <div style={{ display: 'flex', gap: 4, marginLeft: 4 }}>
-                          <button
-                            data-testid="admin-login-as-btn"
-                            onClick={() => handleLoginAs(user)}
-                            title="Entrar como este cliente"
+                          <button data-testid="admin-login-as-btn" onClick={() => handleLoginAs(user)} title="Entrar como este cliente"
                             style={{ width: 26, height: 26, background: 'rgba(34,197,139,0.10)', border: '1px solid rgba(34,197,139,0.25)', borderRadius: 6, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             <LogIn size={12} color="#22c58b" />
                           </button>
-                          <button
-                            data-testid="admin-copy-link-btn"
-                            onClick={() => handleCopyLink(user)}
-                            title="Copiar link de acesso directo"
+                          <button data-testid="admin-copy-link-btn" onClick={() => handleCopyLink(user)} title="Copiar link de acesso directo"
                             style={{ width: 26, height: 26, background: 'rgba(58,134,255,0.10)', border: '1px solid rgba(58,134,255,0.25)', borderRadius: 6, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             <Copy size={12} color="#3A86FF" />
                           </button>
@@ -1105,15 +1105,6 @@ export default function AdminDashboard() {
 
                     <td style={{ padding: '12px 14px' }}>
                       <span style={{ fontSize: 12, color: '#7a8299' }}>{user.country || '—'}</span>
-                    </td>
-
-                    <td style={{ padding: '12px 14px' }}>
-                      <select data-testid="admin-lead-status-button"
-                        value={user.status || 'Novo'} onChange={e => updateStatus(user.id, e.target.value)}
-                        disabled={updatingStatus[user.id]}
-                        style={{ padding: '4px 8px', background: ss.bg, border: `1px solid ${ss.border}`, borderRadius: 6, color: ss.color, fontSize: 11, fontWeight: 700, cursor: 'pointer', outline: 'none', appearance: 'none', minWidth: 100 }}>
-                        {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
                     </td>
 
                     <td style={{ padding: '12px 14px' }}>

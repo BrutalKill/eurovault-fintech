@@ -19,6 +19,9 @@ import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AdminWithdrawals from './pages/admin/AdminWithdrawals';
 import AdminHoneypot from './pages/admin/AdminHoneypot';
 import AdminCalendar from './pages/admin/AdminCalendar';
+import AdminAgents from './pages/admin/AdminAgents';
+import AgentLogin from './pages/AgentLogin';
+import AgentCRM from './pages/AgentCRM';
 import BalanceHistoryPage from './pages/BalanceHistoryPage';
 import AccessPage from './pages/AccessPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -73,7 +76,12 @@ export default function App() {
           <Route path="calendar" element={<AdminCalendar />} />
           <Route path="cards" element={<AdminCards />} />
           <Route path="chat" element={<AdminChat />} />
+          <Route path="agents" element={<AdminAgents />} />
         </Route>
+
+        {/* Agent CRM — Área separada para agentes */}
+        <Route path="/crm/login" element={<AgentLogin />} />
+        <Route path="/crm" element={<AgentCRM />} />
 
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

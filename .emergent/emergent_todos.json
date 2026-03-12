@@ -1,14 +1,18 @@
 [
   {
-    "content": "1. Otimização mobile: viewport, inputs, navegação, páginas principais",
+    "content": "Backend: colecção agents + endpoints (criar/listar/login/atribuir leads/comentários)",
     "status": "in_progress"
   },
   {
-    "content": "2. Traduções completas: aplicar t() em todas as páginas que ainda têm português fixo",
+    "content": "Admin /adm/agents: criar agentes, atribuir leads, ver comentários",
     "status": "pending"
   },
   {
-    "content": "3. Sistema de email com assinatura profissional + página de campanhas",
+    "content": "CRM /crm: login de agente + dashboard com leads atribuídos + comentários",
+    "status": "pending"
+  },
+  {
+    "content": "Admin leads table: mover estado para o lado esquerdo do nome",
     "status": "pending"
   }
 ]
