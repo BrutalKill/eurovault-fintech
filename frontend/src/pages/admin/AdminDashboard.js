@@ -716,14 +716,19 @@ export default function AdminDashboard() {
     try {
       const token = localStorage.getItem('adminToken');
       const res = await fetch(`${BACKEND_URL}/api/admin/users`, { headers: { Authorization: `Bearer ${token}` } });
+      if (res.status === 401 || res.status === 403) {
+        // Token expirado — limpar e redirecionar para login
+        localStorage.removeItem('adminToken');
+        window.location.href = '/adm/login';
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         data.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-        // Só actualizar o estado se os dados mudaram (evita flicker)
         setUsers(prev => {
           if (prev.length === data.length &&
               prev.every((u, i) => u.id === data[i]?.id && u.status === data[i]?.status && u.balance === data[i]?.balance)) {
-            return prev; // sem alterações — não re-renderizar
+            return prev;
           }
           return data;
         });

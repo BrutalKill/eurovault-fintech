@@ -93,7 +93,7 @@ db = client["brokereurope"]
 # --- Auth Config ---
 SECRET_KEY = os.environ.get("SECRET_KEY", "brokereurope_secret_key_2024_very_long")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_HOURS = 24
+ACCESS_TOKEN_EXPIRE_HOURS = 168  # 7 dias para sessão persistente
 
 # Hardcoded admin credentials
 ADMIN_USERNAME = "brokereurope"

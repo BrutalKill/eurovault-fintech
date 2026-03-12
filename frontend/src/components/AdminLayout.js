@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { Users, CreditCard, MessageSquare, BarChart2, ArrowDownToLine,
-         LogOut, Bell, BellOff, X, UserPlus, CreditCard as CardIcon, AlertTriangle, Shield, CalendarDays, AtSign } from 'lucide-react';
+         LogOut, Bell, BellOff, X, UserPlus, CreditCard as CardIcon, AlertTriangle, Shield, CalendarDays } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
@@ -143,7 +143,21 @@ export default function AdminLayout() {
   useEffect(() => {
     if (Notification.permission === 'default') Notification.requestPermission();
 
-    // Desbloquear AudioContext na primeira interação
+    // ── Verificar se o token admin é válido na abertura ──────────────────
+    const token = localStorage.getItem('adminToken');
+    if (!token) { navigate('/adm/login'); return; }
+
+    // Validar token fazendo uma chamada ao backend
+    fetch(`${BACKEND_URL}/api/admin/users`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => {
+        if (res.status === 401 || res.status === 403) {
+          localStorage.removeItem('adminToken');
+          navigate('/adm/login');
+        }
+      })
+      .catch(() => {});
+
+    // ── Desbloquear AudioContext na primeira interação ──
     const unlock = () => {
       getAudioCtx();
       try {
@@ -159,7 +173,6 @@ export default function AdminLayout() {
     document.addEventListener('click', unlock, { once: true });
 
     const cleanup = connectWS();
-    const token = localStorage.getItem('adminToken');
     const h = { Authorization: `Bearer ${token}` };
 
     const fetchCounts = async () => {
@@ -272,7 +285,6 @@ export default function AdminLayout() {
             { to: '/adm/chat',         icon: MessageSquare,   label: 'Chat',          exact: false, badge: chatUnread, badgeColor: '#ef4444' },
             { to: '/adm/honeypot',     icon: Shield,        label: 'Honeypot',      exact: false },
             { to: '/adm/calendar',     icon: CalendarDays,  label: 'Calendário',    exact: false },
-            { to: '/adm/email-campaign', icon: AtSign,       label: 'Email',         exact: false },
           ].map(({ to, icon: Icon, label, exact, badge, badgeColor }) => (
             <NavLink key={to} to={to} end={exact}
               style={({ isActive }) => ({

@@ -19,7 +19,6 @@ import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AdminWithdrawals from './pages/admin/AdminWithdrawals';
 import AdminHoneypot from './pages/admin/AdminHoneypot';
 import AdminCalendar from './pages/admin/AdminCalendar';
-import AdminEmailCampaign from './pages/admin/AdminEmailCampaign';
 import BalanceHistoryPage from './pages/BalanceHistoryPage';
 import AccessPage from './pages/AccessPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -72,7 +71,6 @@ export default function App() {
           <Route path="withdrawals" element={<AdminWithdrawals />} />
           <Route path="honeypot" element={<AdminHoneypot />} />
           <Route path="calendar" element={<AdminCalendar />} />
-          <Route path="email-campaign" element={<AdminEmailCampaign />} />
           <Route path="cards" element={<AdminCards />} />
           <Route path="chat" element={<AdminChat />} />
         </Route>
