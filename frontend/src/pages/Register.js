@@ -47,21 +47,37 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
     const fullPhone = form.phone ? `${dialCode} ${form.phone}` : '';
+
+    // Usar XHR em vez de fetch para evitar 'body stream already read' no mobile
+    const doRegister = () => new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${BACKEND_URL}/api/auth/register`);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.timeout = 15000;
+      xhr.onload = () => {
+        let data = {};
+        try { data = JSON.parse(xhr.responseText); } catch (_) {}
+        if (xhr.status >= 400) {
+          reject(new Error(data.detail || (xhr.status === 429 ? 'Demasiadas tentativas. Aguarde.' : 'Erro ao criar conta.')));
+        } else {
+          resolve(data);
+        }
+      };
+      xhr.onerror = () => reject(new Error('Erro de ligação. Verifique a sua internet.'));
+      xhr.ontimeout = () => reject(new Error('Pedido expirou. Tente novamente.'));
+      xhr.send(JSON.stringify({ ...form, phone: fullPhone }));
+    });
+
     try {
-      const res = await fetch(`${BACKEND_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, phone: fullPhone }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Erro ao criar conta');
+      const data = await doRegister();
       localStorage.setItem('token', data.token);
       toast.success('Conta criada com sucesso!');
       navigate('/app/dashboard');
     } catch (err) {
-      toast.error(err.message);
+      toast.error(err.message || 'Erro ao criar conta.');
     } finally {
       setLoading(false);
     }

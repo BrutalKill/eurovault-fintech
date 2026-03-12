@@ -42,15 +42,31 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
+
+    // Usar XHR para evitar 'body stream already read' no mobile Chrome
+    const doLogin = () => new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${BACKEND_URL}/api/auth/login`);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.timeout = 15000;
+      xhr.onload = () => {
+        let data = {};
+        try { data = JSON.parse(xhr.responseText); } catch (_) {}
+        if (xhr.status >= 400) {
+          reject(new Error(data.detail || (xhr.status === 429 ? 'Demasiadas tentativas. Aguarde.' : 'Credenciais inválidas')));
+        } else {
+          resolve(data);
+        }
+      };
+      xhr.onerror = () => reject(new Error('Erro de ligação. Verifique a sua internet.'));
+      xhr.ontimeout = () => reject(new Error('Pedido expirou. Tente novamente.'));
+      xhr.send(JSON.stringify(form));
+    });
+
     try {
-      const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Credenciais inválidas');
+      const data = await doLogin();
       localStorage.setItem('token', data.token);
       if ('Notification' in window && Notification.permission === 'default') {
         Notification.requestPermission();
@@ -58,10 +74,7 @@ export default function Login() {
       toast.success('Sessão iniciada com sucesso!');
       navigate('/app/dashboard');
     } catch (err) {
-      // Suprimir erro técnico de race condition do browser
-      const msg = err?.message || '';
-      if (msg.includes('body stream') || msg.includes('json') || msg.includes('Failed to execute')) return;
-      toast.error(msg || 'Erro de ligação. Tente novamente.');
+      toast.error(err.message || 'Erro de ligação. Tente novamente.');
     } finally {
       setLoading(false);
     }
