@@ -39,7 +39,7 @@ function Sparkline({ data, color = '#3A86FF', height = 56 }) {
 
 export default function DashboardPage() {
   const { user } = useUser();
-  const { t }    = useLang();
+  const { t, lang }    = useLang();
   const navigate  = useNavigate();
   const [history, setHistory]       = useState([]);
   const [referral, setReferral]     = useState(null);
@@ -71,7 +71,25 @@ export default function DashboardPage() {
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? t('dash_good_morning') : hour < 18 ? t('dash_good_afternoon') : t('dash_good_evening');
-  const firstName = user?.full_name?.split(' ')[0] || 'Investidor';
+  const firstName = user?.full_name?.split(' ')[0] || t('nav_investor');
+
+  // Traduzir labels das actividades vindas do backend
+  const getActivityLabel = (act) => {
+    if (act.type === 'order') {
+      const side = act.side === 'comprar' ? t('act_buy') : t('act_sell');
+      return `${side} — ${act.asset || act.asset_label || ''}`;
+    }
+    if (act.type === 'deposit') return t('act_deposit');
+    if (act.type === 'kyc') return `${t('act_kyc_sent')} — ${act.doc_label || act.doc_type || ''}`;
+    return act.label || '';
+  };
+
+  // Formatar data conforme idioma
+  const fmtActivity = (iso) => {
+    if (!iso) return '';
+    const locale = { pt: 'pt-PT', en: 'en-GB', es: 'es-ES' }[lang] || 'pt-PT';
+    return new Date(iso).toLocaleString(locale, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 960, margin: '0 auto' }}>
@@ -90,16 +108,16 @@ export default function DashboardPage() {
           <div>
             <p style={{ fontSize: 13, color: 'hsl(215,16%,60%)', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: 6 }}>
               {greeting}, <strong style={{ color: '#f3f5ff' }}>{firstName}</strong>
-              {isVerified && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, padding: '2px 8px', background: 'rgba(34,197,139,0.15)', border: '1px solid rgba(34,197,139,0.3)', borderRadius: 5, color: '#22c58b', fontWeight: 700 }}><ShieldCheck size={9} />VERIFICADO</span>}
+              {isVerified && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, padding: '2px 8px', background: 'rgba(34,197,139,0.15)', border: '1px solid rgba(34,197,139,0.3)', borderRadius: 5, color: '#22c58b', fontWeight: 700 }}><ShieldCheck size={9} />{t('dash_verified')}</span>}
             </p>            <div className="numeric" style={{ fontSize: 'clamp(28px,6vw,44px)', fontWeight: 900, color: '#ffffff', fontFamily: 'var(--font-heading)', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
               {fmt(animBalance)}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-              <span style={{ fontSize: 12, color: 'hsl(215,16%,60%)' }}>Lucro acumulado</span>
+              <span style={{ fontSize: 12, color: 'hsl(215,16%,60%)' }}>{t('profile_profit')}</span>
               <span className="numeric" style={{ fontSize: 14, fontWeight: 700, color: '#22c58b' }}>+{fmt(animProfit)}</span>
               {dailyRate > 0 && (
                 <span style={{ fontSize: 11, padding: '2px 8px', background: 'rgba(255,190,11,0.12)', border: '1px solid rgba(255,190,11,0.25)', borderRadius: 5, color: '#FFBE0B', fontWeight: 700 }}>
-                  <Zap size={10} style={{ marginRight: 3 }} />{dailyRate}%/dia
+                  <Zap size={10} style={{ marginRight: 3 }} />{dailyRate}%{t('dash_per_day')}
                 </span>
               )}
             </div>
@@ -114,7 +132,7 @@ export default function DashboardPage() {
           <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid hsl(240,16%,18%)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
               <span style={{ fontSize: 12, color: 'hsl(215,16%,60%)', display: 'flex', alignItems: 'center', gap: 5 }}>
-                <Target size={11} color="#FFBE0B" />{goalLabel || 'Meta de Investimento'}
+                <Target size={11} color="#FFBE0B" />{goalLabel || t('dash_investment_goal')}
               </span>
               <span className="numeric" style={{ fontSize: 12, fontWeight: 700, color: '#FFBE0B' }}>{goalPct}%</span>
             </div>
@@ -160,7 +178,7 @@ export default function DashboardPage() {
             </div>
             <button onClick={() => navigate('/app/history')}
               style={{ fontSize: 11, color: '#3A86FF', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
-              Ver tudo <ChevronRight size={11} />
+              {t('dash_view_all')} <ChevronRight size={11} />
             </button>
           </div>
           {activities.length === 0 ? (
@@ -174,9 +192,9 @@ export default function DashboardPage() {
                 {act.icon}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#e8eaf6', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{act.label}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#e8eaf6', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{getActivityLabel(act)}</div>
                 <div style={{ fontSize: 10, color: 'hsl(215,16%,45%)', marginTop: 1 }}>
-                  {act.created_at ? new Date(act.created_at).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}
+                  {fmtActivity(act.created_at)}
                 </div>
               </div>
               {act.amount > 0 && (
@@ -194,7 +212,7 @@ export default function DashboardPage() {
             <div style={{ background: 'linear-gradient(135deg, rgba(34,197,139,0.1), rgba(58,134,255,0.08))', border: '1px solid rgba(34,197,139,0.2)', borderRadius: 16, padding: '18px 20px', flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                 <Users size={15} color="#22c58b" />
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#f3f5ff' }}>Programa de Parceiros</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#f3f5ff' }}>{t('dash_referral')}</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
                 {[{ label: t('dash_referral_guests'), value: referral.count }, { label: t('dash_referral_bonus'), value: fmt(referral.bonus) }].map(({ label, value }) => (
@@ -206,7 +224,7 @@ export default function DashboardPage() {
               </div>
               <button onClick={() => navigate('/app/referral')}
                 style={{ width: '100%', padding: '9px', background: 'rgba(34,197,139,0.15)', border: '1px solid rgba(34,197,139,0.3)', borderRadius: 10, color: '#22c58b', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                <Star size={13} fill="#22c58b" />Ver Programa Completo <ChevronRight size={12} />
+                <Star size={13} fill="#22c58b" />{t('dash_see_program')} <ChevronRight size={12} />
               </button>
             </div>
           )}
@@ -223,7 +241,7 @@ export default function DashboardPage() {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: isVerified ? '#22c58b' : '#FFBE0B' }}>
-                  {isVerified ? '✓ Identidade Verificada' : 'KYC Pendente'}
+                  {isVerified ? t('dash_kyc_verified') : t('dash_kyc_pending')}
                 </div>
                 <div style={{ fontSize: 11, color: 'hsl(215,16%,55%)', marginTop: 2 }}>
                   {isVerified ? t('dash_kyc_verified_sub') : t('dash_kyc_pending_sub')}
@@ -233,7 +251,7 @@ export default function DashboardPage() {
             {!isVerified && (
               <button onClick={() => navigate('/app/profile')}
                 style={{ width: '100%', marginTop: 12, padding: '8px', background: 'rgba(58,134,255,0.12)', border: '1px solid rgba(58,134,255,0.25)', borderRadius: 9, color: '#3A86FF', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                Verificar Agora →
+                {t('dash_verify_now')}
               </button>
             )}
           </div>
@@ -256,13 +274,13 @@ export default function DashboardPage() {
             <TrendingUp size={22} color="#3A86FF" />
           </div>
           <div style={{ textAlign: 'left' }}>
-            <div style={{ fontFamily: 'var(--font-heading)', fontSize: 16, fontWeight: 800, color: '#f3f5ff' }}>Mercados Abertos</div>
-            <div style={{ fontSize: 12, color: 'hsl(215,16%,60%)', marginTop: 2 }}>Forex · Cripto · Ações · Metais · Commodities</div>
+            <div style={{ fontFamily: 'var(--font-heading)', fontSize: 16, fontWeight: 800, color: '#f3f5ff' }}>{t('dash_go_trade')}</div>
+            <div style={{ fontSize: 12, color: 'hsl(215,16%,60%)', marginTop: 2 }}>{t('dash_go_trade_sub')}</div>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ width: 7, height: 7, background: '#22c58b', borderRadius: '50%', animation: 'shimmer 2s ease infinite' }} />
-          <span style={{ fontSize: 12, color: '#22c58b', fontWeight: 700 }}>Tempo Real</span>
+          <span style={{ fontSize: 12, color: '#22c58b', fontWeight: 700 }}>{t('dash_live')}</span>
           <ArrowRight size={18} color="#3A86FF" />
         </div>
       </button>

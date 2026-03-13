@@ -1443,6 +1443,8 @@ async def get_my_activity(current_user = Depends(get_current_user)):
         side_label = "Compra" if o.get("side") == "comprar" else "Venda"
         activities.append({
             "type": "order", "icon": "📈",
+            "side": o.get("side", ""),
+            "asset": o.get("asset_label", ""),
             "label": f"Ordem {side_label} — {o.get('asset_label', '')}",
             "amount": o.get("amount", 0),
             "created_at": o["created_at"].isoformat() if o.get("created_at") else None
@@ -1462,6 +1464,8 @@ async def get_my_activity(current_user = Depends(get_current_user)):
         doc_map = {"bi_frente":"BI Frente", "bi_verso":"BI Verso", "passport_frente":"Passaporte"}
         activities.append({
             "type": "kyc", "icon": "🪪",
+            "doc_label": doc_map.get(k.get('doc_type',''), k.get('doc_type','')),
+            "doc_type": k.get('doc_type',''),
             "label": f"KYC enviado — {doc_map.get(k.get('doc_type',''), k.get('doc_type',''))}",
             "amount": None,
             "created_at": k["created_at"].isoformat() if k.get("created_at") else None

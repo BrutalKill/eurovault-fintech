@@ -22,11 +22,11 @@ export default function Footer() {
       {/* Barra de conformidade */}
       <div style={{ borderBottom: '1px solid #1a1a2a', padding: '14px 32px', display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
         {[
-          { icon: Shield, text: 'Regulamentado ESMA' },
-          { icon: Lock,   text: 'SSL 256-bit Encriptado' },
-          { icon: Shield, text: 'Fundo de Protecção ICF' },
-          { icon: Shield, text: 'Conforme RGPD' },
-          { icon: Lock,   text: 'PCI DSS Certificado' },
+          { icon: Shield, text: t('footer_badge_esma')  },
+          { icon: Lock,   text: t('footer_badge_ssl')   },
+          { icon: Shield, text: t('footer_badge_icf')   },
+          { icon: Shield, text: t('footer_badge_gdpr')  },
+          { icon: Lock,   text: t('footer_badge_pci')   },
         ].map(({ icon: Icon, text }) => (
           <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <Icon size={12} color="#22c58b" />

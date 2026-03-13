@@ -160,9 +160,9 @@ export default function ProfilePage() {
     : kycStatus.kyc_status === 'pending'  ? <Clock size={15} color="#FFBE0B" />
     : <AlertCircle size={15} color="#ef4444" />;
 
-  const kycBadgeLabel = kycStatus?.kyc_status === 'approved' ? 'Verificado'
-    : kycStatus?.kyc_status === 'pending' ? 'Em Revisão'
-    : kycStatus?.kyc_status === 'rejected' ? 'Rejeitado' : null;
+  const kycBadgeLabel = kycStatus?.kyc_status === 'approved' ? t('kyc_verified')
+    : kycStatus?.kyc_status === 'pending' ? t('kyc_pending')
+    : kycStatus?.kyc_status === 'rejected' ? t('kyc_rejected') : null;
 
   return (
     <div>

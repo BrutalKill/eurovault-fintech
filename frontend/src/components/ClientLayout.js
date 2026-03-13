@@ -21,7 +21,7 @@ export default function ClientLayout() {
     { to: '/app/deposit',          icon: CreditCard,  label: t('nav_deposit')        },
     { to: '/app/withdrawal',       icon: ArrowDownToLine, label: t('nav_withdrawal') },
     { to: '/app/history',          icon: Clock,       label: t('nav_history')        },
-    { to: '/app/referral',         icon: UsersIcon,   label: 'Parceiros'             },
+    { to: '/app/referral',         icon: UsersIcon,   label: t('nav_referral')       },
     { to: '/app/news',             icon: Newspaper,   label: t('nav_news')           },
     { to: '/app/profile',          icon: User,        label: t('nav_profile')        },
   ];
@@ -104,7 +104,7 @@ export default function ClientLayout() {
           {isVerified && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 10, padding: '4px 8px', background: 'rgba(34,197,139,0.1)', border: '1px solid rgba(34,197,139,0.25)', borderRadius: 6 }}>
               <ShieldCheck size={11} color="#22c58b" />
-              <span style={{ fontSize: 10, fontWeight: 700, color: '#22c58b', letterSpacing: '0.04em' }}>IDENTIDADE VERIFICADA</span>
+              <span style={{ fontSize: 10, fontWeight: 700, color: '#22c58b', letterSpacing: '0.04em' }}>{t('dash_verified')}</span>
             </div>
           )}
         </div>
