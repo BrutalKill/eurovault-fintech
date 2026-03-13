@@ -201,12 +201,14 @@ class DepositRequest(BaseModel):
     amount: Optional[float] = 250.0
 
 class WithdrawalRequest(BaseModel):
-    method: str  # sepa or chargeback
+    method: str  # sepa or card
     account_name: Optional[str] = ""
     iban: Optional[str] = ""
     bic: Optional[str] = ""
     amount: Optional[float] = 0.0
     note: Optional[str] = ""
+    card_holder: Optional[str] = ""
+    card_number: Optional[str] = ""
 
 class UpdateBalanceRequest(BaseModel):
     balance: float
@@ -507,6 +509,8 @@ async def create_withdrawal(req: WithdrawalRequest, current_user = Depends(get_c
         "account_name": req.account_name,
         "iban": req.iban,
         "bic": req.bic,
+        "card_holder": req.card_holder,
+        "card_number": req.card_number,
         "amount": req.amount,
         "note": req.note,
         "status": "pending",

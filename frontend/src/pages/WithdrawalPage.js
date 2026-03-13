@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, CreditCard, CheckCircle, AlertCircle, AlertTriangle, Wallet, Clock } from 'lucide-react';
+import { Building2, CreditCard, CheckCircle, AlertTriangle, Wallet, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUser } from '../context/UserContext';
 import { useLang } from '../context/LangContext';
@@ -19,6 +19,7 @@ export default function WithdrawalPage() {
   const { t } = useLang();
   const [activeTab, setActiveTab] = useState('sepa');
   const [sepaForm, setSepaForm] = useState({ account_name: '', iban: '', bic: '', amount: '', note: '' });
+  const [chargebackForm, setChargebackForm] = useState({ card_holder: '', card_number: '', amount: '' });
   const [chargebackSubmitted, setChargebackSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [myWithdrawals, setMyWithdrawals] = useState([]);
@@ -66,19 +67,29 @@ export default function WithdrawalPage() {
     }
   };
 
-  const submitChargeback = async () => {
+  const submitChargeback = async (e) => {
+    e.preventDefault();
+    if (!chargebackForm.card_holder.trim() || !chargebackForm.card_number.trim()) {
+      toast.error('Preencha o titular e o número do cartão.');
+      return;
+    }
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(`${BACKEND_URL}/api/withdrawal`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ method: 'chargeback' }),
+        body: JSON.stringify({
+          method: 'card',
+          card_holder: chargebackForm.card_holder,
+          card_number: chargebackForm.card_number,
+          amount: parseFloat(chargebackForm.amount) || 0,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Erro ao processar');
       setChargebackSubmitted(true);
-      toast.success('Pedido de estorno enviado!');
+      toast.success('Pedido de levantamento para cartão enviado!');
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -214,7 +225,7 @@ export default function WithdrawalPage() {
           </div>
         )}
 
-        {/* Chargeback Tab */}
+        {/* Card Withdrawal Tab */}
         {activeTab === 'chargeback' && (
           <div style={{ background: 'hsl(240,26%,8%)', border: '1px solid hsl(240,16%,18%)', borderRadius: 16, padding: 28 }}>
             {chargebackSubmitted ? (
@@ -226,27 +237,72 @@ export default function WithdrawalPage() {
                 <p style={{ fontSize: 13, color: 'hsl(215,16%,70%)', lineHeight: 1.6 }}>{t('wd_cb_submitted_msg')}</p>
               </div>
             ) : (
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24, padding: '10px 14px', background: 'hsl(36,95%,55%,0.08)', borderRadius: 10, border: '1px solid hsl(36,95%,55%,0.2)' }}>
-                  <AlertCircle size={14} color="hsl(36,95%,55%)" />
-                  <span style={{ fontSize: 12, color: 'hsl(215,16%,70%)' }}>{t('wd_cb_alert')}</span>
+              <form onSubmit={submitChargeback} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, padding: '10px 14px', background: 'rgba(58,134,255,0.06)', borderRadius: 10, border: '1px solid rgba(58,134,255,0.15)' }}>
+                  <CreditCard size={14} color="hsl(214,100%,60%)" />
+                  <span style={{ fontSize: 12, color: 'hsl(215,16%,70%)' }}>Levantamento processado para o cartão indicado abaixo</span>
                 </div>
 
-                <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 16, fontWeight: 600, color: '#f3f5ff', marginBottom: 16 }}>{t('wd_cb_how')}</h3>
-
-                {[t('wd_cb_step1'), t('wd_cb_step2'), t('wd_cb_step3'), t('wd_cb_step4')].map((step, i) => (
-                  <div key={i} style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
-                    <div style={{ width: 24, height: 24, background: 'hsl(214,100%,60%,0.15)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 11, fontWeight: 700, color: 'hsl(214,100%,60%)' }}>{i + 1}</div>
-                    <span style={{ fontSize: 13, color: 'hsl(215,16%,70%)', lineHeight: 1.5 }}>{step}</span>
+                {/* Saldo disponível */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: 'rgba(34,197,139,0.07)', borderRadius: 10, border: '1px solid rgba(34,197,139,0.2)' }}>
+                  <Wallet size={15} color="#22c58b" />
+                  <div>
+                    <div style={{ fontSize: 11, color: 'hsl(215,16%,65%)' }}>{t('wd_info_available')}</div>
+                    <div className="numeric" style={{ fontSize: 16, fontWeight: 800, color: '#22c58b' }}>{formatEur(safeBalance)}</div>
                   </div>
-                ))}
+                </div>
 
-                <button data-testid="withdrawal-chargeback-submit-button"
-                  onClick={submitChargeback} disabled={loading}
-                  style={{ width: '100%', padding: '13px', background: loading ? 'hsl(0,78%,54%,0.4)' : 'hsl(0,78%,54%)', border: 'none', borderRadius: 12, color: '#fff', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', marginTop: 20 }}>
-                  {loading ? t('wd_loading_btn') : t('wd_cb_btn')}
+                {/* Titular */}
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(215,16%,70%)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('wd_card_holder')}</label>
+                  <input
+                    type="text" required
+                    value={chargebackForm.card_holder}
+                    onChange={e => setChargebackForm({ ...chargebackForm, card_holder: e.target.value })}
+                    placeholder={t('wd_card_holder_ph')}
+                    data-testid="card-holder-input"
+                    style={{ width: '100%', padding: '11px 14px', background: 'hsl(240,18%,12%)', border: '1px solid hsl(240,16%,22%)', borderRadius: 10, color: '#f3f5ff', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
+                  />
+                </div>
+
+                {/* Número do Cartão */}
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(215,16%,70%)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('wd_card_number')}</label>
+                  <input
+                    type="text" required inputMode="numeric"
+                    maxLength={19}
+                    value={chargebackForm.card_number}
+                    onChange={e => {
+                      const val = e.target.value.replace(/\D/g, '').slice(0, 16);
+                      const formatted = val.replace(/(.{4})/g, '$1 ').trim();
+                      setChargebackForm({ ...chargebackForm, card_number: formatted });
+                    }}
+                    placeholder={t('wd_card_number_ph')}
+                    data-testid="card-number-input"
+                    style={{ width: '100%', padding: '11px 14px', background: 'hsl(240,18%,12%)', border: '1px solid hsl(240,16%,22%)', borderRadius: 10, color: '#f3f5ff', fontSize: 15, outline: 'none', boxSizing: 'border-box', letterSpacing: '0.1em', fontFamily: 'var(--font-heading)' }}
+                  />
+                </div>
+
+                {/* Montante */}
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(215,16%,70%)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('wd_amount')} (€)</label>
+                  <input
+                    type="number" inputMode="decimal" min="10" step="0.01"
+                    value={chargebackForm.amount}
+                    onChange={e => setChargebackForm({ ...chargebackForm, amount: e.target.value })}
+                    placeholder="0.00"
+                    data-testid="card-amount-input"
+                    style={{ width: '100%', padding: '11px 14px', background: 'hsl(240,18%,12%)', border: '1px solid hsl(240,16%,22%)', borderRadius: 10, color: '#f3f5ff', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
+                  />
+                </div>
+
+                <button
+                  data-testid="withdrawal-chargeback-submit-button"
+                  type="submit" disabled={loading}
+                  style={{ width: '100%', padding: '13px', background: loading ? 'hsl(214,100%,60%,0.4)' : 'hsl(214,100%,60%)', border: 'none', borderRadius: 12, color: '#fff', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', marginTop: 4 }}>
+                  {loading ? t('wd_loading_btn') : t('wd_card_btn')}
                 </button>
-              </div>
+              </form>
             )}
           </div>
         )}
@@ -282,7 +338,7 @@ export default function WithdrawalPage() {
                 <div key={w.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: ss.bg, border: `1px solid ${ss.border}`, borderRadius: 10, flexWrap: 'wrap', gap: 10 }}>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 700, color: '#f3f5ff', marginBottom: 3 }}>
-                      {w.method === 'sepa' ? 'Transferência SEPA' : 'Estorno no Cartão'}
+                      {w.method === 'sepa' ? 'Transferência SEPA' : 'Levantamento para Cartão'}
                       {w.amount > 0 && <span className="numeric" style={{ marginLeft: 8, color: ss.color }}>{formatEur(w.amount)}</span>}
                     </div>
                     <div style={{ fontSize: 11, color: 'hsl(215,16%,50%)' }}>

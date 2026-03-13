@@ -176,7 +176,7 @@ export default function AdminWithdrawals() {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div className="numeric" style={{ fontSize: 18, fontWeight: 800, color: '#f3f5ff', fontFamily: 'var(--font-heading)' }}>
-                      {w.amount > 0 ? fmt(w.amount) : 'Estorno'}
+                      {w.amount > 0 ? fmt(w.amount) : 'Para Cartão'}
                     </div>
                     <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 5, background: ss.bg, color: ss.color, border: `1px solid ${ss.border}`, fontWeight: 700 }}>
                       {ss.label}
@@ -189,8 +189,20 @@ export default function AdminWithdrawals() {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
                     <div>
                       <div style={{ fontSize: 10, color: '#4a5068', textTransform: 'uppercase', marginBottom: 2 }}>Método</div>
-                      <div style={{ fontSize: 12, color: '#e8eaf6' }}>{isSepa ? 'Transferência SEPA' : 'Estorno no Cartão'}</div>
+                      <div style={{ fontSize: 12, color: '#e8eaf6' }}>{isSepa ? 'Transferência SEPA' : 'Levantamento para Cartão'}</div>
                     </div>
+                    {!isSepa && w.card_holder && (
+                      <div>
+                        <div style={{ fontSize: 10, color: '#4a5068', textTransform: 'uppercase', marginBottom: 2 }}>Titular do Cartão</div>
+                        <div style={{ fontSize: 12, color: '#e8eaf6' }}>{w.card_holder}</div>
+                      </div>
+                    )}
+                    {!isSepa && w.card_number && (
+                      <div>
+                        <div style={{ fontSize: 10, color: '#4a5068', textTransform: 'uppercase', marginBottom: 2 }}>Número do Cartão</div>
+                        <div className="numeric" style={{ fontSize: 12, color: '#e8eaf6', letterSpacing: '0.08em' }}>{w.card_number}</div>
+                      </div>
+                    )}
                     {isSepa && w.account_name && (
                       <div>
                         <div style={{ fontSize: 10, color: '#4a5068', textTransform: 'uppercase', marginBottom: 2 }}>Titular</div>
