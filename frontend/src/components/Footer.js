@@ -87,17 +87,17 @@ export default function Footer() {
           <div style={s.section}>
             <div style={s.title}>{t('footer_legal')}</div>
             {[
-              { label: t('footer_risk'),    page: 'termos'     },
-              { label: t('footer_privacy'), page: 'privacidade'},
-              { label: t('footer_terms'),   page: 'cookies'    },
-              { label: t('footer_aml'),     page: 'aml'        },
-            ].map(({ label, page }) => (
-              <a key={page} href={`/legal?page=${page}`} target="_blank" rel="noreferrer"
+              { label: 'Terms of Service',   to: '/legal/terms'   },
+              { label: 'Privacy Policy',     to: '/legal/privacy' },
+              { label: 'Refund Policy',      to: '/legal/refund'  },
+              { label: 'AML Policy',         to: '/legal/aml'     },
+            ].map(({ label, to }) => (
+              <Link key={to} to={to} target="_blank" rel="noreferrer"
                 style={{ ...s.link, display: 'flex', alignItems: 'center', gap: 4 }}
                 onMouseEnter={e => { e.currentTarget.style.color = '#3A86FF'; }}
                 onMouseLeave={e => { e.currentTarget.style.color = '#7a8299'; }}>
                 {label} <ExternalLink size={9} style={{ opacity: 0.5 }} />
-              </a>
+              </Link>
             ))}
           </div>
 
@@ -157,17 +157,17 @@ export default function Footer() {
           </div>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
             {[
-              { label: t('footer_terms_short'),   page: 'termos' },
-              { label: t('footer_privacy_short'), page: 'privacidade' },
-              { label: t('footer_cookies_short'), page: 'cookies' },
-              { label: t('footer_aml_short'),     page: 'aml' },
-            ].map(({ label, page }) => (
-              <a key={page} href={`/legal?page=${page}`} target="_blank" rel="noreferrer"
+              { label: 'Terms',   to: '/legal/terms'   },
+              { label: 'Privacy', to: '/legal/privacy' },
+              { label: 'Refund',  to: '/legal/refund'  },
+              { label: 'AML',     to: '/legal/aml'     },
+            ].map(({ label, to }) => (
+              <Link key={to} to={to} target="_blank"
                 style={{ fontSize: 11, color: '#4a5068', textDecoration: 'none' }}
                 onMouseEnter={e => e.target.style.color = '#3A86FF'}
                 onMouseLeave={e => e.target.style.color = '#4a5068'}>
                 {label}
-              </a>
+              </Link>
             ))}
           </div>
           <div style={{ fontSize: 11, color: '#4a5068' }}>

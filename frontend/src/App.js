@@ -53,6 +53,7 @@ export default function App() {
         <Route path="/contract/:token" element={<ContractPublicPage />} />
         <Route path="/access/:token" element={<AccessPage />} />
         <Route path="/legal" element={<LegalPage />} />
+        <Route path="/legal/:slug" element={<LegalPage />} />
 
 
         {/* Client Area */}

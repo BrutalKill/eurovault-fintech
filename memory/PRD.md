@@ -41,6 +41,13 @@ Plataforma de investimentos profissional focada no mercado europeu (€), com:
 
 ## O que foi Implementado
 
+### Páginas Legais (novas)
+- [x] **Terms of Service** (`/legal/terms`) — 10 cláusulas, posicionamento SaaS
+- [x] **Privacy Policy** (`/legal/privacy`) — 8 secções, conformidade GDPR
+- [x] **Refund Policy** (`/legal/refund`) — 7 secções, garantia 14 dias
+- [x] **AML Policy** (`/legal/aml`) — 10 secções, 5AMLD/CySEC/FATF
+- [x] Links actualizados no rodapé (coluna Legal + barra inferior)
+
 ### Sistema de Contratos Digitais (novo)
 - [x] Painel admin `/adm/contracts` com 3 tabs: Contratos | Modelos | Empresa
 - [x] Criação/edição de modelos com placeholders ({{nome_completo}}, {{valor_investimento}}, etc.)
