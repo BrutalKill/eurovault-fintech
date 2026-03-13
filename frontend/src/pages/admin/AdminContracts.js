@@ -427,6 +427,30 @@ export default function AdminContracts() {
                             <Eye size={11}/>Abrir
                           </a>
                         </div>
+                        {/* Linha de Certificação Digital — só para contratos assinados */}
+                        {c.status === 'signed' && (c.cert_hash || c.signer_ip) && (
+                          <div style={{ padding:'8px 18px', background:'rgba(34,197,139,0.03)', borderTop:'1px solid rgba(34,197,139,0.1)', display:'flex', flexWrap:'wrap', gap:14, alignItems:'center' }}>
+                            <div style={{ display:'flex', alignItems:'center', gap:5 }}>
+                              <CheckCircle size={10} color="#22c58b" style={{ flexShrink:0 }}/>
+                              <span style={{ fontSize:10, color:'#4a5068', fontWeight:600 }}>CERTIFICAÇÃO DIGITAL</span>
+                            </div>
+                            {c.signer_ip && (
+                              <span style={{ fontSize:10, color:'#5a6280' }}>
+                                <span style={{ color:'#7a8299', fontWeight:600 }}>IP: </span>{c.signer_ip}
+                              </span>
+                            )}
+                            {c.cert_timestamp && (
+                              <span style={{ fontSize:10, color:'#5a6280' }}>
+                                <span style={{ color:'#7a8299', fontWeight:600 }}>Timestamp: </span>{new Date(c.cert_timestamp).toLocaleString('pt-PT')}
+                              </span>
+                            )}
+                            {c.cert_hash && (
+                              <span style={{ fontSize:9, color:'#3a3d5a', fontFamily:'monospace', overflow:'hidden', textOverflow:'ellipsis', maxWidth:220, whiteSpace:'nowrap' }} title={c.cert_hash}>
+                                <span style={{ color:'#4a5068', fontWeight:600, fontFamily:'inherit' }}>SHA-256: </span>{c.cert_hash.substring(0,20)}…
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     );
                   })}

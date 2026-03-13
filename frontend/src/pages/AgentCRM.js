@@ -175,7 +175,26 @@ function LeadCard({ lead, token, onComment, onStatusChange }) {
   const [status, setStatus] = useState(lead.status || 'Novo');
   const [showStatus, setShowStatus] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [tags, setTags]   = useState(lead.tags || []);
+  const [tagInput, setTagInput] = useState('');
+  const [showTagInput, setShowTagInput] = useState(false);
   const ss = STATUS_STYLES[status] || STATUS_STYLES['Novo'];
+
+  const TAG_PRESETS = ['VIP','Alta Prioridade','Precisa Mais Info','Quente','Frio','Aguarda Doc.'];
+  const TAG_COLORS  = { 'VIP':'#F59E0B','Alta Prioridade':'#ef4444','Precisa Mais Info':'#3A86FF','Quente':'#FF6B35','Frio':'#7a8299','Aguarda Doc.':'#22c58b' };
+  const tagColor = (t) => TAG_COLORS[t] || '#a0a0c0';
+
+  const updateTags = async (newTags) => {
+    try {
+      await fetch(`${BACKEND_URL}/api/agent/leads/${lead.id}/tags`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ tags: newTags }),
+      });
+      setTags(newTags);
+    } catch (_) {}
+  };
+  const addTag = (t) => { if (t && !tags.includes(t)) updateTags([...tags, t]); };
+  const removeTag = (t) => updateTags(tags.filter(x => x !== t));
 
   const changeStatus = async (newStatus) => {
     try {
@@ -353,7 +372,7 @@ function LeadCard({ lead, token, onComment, onStatusChange }) {
         )}
 
         {/* ROW 5 — Estado + Selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'relative', marginBottom: tags.length > 0 || showTagInput ? 10 : 0 }}>
           <span style={{ fontSize: 10, color: '#3a3d5a', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Estado:</span>
           <button
             onClick={() => setShowStatus(!showStatus)}
@@ -388,6 +407,45 @@ function LeadCard({ lead, token, onComment, onStatusChange }) {
                 })}
               </div>
             </>
+          )}
+        </div>
+
+        {/* ROW 6 — Tags */}
+        <div style={{ marginTop: 10 }}>
+          {/* Tags activas */}
+          {tags.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 8 }}>
+              {tags.map(t => (
+                <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10, padding: '3px 9px', borderRadius: 12, background: `${tagColor(t)}18`, color: tagColor(t), fontWeight: 700, border: `1px solid ${tagColor(t)}35` }}>
+                  {t}
+                  <button onClick={() => removeTag(t)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: tagColor(t), padding: 0, lineHeight: 1, fontSize: 12 }}>×</button>
+                </span>
+              ))}
+            </div>
+          )}
+          {/* Botão + e input de nova tag */}
+          {!showTagInput ? (
+            <button onClick={() => setShowTagInput(true)} style={{ fontSize: 10, color: '#4a5068', background: 'none', border: '1px dashed #26263a', borderRadius: 10, padding: '3px 9px', cursor: 'pointer' }}>
+              + Tag
+            </button>
+          ) : (
+            <div>
+              <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 6 }}>
+                {TAG_PRESETS.filter(p => !tags.includes(p)).map(p => (
+                  <button key={p} onClick={() => { addTag(p); setShowTagInput(false); }}
+                    style={{ fontSize: 10, padding: '3px 8px', borderRadius: 10, cursor: 'pointer', background: `${tagColor(p)}18`, color: tagColor(p), border: `1px solid ${tagColor(p)}35`, fontWeight: 700 }}>
+                    {p}
+                  </button>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 5 }}>
+                <input value={tagInput} onChange={e => setTagInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && tagInput.trim()) { addTag(tagInput.trim()); setTagInput(''); setShowTagInput(false); } }}
+                  placeholder="Tag personalizada…" style={{ flex: 1, fontSize: 11, padding: '5px 9px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 7, color: '#f3f5ff', outline: 'none' }} />
+                <button onClick={() => { if (tagInput.trim()) { addTag(tagInput.trim()); setTagInput(''); } setShowTagInput(false); }}
+                  style={{ fontSize: 10, padding: '5px 10px', background: '#3A86FF', border: 'none', borderRadius: 7, color: '#fff', cursor: 'pointer', fontWeight: 700 }}>OK</button>
+              </div>
+            </div>
           )}
         </div>
       </div>

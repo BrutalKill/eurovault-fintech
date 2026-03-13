@@ -143,6 +143,34 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
   const [newNoteText, setNewNoteText]     = useState('');
   const [addingNote, setAddingNote]       = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
+  // Tags
+  const [tags, setTags]             = useState(lead.tags || []);
+  const [tagInput, setTagInput]     = useState('');
+  const [savingTags, setSavingTags] = useState(false);
+
+  const TAG_PRESETS = [
+    { label: 'VIP',              color: '#F59E0B', bg: 'rgba(245,158,11,0.15)'  },
+    { label: 'Alta Prioridade',  color: '#ef4444', bg: 'rgba(239,68,68,0.12)'  },
+    { label: 'Precisa Mais Info',color: '#3A86FF', bg: 'rgba(58,134,255,0.12)' },
+    { label: 'Quente',           color: '#FF6B35', bg: 'rgba(255,107,53,0.12)' },
+    { label: 'Frio',             color: '#7a8299', bg: 'rgba(122,130,153,0.12)'},
+    { label: 'Aguarda Doc.',     color: '#22c58b', bg: 'rgba(34,197,139,0.12)' },
+  ];
+  const getTagStyle = (t) => TAG_PRESETS.find(p => p.label === t) || { color:'#a0a0c0', bg:'rgba(160,160,192,0.12)' };
+
+  const saveTags = async (newTags) => {
+    setSavingTags(true);
+    try {
+      await fetch(`${BACKEND_URL}/api/admin/users/${lead.id}/tags`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ tags: newTags }),
+      });
+      setTags(newTags);
+    } catch (_) {}
+    setSavingTags(false);
+  };
+  const addTag = (t) => { if (t && !tags.includes(t)) saveTags([...tags, t]); };
+  const removeTag = (t) => saveTags(tags.filter(x => x !== t));
 
   const ss = STATUS_STYLES[lead.status] || STATUS_STYLES['Novo'];
   const token = localStorage.getItem('adminToken');
@@ -283,6 +311,7 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
 
   const TABS = [
     { key: 'finance',  label: 'Financeiro',  icon: TrendingUp },
+    { key: 'tags',     label: 'Tags',         icon: Filter },
     { key: 'notes',    label: 'Notas',        icon: StickyNote },
     { key: 'deposits', label: 'Depósitos',    icon: CreditCard },
     { key: 'kyc',      label: 'KYC',          icon: User       },
@@ -304,6 +333,14 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
             <div>
               <div style={{ fontFamily: 'var(--font-heading)', fontSize: 15, fontWeight: 700, color: '#f3f5ff' }}>{lead.full_name}</div>
               <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 5, background: ss.bg, color: ss.color, border: `1px solid ${ss.border}`, fontWeight: 700 }}>{lead.status || 'Novo'}</span>
+              {/* Tags inline no header */}
+              {tags.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 5 }}>
+                  {tags.map(t => { const ts = getTagStyle(t); return (
+                    <span key={t} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: ts.bg, color: ts.color, fontWeight: 700, border: `1px solid ${ts.color}40` }}>{t}</span>
+                  ); })}
+                </div>
+              )}
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -426,6 +463,64 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
                 style={{ width: '100%', padding: '11px', background: saving ? '#1e1e30' : '#3A86FF', border: 'none', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                 <Check size={14} />{saving ? 'A guardar…' : 'Guardar Dados Financeiros'}
               </button>
+            </div>
+          )}
+
+          {/* ── Tab: Tags ── */}
+          {activeTab === 'tags' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Tags actuais */}
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#7a8299', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Tags Activas</div>
+                {tags.length === 0 ? (
+                  <div style={{ fontSize: 12, color: '#3a3d5a', fontStyle: 'italic' }}>Sem tags ainda — adicione abaixo</div>
+                ) : (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+                    {tags.map(t => {
+                      const ts = getTagStyle(t);
+                      return (
+                        <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 11px', borderRadius: 20, background: ts.bg, border: `1px solid ${ts.color}40`, color: ts.color, fontSize: 12, fontWeight: 700 }}>
+                          {t}
+                          <button onClick={() => removeTag(t)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: ts.color, padding: 0, display: 'flex', opacity: 0.7, lineHeight: 1 }}>
+                            ×
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Tags pré-definidas */}
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#7a8299', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Tags Rápidas</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+                  {TAG_PRESETS.map(p => (
+                    <button key={p.label} onClick={() => addTag(p.label)} disabled={tags.includes(p.label)}
+                      style={{ padding: '5px 12px', borderRadius: 20, cursor: tags.includes(p.label) ? 'not-allowed' : 'pointer', background: tags.includes(p.label) ? p.bg : 'transparent', border: `1px solid ${p.color}60`, color: p.color, fontSize: 12, fontWeight: 700, opacity: tags.includes(p.label) ? 0.5 : 1, transition: 'all .15s' }}>
+                      {tags.includes(p.label) ? '✓ ' : '+ '}{p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tag personalizada */}
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#7a8299', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Tag Personalizada</div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input value={tagInput} onChange={e => setTagInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && tagInput.trim()) { addTag(tagInput.trim()); setTagInput(''); } }}
+                    placeholder="Escrever tag… (Enter para adicionar)"
+                    style={{ flex: 1, padding: '9px 12px', background: '#0e0e1a', border: '1px solid #26263a', borderRadius: 9, color: '#f3f5ff', fontSize: 13, outline: 'none' }}
+                  />
+                  <button onClick={() => { if (tagInput.trim()) { addTag(tagInput.trim()); setTagInput(''); } }}
+                    style={{ padding: '9px 14px', background: '#3A86FF', border: 'none', borderRadius: 9, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                    + Adicionar
+                  </button>
+                </div>
+              </div>
+
+              {savingTags && <div style={{ fontSize: 11, color: '#22c58b' }}>A guardar…</div>}
             </div>
           )}
 
@@ -1182,6 +1277,17 @@ export default function AdminDashboard() {
                           </div>
                           <div style={{ fontSize: 11, color: '#4a5068' }}>{user.email}</div>
                           <div style={{ fontSize: 10, color: '#26263a', marginTop: 1 }}>{fmtDate(user.created_at)}</div>
+                          {/* Tags inline na tabela */}
+                          {user.tags && user.tags.length > 0 && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginTop: 4 }}>
+                              {user.tags.slice(0,3).map(t => {
+                                const TAG_COLORS = { 'VIP':'#F59E0B','Alta Prioridade':'#ef4444','Precisa Mais Info':'#3A86FF','Quente':'#FF6B35','Frio':'#7a8299','Aguarda Doc.':'#22c58b' };
+                                const c = TAG_COLORS[t] || '#a0a0c0';
+                                return <span key={t} style={{ fontSize: 9, padding: '1px 6px', borderRadius: 8, background: `${c}18`, color: c, fontWeight: 700, border: `1px solid ${c}35` }}>{t}</span>;
+                              })}
+                              {user.tags.length > 3 && <span style={{ fontSize: 9, color: '#4a5068' }}>+{user.tags.length - 3}</span>}
+                            </div>
+                          )}
                         </div>
                         <div style={{ display: 'flex', gap: 4, marginLeft: 4 }}>
                           <button data-testid="admin-login-as-btn" onClick={() => handleLoginAs(user)} title="Entrar como este cliente"

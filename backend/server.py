@@ -762,6 +762,7 @@ async def agent_leads(current_agent = Depends(get_current_agent)):
             "country": u.get("country",""), "phone": u.get("phone",""),
             "status": u.get("status","Novo"), "balance": u.get("balance",0),
             "profit": u.get("profit", 0.0), "last_seen": u.get("last_seen"),
+            "tags": u.get("tags", []),
             "created_at": u.get("created_at"), "comment_count": comment_count,
             "followup_date": u.get("followup_date"), "followup_note": u.get("followup_note",""),
         }))
@@ -828,6 +829,7 @@ async def get_all_users(admin = Depends(get_admin_user)):
             "balance": max(0.0, float(user.get("balance", 0))),
             "profit": max(0.0, float(user.get("profit", 0))),
             "status": user.get("status", "Novo"),
+            "tags": user.get("tags", []),
             "daily_profit_rate": user.get("daily_profit_rate", 0),
             "kyc_status": user.get("kyc_status", "not_submitted"),
             "is_online": is_online,
@@ -850,6 +852,25 @@ async def update_user_status(user_id: str, req: UpdateStatusRequest, admin = Dep
         {"_id": ObjectId(user_id)},
         {"$set": {"status": req.status, "updated_at": datetime.utcnow()}}
     )
+    return {"success": True}
+
+class UpdateTagsRequest(BaseModel):
+    tags: List[str]
+
+@app.put("/api/admin/users/{user_id}/tags")
+async def update_user_tags(user_id: str, req: UpdateTagsRequest, admin = Depends(get_admin_user)):
+    await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"tags": req.tags, "updated_at": datetime.utcnow()}}
+    )
+    return {"success": True}
+
+@app.put("/api/agent/leads/{user_id}/tags")
+async def agent_update_tags(user_id: str, req: UpdateTagsRequest, current_agent = Depends(get_current_agent)):
+    user = await db.users.find_one({"_id": ObjectId(user_id), "assigned_agent": current_agent["sub"]})
+    if not user:
+        raise HTTPException(status_code=403, detail="Sem permissão para este lead")
+    await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": {"tags": req.tags}})
     return {"success": True}
 
 @app.delete("/api/admin/users/{user_id}")
@@ -2164,7 +2185,8 @@ class ContractSubmitRequest(BaseModel):
     signature_image: Optional[str] = ""  # base64 canvas
 
 def generate_pdf_bytes(company: dict, contract_data: dict, processed_content: str,
-                        signature_name: str, signature_image: Optional[str] = None) -> bytes:
+                        signature_name: str, signature_image: Optional[str] = None,
+                        cert_info: Optional[dict] = None) -> bytes:
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import cm, mm
@@ -2508,6 +2530,38 @@ def generate_pdf_bytes(company: dict, contract_data: dict, processed_content: st
     legal = company.get("legal_text","") or \
         "Documento gerado electronicamente. Este contrato tem plena validade legal nos termos da legislação em vigor."
     story.append(Paragraph(legal, s_legal))
+
+    # ── Bloco de Certificação Digital ────────────────────────────
+    if cert_info:
+        story.append(Spacer(1, 0.4*cm))
+        cert_hash  = cert_info.get("cert_hash","")
+        cert_ts    = cert_info.get("cert_timestamp","")
+        cert_ip    = cert_info.get("signer_ip","")
+
+        cert_rows = [
+            [Paragraph("CERTIFICAÇÃO DIGITAL", sty('CertH', fontSize=8, fontName='Helvetica-Bold',
+                alignment=TA_CENTER, textColor=WHITE)), ""],
+            [Paragraph("Timestamp:", sty('CK', fontSize=7.5, fontName='Helvetica-Bold', textColor=NAVY2)),
+             Paragraph(cert_ts, sty('CV', fontSize=7.5, fontName='Helvetica', textColor=TEXT))],
+            [Paragraph("IP do Signatário:", sty('CK', fontSize=7.5, fontName='Helvetica-Bold', textColor=NAVY2)),
+             Paragraph(cert_ip, sty('CV', fontSize=7.5, fontName='Helvetica', textColor=TEXT))],
+            [Paragraph("Hash SHA-256:", sty('CK', fontSize=7.5, fontName='Helvetica-Bold', textColor=NAVY2)),
+             Paragraph(cert_hash[:32] + "...", sty('CVm', fontSize=6.5, fontName='Helvetica',
+                textColor=NAVY2, fontName2='Courier'))],
+        ]
+        cert_table = Table(cert_rows, colWidths=[3.5*cm, client_col_w*2 - 3.5*cm])
+        cert_table.setStyle(TableStyle([
+            ('SPAN', (0,0), (-1,0)),
+            ('BACKGROUND', (0,0), (-1,0), NAVY2),
+            ('TOPPADDING', (0,0), (-1,0), 6), ('BOTTOMPADDING', (0,0), (-1,0), 6),
+            ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#F0F4FF')),
+            ('TOPPADDING', (0,1), (-1,-1), 4), ('BOTTOMPADDING', (0,1), (-1,-1), 4),
+            ('LEFTPADDING', (0,0), (-1,-1), 8), ('RIGHTPADDING', (0,0), (-1,-1), 8),
+            ('BOX', (0,0), (-1,-1), 0.8, GOLD),
+            ('LINEBELOW', (0,0), (-1,0), 1, GOLD),
+            ('LINEBELOW', (0,1), (-1,-2), 0.3, BORDER),
+        ]))
+        story.append(cert_table)
 
     doc.build(story, onFirstPage=draw_background, onLaterPages=draw_background)
     return buf.getvalue()
@@ -2858,6 +2912,9 @@ async def list_contracts(admin = Depends(get_admin_user)):
             "valor": cd.get("valor_investimento",""),
             "template_name": c.get("template_name",""),
             "has_pdf": bool(c.get("pdf_b64")),
+            "signer_ip": c.get("signer_ip",""),
+            "cert_hash": c.get("cert_hash",""),
+            "cert_timestamp": c.get("cert_timestamp",""),
             "created_at": c.get("created_at"), "submitted_at": c.get("submitted_at"),
         }))
     return contracts
@@ -2919,7 +2976,7 @@ async def get_public_contract(token: str):
     }
 
 @app.post("/api/contract/{token}/submit")
-async def submit_public_contract(token: str, req: ContractSubmitRequest):
+async def submit_public_contract(token: str, req: ContractSubmitRequest, request: FastAPIRequest = None):
     c = await db.contracts.find_one({"token": token})
     if not c:
         raise HTTPException(status_code=404, detail="Contrato não encontrado")
@@ -2927,6 +2984,20 @@ async def submit_public_contract(token: str, req: ContractSubmitRequest):
         raise HTTPException(status_code=400, detail="Este contrato já foi assinado")
     if not req.aceite_termos:
         raise HTTPException(status_code=400, detail="É necessário aceitar os termos")
+
+    # ── Capturar IP e User-Agent do signatário
+    import hashlib as _hashlib
+    signer_ip = "unknown"
+    signer_ua = ""
+    if request:
+        forwarded = request.headers.get("X-Forwarded-For","")
+        signer_ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "unknown")
+        signer_ua = request.headers.get("User-Agent","")
+
+    # ── Timestamp certificado + hash SHA-256
+    cert_timestamp = datetime.utcnow()
+    cert_data = f"{token}|{req.nome_completo}|{req.email}|{req.valor_investimento}|{cert_timestamp.isoformat()}|{signer_ip}"
+    cert_hash = _hashlib.sha256(cert_data.encode("utf-8")).hexdigest()
 
     company = await db.company_settings.find_one({}, {"_id":0}) or {
         "name":"EuroVault Investments", "address":"", "tax_number":""}
@@ -2946,18 +3017,29 @@ async def submit_public_contract(token: str, req: ContractSubmitRequest):
 
     client_data = req.dict()
 
-    # Generate PDF
+    # Generate PDF (pass cert info)
+    cert_info = {
+        "signer_ip": signer_ip, "cert_hash": cert_hash,
+        "cert_timestamp": cert_timestamp.strftime("%d/%m/%Y %H:%M:%S UTC"),
+    }
     try:
-        pdf_bytes = generate_pdf_bytes(company, {**client_data, "token": token, "data_contrato": req.data_contrato},
-                                       content, req.signature_name or req.nome_completo, req.signature_image)
+        pdf_bytes = generate_pdf_bytes(
+            company,
+            {**client_data, "token": token, "data_contrato": req.data_contrato},
+            content, req.signature_name or req.nome_completo, req.signature_image,
+            cert_info=cert_info
+        )
         pdf_b64 = base64.b64encode(pdf_bytes).decode("utf-8")
-    except Exception as e:
+    except Exception:
         pdf_b64 = ""
 
     await db.contracts.update_one({"token": token}, {"$set": {
         "status": "signed", "client_data": client_data,
         "processed_content": content, "pdf_b64": pdf_b64,
-        "submitted_at": datetime.utcnow(),
+        "submitted_at": cert_timestamp,
+        "signer_ip": signer_ip, "signer_ua": signer_ua,
+        "cert_hash": cert_hash,
+        "cert_timestamp": cert_timestamp.isoformat(),
     }})
 
     # Notify admin via WebSocket
@@ -2965,7 +3047,7 @@ async def submit_public_contract(token: str, req: ContractSubmitRequest):
         await manager.broadcast({
             "type": "contract_signed",
             "client_name": req.nome_completo, "valor": req.valor_investimento,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": cert_timestamp.isoformat()
         })
     except Exception:
         pass
