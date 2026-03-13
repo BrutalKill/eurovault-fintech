@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from './components/ui/sonner';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ContractPublicPage from './pages/ContractPublicPage';
 import TradePage from './pages/TradePage';
 import DepositPage from './pages/DepositPage';
 import WithdrawalPage from './pages/WithdrawalPage';
@@ -20,6 +21,7 @@ import AdminWithdrawals from './pages/admin/AdminWithdrawals';
 import AdminHoneypot from './pages/admin/AdminHoneypot';
 import AdminCalendar from './pages/admin/AdminCalendar';
 import AdminAgents from './pages/admin/AdminAgents';
+import AdminContracts from './pages/admin/AdminContracts';
 import AgentLogin from './pages/AgentLogin';
 import AgentCRM from './pages/AgentCRM';
 import BalanceHistoryPage from './pages/BalanceHistoryPage';
@@ -48,6 +50,7 @@ export default function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/contract/:token" element={<ContractPublicPage />} />
         <Route path="/access/:token" element={<AccessPage />} />
         <Route path="/legal" element={<LegalPage />} />
 
@@ -77,6 +80,7 @@ export default function App() {
           <Route path="cards" element={<AdminCards />} />
           <Route path="chat" element={<AdminChat />} />
           <Route path="agents" element={<AdminAgents />} />
+            <Route path="contracts" element={<AdminContracts />} />
         </Route>
 
         {/* Agent CRM — Área separada para agentes */}

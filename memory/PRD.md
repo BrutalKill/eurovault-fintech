@@ -41,6 +41,19 @@ Plataforma de investimentos profissional focada no mercado europeu (€), com:
 
 ## O que foi Implementado
 
+### Sistema de Contratos Digitais (novo)
+- [x] Painel admin `/adm/contracts` com 3 tabs: Contratos | Modelos | Empresa
+- [x] Criação/edição de modelos com placeholders ({{nome_completo}}, {{valor_investimento}}, etc.)
+- [x] Geração de link único `/contract/:token` para enviar ao cliente
+- [x] Formulário público 3 passos: Dados → Revisão → Assinatura
+- [x] Assinatura digital: nome digitado OU canvas desenhado
+- [x] Geração automática de PDF (reportlab) após assinatura
+- [x] Download PDF no painel admin
+- [x] Status: Pendente → Assinado
+- [x] Configuração de dados da empresa (nome, morada, NIF, logo, texto legal)
+- [x] Template padrão de contrato de investimento pré-instalado
+- [x] Integração com leads: pré-preencher nome/email do lead ao gerar link
+
 ### Área do Cliente
 - [x] Dashboard com gráfico de evolução de saldo
 - [x] TradingView widget (gráfico real)

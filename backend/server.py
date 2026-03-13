@@ -2092,8 +2092,414 @@ async def get_honeypot_logs(admin = Depends(get_admin_user)):
 
 # ════════════════════════════════════════════════════════════════
 #  ANTI-ENUMERAÇÃO: 404 genérico para rotas desconhecidas
+import uuid as uuid_lib
+
 # ════════════════════════════════════════════════════════════════
-from fastapi.exceptions import RequestValidationError
+#  SISTEMA DE CONTRATOS
+# ════════════════════════════════════════════════════════════════
+
+DEFAULT_CONTRACT_TEMPLATE = """CONTRATO DE INVESTIMENTO
+
+Entre a empresa {{empresa_nome}}, com sede em {{empresa_morada}}, NIF {{empresa_nif}}, adiante designada por "Empresa",
+
+e o(a) Sr.(a) {{nome_completo}}, portador(a) do documento {{documento}}, residente em {{morada}}, e-mail {{email}}, telefone {{telefone}}, adiante designado(a) por "Cliente",
+
+é celebrado o presente Contrato de Investimento, nos termos e condições seguintes:
+
+CLÁUSULA 1.ª — OBJETO DO CONTRATO
+O presente contrato tem por objeto a prestação de serviços de investimento por parte da Empresa ao Cliente, no montante de {{valor_investimento}} euros.
+
+CLÁUSULA 2.ª — DURAÇÃO
+O presente contrato entra em vigor na data da sua assinatura, {{data}}, e vigorará pelo prazo acordado entre as partes.
+
+CLÁUSULA 3.ª — OBRIGAÇÕES DA EMPRESA
+A Empresa compromete-se a gerir os fundos do Cliente de forma diligente, em conformidade com a legislação aplicável, e a fornecer relatórios periódicos sobre a evolução do investimento.
+
+CLÁUSULA 4.ª — OBRIGAÇÕES DO CLIENTE
+O Cliente compromete-se a fornecer informações verdadeiras e completas, e a cumprir com os requisitos de identificação exigidos pela lei.
+
+CLÁUSULA 5.ª — RISCO
+O Cliente reconhece que os investimentos envolvem riscos e que os resultados passados não garantem resultados futuros. A Empresa não garante qualquer rendimento mínimo.
+
+CLÁUSULA 6.ª — CONFIDENCIALIDADE
+Ambas as partes comprometem-se a manter a confidencialidade de todas as informações trocadas no âmbito do presente contrato.
+
+CLÁUSULA 7.ª — LEI APLICÁVEL
+O presente contrato é regido pela lei portuguesa, sendo competente o Tribunal da Comarca de Lisboa para a resolução de eventuais litígios.
+
+Data: {{data}}
+
+Assinatura do Cliente: {{assinatura_nome}}"""
+
+class CompanySettingsRequest(BaseModel):
+    name: str = "EuroVault Investments"
+    address: str = ""
+    tax_number: str = ""
+    email: str = ""
+    phone: str = ""
+    legal_text: str = ""
+    logo_b64: Optional[str] = ""
+
+class ContractTemplateRequest(BaseModel):
+    name: str
+    content: str
+    description: Optional[str] = ""
+
+class GenerateContractRequest(BaseModel):
+    template_id: str
+    lead_id: Optional[str] = None
+    preset_name: Optional[str] = ""
+    preset_email: Optional[str] = ""
+
+class ContractSubmitRequest(BaseModel):
+    nome_completo: str
+    email: str
+    telefone: str
+    documento: str
+    valor_investimento: str
+    data_contrato: str
+    morada: Optional[str] = ""
+    aceite_termos: bool
+    signature_name: Optional[str] = ""
+    signature_image: Optional[str] = ""  # base64 canvas
+
+def generate_pdf_bytes(company: dict, contract_data: dict, processed_content: str,
+                        signature_name: str, signature_image: Optional[str] = None) -> bytes:
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable, Image
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
+    from io import BytesIO as BIO
+    import base64 as b64
+
+    buf = BIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+        rightMargin=2.2*cm, leftMargin=2.2*cm, topMargin=2*cm, bottomMargin=2.2*cm)
+    styles = getSampleStyleSheet()
+
+    def sty(name, **kw):
+        s = ParagraphStyle(name, parent=styles['Normal'], **kw)
+        return s
+
+    heading = sty('H', fontSize=18, fontName='Helvetica-Bold', alignment=TA_CENTER,
+                  textColor=colors.HexColor('#0d1b2a'), spaceAfter=6)
+    sub = sty('Sub', fontSize=9, fontName='Helvetica', alignment=TA_CENTER,
+              textColor=colors.HexColor('#5a6280'), spaceAfter=2)
+    body = sty('Body', fontSize=10, fontName='Helvetica', leading=16,
+               alignment=TA_JUSTIFY, textColor=colors.HexColor('#1a1a2e'), spaceAfter=8)
+    label = sty('Lbl', fontSize=8, fontName='Helvetica-Bold',
+                textColor=colors.HexColor('#5a6280'), spaceAfter=2)
+    sign_name = sty('Sign', fontSize=12, fontName='Helvetica-Bold', alignment=TA_CENTER,
+                    textColor=colors.HexColor('#0d1b2a'))
+
+    story = []
+
+    # ── Header: logo + company
+    logo_b64 = company.get("logo_b64", "")
+    if logo_b64:
+        try:
+            raw = b64.b64decode(logo_b64.split(",")[-1])
+            img_buf = BIO(raw)
+            logo_img = Image(img_buf, width=3*cm, height=3*cm)
+            logo_img.hAlign = 'CENTER'
+            story.append(logo_img)
+            story.append(Spacer(1, 0.2*cm))
+        except Exception:
+            pass
+
+    story.append(Paragraph(company.get("name","EuroVault Investments"), heading))
+    story.append(Paragraph(company.get("address",""), sub))
+    if company.get("tax_number"):
+        story.append(Paragraph(f"NIF: {company['tax_number']}", sub))
+    story.append(Spacer(1, 0.4*cm))
+    story.append(HRFlowable(width="100%", thickness=2, color=colors.HexColor('#3A86FF')))
+    story.append(Spacer(1, 0.5*cm))
+
+    # ── Title
+    story.append(Paragraph("CONTRATO DE INVESTIMENTO", sty('T', fontSize=14, fontName='Helvetica-Bold',
+        alignment=TA_CENTER, textColor=colors.HexColor('#0d1b2a'), spaceAfter=4)))
+    ref_id = contract_data.get("token","")[:12].upper()
+    story.append(Paragraph(f"Referência: {ref_id} &nbsp;&nbsp;|&nbsp;&nbsp; Data: {contract_data.get('data_contrato', datetime.utcnow().strftime('%d/%m/%Y'))}", sub))
+    story.append(Spacer(1, 0.6*cm))
+
+    # ── Client info table
+    cd = contract_data
+    client_table_data = [
+        ["DADOS DO CLIENTE", ""],
+        ["Nome Completo:", cd.get("nome_completo","")],
+        ["Email:", cd.get("email","")],
+        ["Telefone:", cd.get("telefone","")],
+        ["Documento:", cd.get("documento","")],
+        ["Morada:", cd.get("morada","")],
+        ["Valor do Investimento:", f"{cd.get('valor_investimento','')} €"],
+    ]
+    t = Table(client_table_data, colWidths=[5.5*cm, 11.5*cm])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#3A86FF')),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,0), (-1,0), 10),
+        ('SPAN', (0,0), (-1,0)),
+        ('ALIGN', (0,0), (-1,0), 'CENTER'),
+        ('FONTNAME', (0,1), (0,-1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,1), (-1,-1), 9),
+        ('TEXTCOLOR', (0,1), (-1,-1), colors.HexColor('#1a1a2e')),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.HexColor('#f8f9ff'), colors.white]),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e0e0f0')),
+        ('TOPPADDING', (0,0), (-1,-1), 6),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+        ('LEFTPADDING', (0,0), (-1,-1), 8),
+    ]))
+    story.append(t)
+    story.append(Spacer(1, 0.7*cm))
+
+    # ── Contract body
+    story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#e0e0f0')))
+    story.append(Spacer(1, 0.3*cm))
+    for line in processed_content.split('\n'):
+        if line.strip() == '':
+            story.append(Spacer(1, 0.2*cm))
+        elif line.isupper() and len(line) < 60:
+            story.append(Paragraph(line, sty('BH', fontSize=10, fontName='Helvetica-Bold',
+                textColor=colors.HexColor('#0d1b2a'), spaceAfter=4)))
+        else:
+            safe = line.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            story.append(Paragraph(safe, body))
+
+    story.append(Spacer(1, 0.8*cm))
+    story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#e0e0f0')))
+    story.append(Spacer(1, 0.5*cm))
+
+    # ── Signature section
+    sig_table = [["ASSINATURA DO CLIENTE", "ASSINATURA DA EMPRESA"]]
+
+    # Client signature
+    if signature_image and signature_image.startswith("data:image"):
+        try:
+            raw = b64.b64decode(signature_image.split(",")[-1])
+            sig_buf = BIO(raw)
+            sig_img = Image(sig_buf, width=5*cm, height=2*cm)
+            client_sig = [sig_img, Paragraph(signature_name or "", sign_name)]
+        except Exception:
+            client_sig = [Paragraph(f"\n{signature_name or 'Assinado digitalmente'}", sign_name)]
+    else:
+        client_sig = [Paragraph(f"\n{signature_name or 'Assinado digitalmente'}", sign_name)]
+
+    company_sig = [Paragraph("\n_______________________\n" + company.get("name",""), sign_name)]
+
+    sig_table.append([client_sig, company_sig])
+    st = Table(sig_table, colWidths=[8.5*cm, 8.5*cm])
+    st.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#f0f4ff')),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.HexColor('#3A86FF')),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,0), (-1,0), 8),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e0e0f0')),
+        ('TOPPADDING', (0,0), (-1,-1), 8),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 10),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white]),
+    ]))
+    story.append(st)
+    story.append(Spacer(1, 0.6*cm))
+
+    # ── Legal footer
+    legal = company.get("legal_text","") or "Documento gerado electronicamente. Este contrato tem validade legal nos termos da legislação portuguesa."
+    story.append(Paragraph(legal, sty('Foot', fontSize=7, fontName='Helvetica',
+        textColor=colors.HexColor('#9ca3c0'), alignment=TA_CENTER)))
+
+    doc.build(story)
+    return buf.getvalue()
+
+# ── Company Settings
+@app.get("/api/admin/company-settings")
+async def get_company_settings(admin = Depends(get_admin_user)):
+    s = await db.company_settings.find_one({}, {"_id": 0})
+    if not s:
+        return {"name":"EuroVault Investments","address":"Av. da Liberdade 110, Lisboa, Portugal",
+                "tax_number":"PT123456789","email":"suporte@eurovault.eu",
+                "phone":"+351 21 000 0000","legal_text":"","logo_b64":""}
+    return s
+
+@app.put("/api/admin/company-settings")
+async def update_company_settings(req: CompanySettingsRequest, admin = Depends(get_admin_user)):
+    await db.company_settings.update_one({}, {"$set": req.dict()}, upsert=True)
+    return {"success": True}
+
+# ── Contract Templates
+@app.get("/api/admin/contract-templates")
+async def list_contract_templates(admin = Depends(get_admin_user)):
+    templates = []
+    async for t in db.contract_templates.find({}).sort("created_at", -1):
+        templates.append(serialize_doc({"id": t["_id"], "name": t.get("name"),
+            "description": t.get("description",""), "content": t.get("content",""),
+            "created_at": t.get("created_at")}))
+    return templates
+
+@app.post("/api/admin/contract-templates")
+async def create_contract_template(req: ContractTemplateRequest, admin = Depends(get_admin_user)):
+    result = await db.contract_templates.insert_one({
+        "name": req.name, "description": req.description,
+        "content": req.content, "created_at": datetime.utcnow()
+    })
+    return {"success": True, "id": str(result.inserted_id)}
+
+@app.put("/api/admin/contract-templates/{template_id}")
+async def update_contract_template(template_id: str, req: ContractTemplateRequest, admin = Depends(get_admin_user)):
+    await db.contract_templates.update_one({"_id": ObjectId(template_id)},
+        {"$set": {"name": req.name, "description": req.description,
+                  "content": req.content, "updated_at": datetime.utcnow()}})
+    return {"success": True}
+
+@app.delete("/api/admin/contract-templates/{template_id}")
+async def delete_contract_template(template_id: str, admin = Depends(get_admin_user)):
+    await db.contract_templates.delete_one({"_id": ObjectId(template_id)})
+    return {"success": True}
+
+# ── Contracts
+@app.get("/api/admin/contracts")
+async def list_contracts(admin = Depends(get_admin_user)):
+    contracts = []
+    async for c in db.contracts.find({}).sort("created_at", -1):
+        cd = c.get("client_data", {})
+        contracts.append(serialize_doc({
+            "id": c["_id"], "token": c.get("token"), "status": c.get("status","pending"),
+            "client_name": cd.get("nome_completo","") or c.get("preset_name",""),
+            "client_email": cd.get("email","") or c.get("preset_email",""),
+            "valor": cd.get("valor_investimento",""),
+            "template_name": c.get("template_name",""),
+            "has_pdf": bool(c.get("pdf_b64")),
+            "created_at": c.get("created_at"), "submitted_at": c.get("submitted_at"),
+        }))
+    return contracts
+
+@app.post("/api/admin/contracts/generate")
+async def generate_contract_link(req: GenerateContractRequest, admin = Depends(get_admin_user)):
+    template = await db.contract_templates.find_one({"_id": ObjectId(req.template_id)})
+    if not template:
+        raise HTTPException(status_code=404, detail="Template não encontrado")
+    token = uuid_lib.uuid4().hex[:20]
+    preset_name = req.preset_name or ""
+    preset_email = req.preset_email or ""
+    if req.lead_id:
+        try:
+            lead = await db.users.find_one({"_id": ObjectId(req.lead_id)})
+            if lead:
+                preset_name = preset_name or lead.get("full_name","")
+                preset_email = preset_email or lead.get("email","")
+        except Exception:
+            pass
+    result = await db.contracts.insert_one({
+        "token": token, "template_id": str(template["_id"]),
+        "template_name": template.get("name",""), "template_content": template.get("content",""),
+        "status": "pending", "preset_name": preset_name, "preset_email": preset_email,
+        "lead_id": req.lead_id, "client_data": {}, "created_at": datetime.utcnow(),
+    })
+    return {"success": True, "id": str(result.inserted_id), "token": token}
+
+@app.delete("/api/admin/contracts/{contract_id}")
+async def delete_contract(contract_id: str, admin = Depends(get_admin_user)):
+    await db.contracts.delete_one({"_id": ObjectId(contract_id)})
+    return {"success": True}
+
+@app.get("/api/admin/contracts/{contract_id}/pdf")
+async def download_contract_pdf(contract_id: str, admin = Depends(get_admin_user)):
+    from fastapi.responses import Response
+    contract = await db.contracts.find_one({"_id": ObjectId(contract_id)})
+    if not contract or not contract.get("pdf_b64"):
+        raise HTTPException(status_code=404, detail="PDF não disponível ainda")
+    pdf_bytes = base64.b64decode(contract["pdf_b64"])
+    name = (contract.get("client_data",{}).get("nome_completo","") or contract.get("preset_name","contrato")).replace(" ","_")
+    return Response(content=pdf_bytes, media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="contrato_{name}.pdf"'})
+
+# ── Public Contract (no auth)
+@app.get("/api/contract/{token}")
+async def get_public_contract(token: str):
+    c = await db.contracts.find_one({"token": token})
+    if not c:
+        raise HTTPException(status_code=404, detail="Contrato não encontrado")
+    company = await db.company_settings.find_one({}, {"_id":0}) or {"name":"EuroVault Investments"}
+    return {
+        "token": token, "status": c.get("status","pending"),
+        "template_name": c.get("template_name",""),
+        "template_content": c.get("template_content",""),
+        "preset_name": c.get("preset_name",""),
+        "preset_email": c.get("preset_email",""),
+        "company_name": company.get("name","EuroVault Investments"),
+    }
+
+@app.post("/api/contract/{token}/submit")
+async def submit_public_contract(token: str, req: ContractSubmitRequest):
+    c = await db.contracts.find_one({"token": token})
+    if not c:
+        raise HTTPException(status_code=404, detail="Contrato não encontrado")
+    if c.get("status") == "signed":
+        raise HTTPException(status_code=400, detail="Este contrato já foi assinado")
+    if not req.aceite_termos:
+        raise HTTPException(status_code=400, detail="É necessário aceitar os termos")
+
+    company = await db.company_settings.find_one({}, {"_id":0}) or {
+        "name":"EuroVault Investments", "address":"", "tax_number":""}
+
+    # Process template — fill placeholders
+    content = c.get("template_content","")
+    replacements = {
+        "{{nome_completo}}": req.nome_completo, "{{email}}": req.email,
+        "{{telefone}}": req.telefone, "{{documento}}": req.documento,
+        "{{valor_investimento}}": req.valor_investimento, "{{data}}": req.data_contrato,
+        "{{morada}}": req.morada or "", "{{assinatura_nome}}": req.signature_name or req.nome_completo,
+        "{{empresa_nome}}": company.get("name",""), "{{empresa_morada}}": company.get("address",""),
+        "{{empresa_nif}}": company.get("tax_number",""),
+    }
+    for k, v in replacements.items():
+        content = content.replace(k, v)
+
+    client_data = req.dict()
+
+    # Generate PDF
+    try:
+        pdf_bytes = generate_pdf_bytes(company, {**client_data, "token": token, "data_contrato": req.data_contrato},
+                                       content, req.signature_name or req.nome_completo, req.signature_image)
+        pdf_b64 = base64.b64encode(pdf_bytes).decode("utf-8")
+    except Exception as e:
+        pdf_b64 = ""
+
+    await db.contracts.update_one({"token": token}, {"$set": {
+        "status": "signed", "client_data": client_data,
+        "processed_content": content, "pdf_b64": pdf_b64,
+        "submitted_at": datetime.utcnow(),
+    }})
+
+    # Notify admin via WebSocket
+    try:
+        await manager.broadcast({
+            "type": "contract_signed",
+            "client_name": req.nome_completo, "valor": req.valor_investimento,
+            "timestamp": datetime.utcnow().isoformat()
+        })
+    except Exception:
+        pass
+
+    return {"success": True}
+
+# ── Seed default template on startup
+@app.on_event("startup")
+async def seed_default_template():
+    count = await db.contract_templates.count_documents({})
+    if count == 0:
+        await db.contract_templates.insert_one({
+            "name": "Contrato de Investimento Padrão",
+            "description": "Template padrão para contratos de investimento",
+            "content": DEFAULT_CONTRACT_TEMPLATE,
+            "created_at": datetime.utcnow()
+        })
+
+
+# ════════════════════════════════════════════════════════════════
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 @app.exception_handler(StarletteHTTPException)
