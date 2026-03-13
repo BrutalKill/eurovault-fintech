@@ -122,7 +122,7 @@ export default function Login() {
       </div>
 
       {/* ── Header ── */}
-      <header style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', flexShrink: 0 }}>
+      <header style={{ position: 'relative', zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <img src="/logo-eurovault.png" alt="EuroVault" style={{ width: 36, height: 36, objectFit: 'contain' }} />
           <div>
@@ -131,7 +131,7 @@ export default function Login() {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <LangSwitcher compact />
+          <LangSwitcher />
           <Link to="/register" style={{
             padding: '7px 14px', borderRadius: 9,
             border: '1px solid rgba(58,134,255,0.4)',
@@ -264,7 +264,7 @@ export default function Login() {
                 <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'hsl(215,16%,65%)', marginBottom: 7, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{t('login_email')}</label>
                 <input data-testid="login-email-input" type="email" required value={form.email}
                   onChange={e => setForm({ ...form, email: e.target.value })}
-                  placeholder="exemplo@gmail.com"
+                  placeholder={t('login_email_ph')}
                   style={{ width: '100%', padding: '12px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, color: '#f3f5ff', fontSize: 16, outline: 'none', boxSizing: 'border-box', transition: 'border-color .2s' }}
                   onFocus={e => e.target.style.borderColor = 'rgba(58,134,255,0.6)'}
                   onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.12)'}

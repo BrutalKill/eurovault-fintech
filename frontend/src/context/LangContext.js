@@ -9,6 +9,7 @@ export const TRANSLATIONS = {
     login_title: 'Iniciar Sessão',
     login_subtitle: 'Bem-vindo. Introduza as suas credenciais de acesso.',
     login_email: 'Endereço de E-mail',
+    login_email_ph: 'exemplo@gmail.com',
     login_password: 'Palavra-Passe',
     login_btn: 'Entrar',
     login_loading: 'A entrar…',
@@ -369,6 +370,7 @@ export const TRANSLATIONS = {
     login_title: 'Sign In',
     login_subtitle: 'Welcome. Enter your credentials to access your account.',
     login_email: 'Email Address',
+    login_email_ph: 'example@gmail.com',
     login_password: 'Password',
     login_btn: 'Sign In',
     login_loading: 'Signing in…',
@@ -634,6 +636,7 @@ export const TRANSLATIONS = {
     login_title: 'Iniciar Sesión',
     login_subtitle: 'Bienvenido. Introduzca sus credenciales de acceso.',
     login_email: 'Dirección de E-mail',
+    login_email_ph: 'ejemplo@gmail.com',
     login_password: 'Contraseña',
     login_btn: 'Entrar',
     login_loading: 'Iniciando sesión…',
@@ -901,10 +904,21 @@ export const TRANSLATIONS = {
 // ─────────────────────────────────────────────────────────────
 const LangContext = createContext(null);
 
+// Detectar idioma do navegador automaticamente
+function detectBrowserLang() {
+  const saved = localStorage.getItem('ev_lang');
+  if (saved && ['pt', 'en', 'es'].includes(saved)) return saved;
+  // Ler idioma do navegador
+  const raw = (navigator.language || navigator.languages?.[0] || 'pt').toLowerCase();
+  if (raw.startsWith('es')) return 'es';
+  if (raw.startsWith('en')) return 'en';
+  if (raw.startsWith('pt')) return 'pt';
+  // Para outros idiomas europeus, usar inglês como fallback
+  return 'en';
+}
+
 export function LangProvider({ children }) {
-  const [lang, setLang] = useState(() => {
-    return localStorage.getItem('ev_lang') || 'pt';
-  });
+  const [lang, setLang] = useState(() => detectBrowserLang());
 
   const changeLang = (newLang) => {
     setLang(newLang);
