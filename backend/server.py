@@ -2169,149 +2169,289 @@ def generate_pdf_bytes(company: dict, contract_data: dict, processed_content: st
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import cm
     from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable, Image
+    from reportlab.pdfgen import canvas as pdfcanvas
     from reportlab.lib import colors
-    from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY, TA_RIGHT
     from io import BytesIO as BIO
     import base64 as b64
 
+    NAVY   = colors.HexColor('#0d1b2a')
+    GOLD   = colors.HexColor('#C9A84C')
+    GOLD2  = colors.HexColor('#E8C96A')
+    LIGHT  = colors.HexColor('#f7f8ff')
+    MID    = colors.HexColor('#5a6280')
+    ACCENT = colors.HexColor('#1e3a5f')
+    WHITE  = colors.white
+
     buf = BIO()
+    W, H = A4
+    logo_b64 = company.get("logo_b64", "")
+
+    def add_page_decoration(canv, doc):
+        canv.saveState()
+        # Background
+        canv.setFillColor(colors.HexColor('#f9faff'))
+        canv.rect(0, 0, W, H, fill=1, stroke=0)
+
+        # Outer gold border frame
+        canv.setStrokeColor(GOLD)
+        canv.setLineWidth(1.2)
+        canv.rect(0.65*cm, 0.65*cm, W-1.3*cm, H-1.3*cm, fill=0, stroke=1)
+        # Inner thin navy line
+        canv.setStrokeColor(NAVY)
+        canv.setLineWidth(0.3)
+        canv.rect(0.85*cm, 0.85*cm, W-1.7*cm, H-1.7*cm, fill=0, stroke=1)
+
+        # Top gold bar
+        canv.setFillColor(NAVY)
+        canv.rect(0.65*cm, H-0.65*cm, W-1.3*cm, -1.1*cm, fill=1, stroke=0)
+        # Gold accent stripe on top bar
+        canv.setFillColor(GOLD)
+        canv.rect(0.65*cm, H-0.65*cm-0.12*cm, W-1.3*cm, 0.12*cm, fill=1, stroke=0)
+
+        # Bottom bar
+        canv.setFillColor(NAVY)
+        canv.rect(0.65*cm, 0.65*cm, W-1.3*cm, 0.9*cm, fill=1, stroke=0)
+        canv.setFillColor(GOLD)
+        canv.rect(0.65*cm, 1.55*cm-0.08*cm, W-1.3*cm, 0.08*cm, fill=1, stroke=0)
+
+        # Company name in top bar
+        canv.setFillColor(WHITE)
+        canv.setFont('Helvetica-Bold', 10)
+        canv.drawCentredString(W/2, H-0.65*cm-0.7*cm, company.get("name","EuroVault Investments").upper())
+        canv.setFillColor(GOLD2)
+        canv.setFont('Helvetica', 7)
+        canv.drawCentredString(W/2, H-0.65*cm-0.95*cm,
+            " · ".join(filter(None, [company.get("address",""), company.get("tax_number","")])))
+
+        # Page number in bottom bar
+        canv.setFillColor(GOLD2)
+        canv.setFont('Helvetica', 7)
+        canv.drawCentredString(W/2, 0.65*cm+0.28*cm, f"Página {canv.getPageNumber()}")
+        canv.setFillColor(WHITE)
+        ref = contract_data.get("token","")[:16].upper()
+        canv.setFont('Helvetica', 6.5)
+        canv.drawString(0.9*cm, 0.65*cm+0.28*cm, f"REF: {ref}")
+        canv.drawRightString(W-0.9*cm, 0.65*cm+0.28*cm, "Documento Confidencial")
+
+        # ── Watermark (logo at very low opacity in center) ──
+        if logo_b64:
+            try:
+                raw = b64.b64decode(logo_b64.split(",")[-1])
+                img_buf = BIO(raw)
+                canv.saveState()
+                # Apply transparency via setFillAlpha (reportlab 4+)
+                try:
+                    canv.setFillAlpha(0.04)
+                    canv.drawImage(img_buf, W/2-4*cm, H/2-4*cm, width=8*cm, height=8*cm,
+                                   mask='auto', preserveAspectRatio=True)
+                except Exception:
+                    pass
+                canv.restoreState()
+            except Exception:
+                pass
+        else:
+            # Text watermark if no logo
+            canv.saveState()
+            canv.setFont('Helvetica-Bold', 52)
+            canv.setFillColor(colors.HexColor('#0d1b2a'))
+            try:
+                canv.setFillAlpha(0.04)
+            except Exception:
+                pass
+            canv.translate(W/2, H/2)
+            canv.rotate(35)
+            canv.drawCentredString(0, 0, company.get("name","EUROVAULT").upper())
+            canv.restoreState()
+
+        canv.restoreState()
+
     doc = SimpleDocTemplate(buf, pagesize=A4,
-        rightMargin=2.2*cm, leftMargin=2.2*cm, topMargin=2*cm, bottomMargin=2.2*cm)
+        rightMargin=2.0*cm, leftMargin=2.0*cm, topMargin=2.8*cm, bottomMargin=2.4*cm)
+
     styles = getSampleStyleSheet()
-
     def sty(name, **kw):
-        s = ParagraphStyle(name, parent=styles['Normal'], **kw)
-        return s
+        return ParagraphStyle(name, parent=styles['Normal'], **kw)
 
-    heading = sty('H', fontSize=18, fontName='Helvetica-Bold', alignment=TA_CENTER,
-                  textColor=colors.HexColor('#0d1b2a'), spaceAfter=6)
-    sub = sty('Sub', fontSize=9, fontName='Helvetica', alignment=TA_CENTER,
-              textColor=colors.HexColor('#5a6280'), spaceAfter=2)
-    body = sty('Body', fontSize=10, fontName='Helvetica', leading=16,
-               alignment=TA_JUSTIFY, textColor=colors.HexColor('#1a1a2e'), spaceAfter=8)
-    label = sty('Lbl', fontSize=8, fontName='Helvetica-Bold',
-                textColor=colors.HexColor('#5a6280'), spaceAfter=2)
-    sign_name = sty('Sign', fontSize=12, fontName='Helvetica-Bold', alignment=TA_CENTER,
-                    textColor=colors.HexColor('#0d1b2a'))
+    s_contract_title = sty('CT', fontSize=17, fontName='Helvetica-Bold',
+        alignment=TA_CENTER, textColor=NAVY, spaceAfter=3, spaceBefore=4)
+    s_ref = sty('Ref', fontSize=9, fontName='Helvetica',
+        alignment=TA_CENTER, textColor=MID, spaceAfter=2)
+    s_section = sty('Sec', fontSize=10, fontName='Helvetica-Bold',
+        textColor=NAVY, spaceAfter=4, spaceBefore=8)
+    s_body = sty('Bod', fontSize=9.5, fontName='Helvetica', leading=15,
+        alignment=TA_JUSTIFY, textColor=colors.HexColor('#1a1a2e'), spaceAfter=5)
+    s_clause_title = sty('CL', fontSize=9.5, fontName='Helvetica-Bold',
+        textColor=ACCENT, spaceAfter=3, spaceBefore=6)
+    s_sign = sty('Sig', fontSize=14, fontName='Helvetica-BoldOblique',
+        alignment=TA_CENTER, textColor=NAVY)
+    s_sign_label = sty('SL', fontSize=8, fontName='Helvetica',
+        alignment=TA_CENTER, textColor=MID)
+    s_footer_legal = sty('FL', fontSize=7, fontName='Helvetica',
+        alignment=TA_CENTER, textColor=MID)
 
     story = []
 
-    # ── Header: logo + company
-    logo_b64 = company.get("logo_b64", "")
+    # ── Logo (if present) ──
     if logo_b64:
         try:
             raw = b64.b64decode(logo_b64.split(",")[-1])
             img_buf = BIO(raw)
-            logo_img = Image(img_buf, width=3*cm, height=3*cm)
+            logo_img = Image(img_buf, width=2.5*cm, height=2.5*cm)
             logo_img.hAlign = 'CENTER'
             story.append(logo_img)
             story.append(Spacer(1, 0.2*cm))
         except Exception:
             pass
 
-    story.append(Paragraph(company.get("name","EuroVault Investments"), heading))
-    story.append(Paragraph(company.get("address",""), sub))
-    if company.get("tax_number"):
-        story.append(Paragraph(f"NIF: {company['tax_number']}", sub))
-    story.append(Spacer(1, 0.4*cm))
-    story.append(HRFlowable(width="100%", thickness=2, color=colors.HexColor('#3A86FF')))
-    story.append(Spacer(1, 0.5*cm))
+    # ── Gold divider ──
+    story.append(HRFlowable(width="100%", thickness=1.5, color=GOLD, spaceAfter=8, spaceBefore=2))
 
-    # ── Title
-    story.append(Paragraph("CONTRATO DE INVESTIMENTO", sty('T', fontSize=14, fontName='Helvetica-Bold',
-        alignment=TA_CENTER, textColor=colors.HexColor('#0d1b2a'), spaceAfter=4)))
-    ref_id = contract_data.get("token","")[:12].upper()
-    story.append(Paragraph(f"Referência: {ref_id} &nbsp;&nbsp;|&nbsp;&nbsp; Data: {contract_data.get('data_contrato', datetime.utcnow().strftime('%d/%m/%Y'))}", sub))
-    story.append(Spacer(1, 0.6*cm))
+    # ── Contract Title ──
+    story.append(Paragraph("CONTRATO DE INVESTIMENTO", s_contract_title))
+    story.append(Paragraph("INVESTMENT AGREEMENT", sty('CT2', fontSize=9, fontName='Helvetica',
+        alignment=TA_CENTER, textColor=colors.HexColor('#9ca3c0'), spaceAfter=6)))
 
-    # ── Client info table
-    cd = contract_data
-    client_table_data = [
-        ["DADOS DO CLIENTE", ""],
-        ["Nome Completo:", cd.get("nome_completo","")],
-        ["Email:", cd.get("email","")],
-        ["Telefone:", cd.get("telefone","")],
-        ["Documento:", cd.get("documento","")],
-        ["Morada:", cd.get("morada","")],
-        ["Valor do Investimento:", f"{cd.get('valor_investimento','')} €"],
-    ]
-    t = Table(client_table_data, colWidths=[5.5*cm, 11.5*cm])
-    t.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#3A86FF')),
-        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0,0), (-1,0), 10),
-        ('SPAN', (0,0), (-1,0)),
-        ('ALIGN', (0,0), (-1,0), 'CENTER'),
-        ('FONTNAME', (0,1), (0,-1), 'Helvetica-Bold'),
-        ('FONTSIZE', (0,1), (-1,-1), 9),
-        ('TEXTCOLOR', (0,1), (-1,-1), colors.HexColor('#1a1a2e')),
-        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.HexColor('#f8f9ff'), colors.white]),
-        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e0e0f0')),
-        ('TOPPADDING', (0,0), (-1,-1), 6),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
-        ('LEFTPADDING', (0,0), (-1,-1), 8),
-    ]))
-    story.append(t)
-    story.append(Spacer(1, 0.7*cm))
+    ref_id = contract_data.get("token","")[:16].upper()
+    date_str = contract_data.get("data_contrato", datetime.utcnow().strftime('%d/%m/%Y'))
+    story.append(Paragraph(f"Ref.: {ref_id}   |   Data: {date_str}", s_ref))
 
-    # ── Contract body
-    story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#e0e0f0')))
+    story.append(HRFlowable(width="100%", thickness=0.5, color=GOLD, spaceAfter=8))
     story.append(Spacer(1, 0.3*cm))
-    for line in processed_content.split('\n'):
-        if line.strip() == '':
-            story.append(Spacer(1, 0.2*cm))
-        elif line.isupper() and len(line) < 60:
-            story.append(Paragraph(line, sty('BH', fontSize=10, fontName='Helvetica-Bold',
-                textColor=colors.HexColor('#0d1b2a'), spaceAfter=4)))
-        else:
-            safe = line.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-            story.append(Paragraph(safe, body))
 
-    story.append(Spacer(1, 0.8*cm))
-    story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#e0e0f0')))
+    # ── Client & Company table ──
+    cd = contract_data
+    data_table = [
+        [Paragraph("DADOS DO CLIENTE", sty('TH', fontSize=9, fontName='Helvetica-Bold', textColor=WHITE)),
+         Paragraph("DADOS DA EMPRESA", sty('TH2', fontSize=9, fontName='Helvetica-Bold', textColor=WHITE))],
+        [
+            Table([
+                [Paragraph("<b>Nome:</b>", sty('td', fontSize=8.5, fontName='Helvetica', textColor=NAVY)),
+                 Paragraph(cd.get("nome_completo",""), sty('td2', fontSize=8.5, textColor=NAVY))],
+                [Paragraph("<b>Email:</b>", sty('td', fontSize=8.5, fontName='Helvetica', textColor=NAVY)),
+                 Paragraph(cd.get("email",""), sty('td2', fontSize=8.5, textColor=NAVY))],
+                [Paragraph("<b>Telefone:</b>", sty('td', fontSize=8.5, fontName='Helvetica', textColor=NAVY)),
+                 Paragraph(cd.get("telefone",""), sty('td2', fontSize=8.5, textColor=NAVY))],
+                [Paragraph("<b>Documento:</b>", sty('td', fontSize=8.5, fontName='Helvetica', textColor=NAVY)),
+                 Paragraph(cd.get("documento",""), sty('td2', fontSize=8.5, textColor=NAVY))],
+                [Paragraph("<b>Morada:</b>", sty('td', fontSize=8.5, fontName='Helvetica', textColor=NAVY)),
+                 Paragraph(cd.get("morada","—"), sty('td2', fontSize=8.5, textColor=NAVY))],
+                [Paragraph("<b>Investimento:</b>", sty('td', fontSize=8.5, fontName='Helvetica', textColor=GOLD)),
+                 Paragraph(f"€ {cd.get('valor_investimento','')}",
+                           sty('td2g', fontSize=9, fontName='Helvetica-Bold', textColor=GOLD))],
+            ], colWidths=[2.2*cm, 6*cm],
+               style=TableStyle([
+                   ('TOPPADDING',(0,0),(-1,-1),3), ('BOTTOMPADDING',(0,0),(-1,-1),3),
+                   ('LEFTPADDING',(0,0),(-1,-1),4), ('RIGHTPADDING',(0,0),(-1,-1),4),
+               ])),
+
+            Table([
+                [Paragraph("<b>Empresa:</b>", sty('td', fontSize=8.5, textColor=NAVY)),
+                 Paragraph(company.get("name",""), sty('td2', fontSize=8.5, textColor=NAVY))],
+                [Paragraph("<b>Morada:</b>", sty('td', fontSize=8.5, textColor=NAVY)),
+                 Paragraph(company.get("address",""), sty('td2', fontSize=8.5, textColor=NAVY))],
+                [Paragraph("<b>NIF:</b>", sty('td', fontSize=8.5, textColor=NAVY)),
+                 Paragraph(company.get("tax_number",""), sty('td2', fontSize=8.5, textColor=NAVY))],
+                [Paragraph("<b>Email:</b>", sty('td', fontSize=8.5, textColor=NAVY)),
+                 Paragraph(company.get("email",""), sty('td2', fontSize=8.5, textColor=NAVY))],
+                [Paragraph("<b>Telefone:</b>", sty('td', fontSize=8.5, textColor=NAVY)),
+                 Paragraph(company.get("phone",""), sty('td2', fontSize=8.5, textColor=NAVY))],
+                [Paragraph(""), Paragraph("")],
+            ], colWidths=[2.2*cm, 5.3*cm],
+               style=TableStyle([
+                   ('TOPPADDING',(0,0),(-1,-1),3), ('BOTTOMPADDING',(0,0),(-1,-1),3),
+                   ('LEFTPADDING',(0,0),(-1,-1),4), ('RIGHTPADDING',(0,0),(-1,-1),4),
+               ])),
+        ]
+    ]
+    outer = Table(data_table, colWidths=[8.5*cm, 8.5*cm])
+    outer.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), NAVY),
+        ('TEXTCOLOR', (0,0), (-1,0), WHITE),
+        ('ALIGN', (0,0), (-1,0), 'CENTER'),
+        ('TOPPADDING', (0,0), (-1,0), 7), ('BOTTOMPADDING', (0,0), (-1,0), 7),
+        ('LEFTPADDING', (0,0), (-1,-1), 8), ('RIGHTPADDING', (0,0), (-1,-1), 8),
+        ('TOPPADDING', (0,1), (-1,-1), 8), ('BOTTOMPADDING', (0,1), (-1,-1), 8),
+        ('BACKGROUND', (0,1), (0,1), colors.HexColor('#f0f4ff')),
+        ('BACKGROUND', (1,1), (1,1), colors.HexColor('#f7f8ff')),
+        ('GRID', (0,0), (-1,-1), 0.5, GOLD),
+        ('LINEBELOW', (0,0), (-1,0), 2, GOLD),
+    ]))
+    story.append(outer)
     story.append(Spacer(1, 0.5*cm))
 
-    # ── Signature section
-    sig_table = [["ASSINATURA DO CLIENTE", "ASSINATURA DA EMPRESA"]]
+    # ── Contract Body ──
+    story.append(HRFlowable(width="100%", thickness=0.5, color=GOLD, spaceAfter=6))
+    in_clause = False
+    for line in processed_content.split('\n'):
+        stripped = line.strip()
+        if stripped == '':
+            story.append(Spacer(1, 0.15*cm))
+        elif stripped.upper() == stripped and len(stripped) < 80 and len(stripped) > 3:
+            # Section heading
+            story.append(Paragraph(stripped, s_clause_title))
+            in_clause = True
+        else:
+            safe = stripped.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            story.append(Paragraph(safe, s_body))
 
-    # Client signature
+    story.append(Spacer(1, 0.6*cm))
+    story.append(HRFlowable(width="100%", thickness=1, color=GOLD, spaceAfter=6))
+    story.append(Spacer(1, 0.4*cm))
+
+    # ── Signature Section ──
+    # Client signature cell
     if signature_image and signature_image.startswith("data:image"):
         try:
             raw = b64.b64decode(signature_image.split(",")[-1])
             sig_buf = BIO(raw)
-            sig_img = Image(sig_buf, width=5*cm, height=2*cm)
-            client_sig = [sig_img, Paragraph(signature_name or "", sign_name)]
+            sig_img = Image(sig_buf, width=5*cm, height=1.8*cm)
+            client_content = [sig_img, Spacer(1, 0.1*cm), Paragraph(signature_name or "", s_sign_label)]
         except Exception:
-            client_sig = [Paragraph(f"\n{signature_name or 'Assinado digitalmente'}", sign_name)]
+            client_content = [Paragraph(signature_name or "Assinado digitalmente", s_sign),
+                              Spacer(1, 0.1*cm), Paragraph("Assinatura digital", s_sign_label)]
     else:
-        client_sig = [Paragraph(f"\n{signature_name or 'Assinado digitalmente'}", sign_name)]
+        client_content = [
+            Spacer(1, 0.2*cm),
+            Paragraph(signature_name or "Assinado digitalmente", s_sign),
+            Spacer(1, 0.1*cm),
+            Paragraph("Assinatura do Cliente", s_sign_label)
+        ]
 
-    company_sig = [Paragraph("\n_______________________\n" + company.get("name",""), sign_name)]
+    company_content = [
+        Spacer(1, 0.2*cm),
+        Paragraph("_________________________", s_sign),
+        Spacer(1, 0.05*cm),
+        Paragraph(company.get("name",""), s_sign_label),
+        Paragraph("Representante Autorizado", sty('RA', fontSize=7, fontName='Helvetica', alignment=TA_CENTER, textColor=MID))
+    ]
 
-    sig_table.append([client_sig, company_sig])
-    st = Table(sig_table, colWidths=[8.5*cm, 8.5*cm])
-    st.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#f0f4ff')),
-        ('TEXTCOLOR', (0,0), (-1,0), colors.HexColor('#3A86FF')),
-        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0,0), (-1,0), 8),
+    sig_header = [
+        Paragraph("ASSINATURA DO CLIENTE", sty('SH', fontSize=8, fontName='Helvetica-Bold', alignment=TA_CENTER, textColor=WHITE)),
+        Paragraph("ASSINATURA DA EMPRESA", sty('SH2', fontSize=8, fontName='Helvetica-Bold', alignment=TA_CENTER, textColor=WHITE))
+    ]
+
+    sig_table = Table([[sig_header[0], sig_header[1]], [client_content, company_content]],
+                      colWidths=[8.5*cm, 8.5*cm])
+    sig_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), NAVY),
+        ('LINEBELOW', (0,0), (-1,0), 1.5, GOLD),
+        ('GRID', (0,0), (-1,-1), 0.5, GOLD),
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e0e0f0')),
-        ('TOPPADDING', (0,0), (-1,-1), 8),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 10),
-        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white]),
+        ('TOPPADDING', (0,0), (-1,0), 7), ('BOTTOMPADDING', (0,0), (-1,0), 7),
+        ('TOPPADDING', (0,1), (-1,-1), 12), ('BOTTOMPADDING', (0,1), (-1,-1), 14),
+        ('BACKGROUND', (0,1), (0,1), colors.HexColor('#f0f4ff')),
+        ('BACKGROUND', (1,1), (1,1), colors.HexColor('#f7f8ff')),
     ]))
-    story.append(st)
-    story.append(Spacer(1, 0.6*cm))
+    story.append(sig_table)
+    story.append(Spacer(1, 0.5*cm))
 
-    # ── Legal footer
-    legal = company.get("legal_text","") or "Documento gerado electronicamente. Este contrato tem validade legal nos termos da legislação portuguesa."
-    story.append(Paragraph(legal, sty('Foot', fontSize=7, fontName='Helvetica',
-        textColor=colors.HexColor('#9ca3c0'), alignment=TA_CENTER)))
+    # ── Legal footer ──
+    legal = company.get("legal_text","") or "Documento gerado e assinado electronicamente. Este contrato tem validade legal."
+    story.append(Paragraph(legal, s_footer_legal))
 
-    doc.build(story)
+    doc.build(story, onFirstPage=add_page_decoration, onLaterPages=add_page_decoration)
     return buf.getvalue()
 
 # ── Company Settings

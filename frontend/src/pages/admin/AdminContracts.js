@@ -363,55 +363,69 @@ export default function AdminContracts() {
                 <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
                   {contracts.map(c => {
                     const ss = STATUS_MAP[c.status] || STATUS_MAP.pending;
+                    const SITE_URL = BACKEND_URL.replace('/api','').replace(':8001','') || window.location.origin;
+                    const contractUrl = `${SITE_URL}/contract/${c.token}`;
                     return (
                       <div key={c.id} data-testid={`contract-row-${c.id}`}
-                        style={{ background:'hsl(240,26%,8%)', border:'1px solid hsl(240,16%,18%)', borderRadius:14, padding:'14px 18px', display:'flex', alignItems:'center', gap:14, flexWrap:'wrap', transition:'border-color .2s' }}
+                        style={{ background:'hsl(240,26%,8%)', border:'1px solid hsl(240,16%,18%)', borderRadius:14, overflow:'hidden', transition:'border-color .2s' }}
                         onMouseEnter={e => e.currentTarget.style.borderColor = ss.border}
                         onMouseLeave={e => e.currentTarget.style.borderColor = 'hsl(240,16%,18%)'}>
-                        {/* Status bar */}
-                        <div style={{ width:4, height:44, background:ss.color, borderRadius:2, flexShrink:0 }} />
-                        {/* Icon */}
-                        <div style={{ width:38, height:38, background:ss.bg, borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                          <FileText size={16} color={ss.color}/>
-                        </div>
-                        {/* Info */}
-                        <div style={{ flex:1, minWidth:0 }}>
-                          <div style={{ fontSize:14, fontWeight:700, color:'#f3f5ff', marginBottom:3 }}>
-                            {c.client_name || <span style={{ color:'#4a5068', fontStyle:'italic' }}>Aguarda preenchimento</span>}
+                        {/* Linha principal */}
+                        <div style={{ padding:'14px 18px', display:'flex', alignItems:'center', gap:14, flexWrap:'wrap' }}>
+                          {/* Status bar */}
+                          <div style={{ width:4, height:44, background:ss.color, borderRadius:2, flexShrink:0 }} />
+                          {/* Icon */}
+                          <div style={{ width:38, height:38, background:ss.bg, borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                            <FileText size={16} color={ss.color}/>
                           </div>
-                          <div style={{ fontSize:11, color:'#5a6280', display:'flex', gap:10, flexWrap:'wrap' }}>
-                            {c.client_email && <span>{c.client_email}</span>}
-                            {c.valor && <span>€ {c.valor}</span>}
-                            <span>{c.template_name}</span>
-                            <span>Criado: {fmtDate(c.created_at)}</span>
-                            {c.submitted_at && <span>Assinado: {fmtDate(c.submitted_at)}</span>}
+                          {/* Info */}
+                          <div style={{ flex:1, minWidth:0 }}>
+                            <div style={{ fontSize:14, fontWeight:700, color:'#f3f5ff', marginBottom:3 }}>
+                              {c.client_name || <span style={{ color:'#4a5068', fontStyle:'italic' }}>Aguarda preenchimento</span>}
+                            </div>
+                            <div style={{ fontSize:11, color:'#5a6280', display:'flex', gap:10, flexWrap:'wrap' }}>
+                              {c.client_email && <span>{c.client_email}</span>}
+                              {c.valor && <span style={{ color:'#22c58b', fontWeight:600 }}>€ {c.valor}</span>}
+                              <span>{c.template_name}</span>
+                              <span>Criado: {fmtDate(c.created_at)}</span>
+                              {c.submitted_at && <span style={{ color:'#22c58b' }}>✓ Assinado: {fmtDate(c.submitted_at)}</span>}
+                            </div>
+                          </div>
+                          {/* Status badge */}
+                          <span style={{ fontSize:11, padding:'4px 10px', borderRadius:7, background:ss.bg, color:ss.color, border:`1px solid ${ss.border}`, fontWeight:700, flexShrink:0 }}>
+                            {ss.label}
+                          </span>
+                          {/* Actions */}
+                          <div style={{ display:'flex', gap:6, flexShrink:0 }}>
+                            {c.has_pdf && (
+                              <button onClick={() => downloadPdf(c.id, c.client_name)}
+                                title="Descarregar PDF"
+                                style={{ padding:'7px 11px', background:'rgba(34,197,139,0.1)', border:'1px solid rgba(34,197,139,0.25)', borderRadius:8, color:'#22c58b', cursor:'pointer', display:'flex', alignItems:'center', gap:5, fontSize:11, fontWeight:700 }}>
+                                <Download size={12}/>PDF
+                              </button>
+                            )}
+                            <button onClick={() => deleteContract(c.id)}
+                              title="Eliminar contrato"
+                              style={{ padding:'7px 10px', background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', borderRadius:8, color:'#ef4444', cursor:'pointer' }}>
+                              <Trash2 size={13}/>
+                            </button>
                           </div>
                         </div>
-                        {/* Status badge */}
-                        <span style={{ fontSize:11, padding:'4px 10px', borderRadius:7, background:ss.bg, color:ss.color, border:`1px solid ${ss.border}`, fontWeight:700, flexShrink:0 }}>
-                          {ss.label}
-                        </span>
-                        {/* Actions */}
-                        <div style={{ display:'flex', gap:6, flexShrink:0 }}>
-                          {c.status === 'pending' && (
-                            <button onClick={() => copyLink(c.token)}
-                              title="Copiar link do contrato"
-                              style={{ padding:'7px 11px', background:'rgba(58,134,255,0.1)', border:'1px solid rgba(58,134,255,0.25)', borderRadius:8, color:'#3A86FF', cursor:'pointer', display:'flex', alignItems:'center', gap:5, fontSize:11, fontWeight:700 }}>
-                              <Copy size={12}/>Link
-                            </button>
-                          )}
-                          {c.has_pdf && (
-                            <button onClick={() => downloadPdf(c.id, c.client_name)}
-                              title="Descarregar PDF"
-                              style={{ padding:'7px 11px', background:'rgba(34,197,139,0.1)', border:'1px solid rgba(34,197,139,0.25)', borderRadius:8, color:'#22c58b', cursor:'pointer', display:'flex', alignItems:'center', gap:5, fontSize:11, fontWeight:700 }}>
-                              <Download size={12}/>PDF
-                            </button>
-                          )}
-                          <button onClick={() => deleteContract(c.id)}
-                            title="Eliminar contrato"
-                            style={{ padding:'7px 10px', background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', borderRadius:8, color:'#ef4444', cursor:'pointer' }}>
-                            <Trash2 size={13}/>
+                        {/* Linha do link — sempre visível */}
+                        <div style={{ padding:'10px 18px', background:'rgba(58,134,255,0.04)', borderTop:'1px solid rgba(58,134,255,0.1)', display:'flex', alignItems:'center', gap:10 }}>
+                          <Link size={11} color="#3A86FF" style={{ flexShrink:0 }} />
+                          <span style={{ fontSize:12, color:'#3A86FF', fontFamily:'monospace', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                            {contractUrl}
+                          </span>
+                          <button onClick={() => copyLink(c.token)}
+                            data-testid={`copy-link-btn-${c.id}`}
+                            style={{ padding:'5px 12px', background:'rgba(58,134,255,0.12)', border:'1px solid rgba(58,134,255,0.3)', borderRadius:7, color:'#3A86FF', cursor:'pointer', display:'flex', alignItems:'center', gap:5, fontSize:11, fontWeight:700, flexShrink:0, whiteSpace:'nowrap' }}>
+                            <Copy size={11}/>Copiar Link
                           </button>
+                          <a href={contractUrl} target="_blank" rel="noreferrer"
+                            style={{ padding:'5px 10px', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:7, color:'#7a8299', cursor:'pointer', display:'flex', alignItems:'center', gap:4, fontSize:11, fontWeight:600, flexShrink:0, textDecoration:'none' }}>
+                            <Eye size={11}/>Abrir
+                          </a>
                         </div>
                       </div>
                     );
