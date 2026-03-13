@@ -1,71 +1,153 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { ChevronDown, Check } from 'lucide-react';
 import { useLang } from '../context/LangContext';
 
-const FLAGS = { pt: '🇵🇹', en: '🇬🇧', es: '🇪🇸' };
-const LABELS = { pt: 'PT', en: 'EN', es: 'ES' };
+const LANGUAGES = [
+  {
+    code: 'pt',
+    label: 'PT',
+    name: 'Português',
+    flag: 'https://flagcdn.com/w40/pt.png',
+  },
+  {
+    code: 'en',
+    label: 'EN',
+    name: 'English',
+    flag: 'https://flagcdn.com/w40/gb.png',
+  },
+  {
+    code: 'es',
+    label: 'ES',
+    name: 'Español',
+    flag: 'https://flagcdn.com/w40/es.png',
+  },
+];
 
 export default function LangSwitcher({ compact = false }) {
   const { lang, changeLang } = useLang();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
+  const current = LANGUAGES.find(l => l.code === lang) || LANGUAGES[0];
+
   useEffect(() => {
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
   return (
     <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
+      {/* Botão trigger */}
       <button
         data-testid="lang-switcher-btn"
         onClick={() => setOpen(o => !o)}
         style={{
-          display: 'flex', alignItems: 'center', gap: compact ? 4 : 6,
-          padding: compact ? '5px 8px' : '6px 11px',
-          background: 'hsl(240,18%,14%)',
-          border: '1px solid hsl(240,16%,22%)',
-          borderRadius: 8, cursor: 'pointer',
-          color: 'hsl(215,16%,70%)',
-          fontSize: 12, fontWeight: 700,
-          transition: 'border-color 0.15s',
+          display: 'flex', alignItems: 'center', gap: 7,
+          padding: compact ? '5px 8px' : '6px 12px',
+          background: open ? 'hsl(240,18%,17%)' : 'hsl(240,18%,14%)',
+          border: `1px solid ${open ? 'hsl(214,100%,60%)' : 'hsl(240,16%,22%)'}`,
+          borderRadius: 9, cursor: 'pointer',
+          color: 'hsl(215,16%,80%)',
+          transition: 'all 0.15s',
         }}
-        onMouseEnter={e => e.currentTarget.style.borderColor = 'hsl(214,100%,60%)'}
-        onMouseLeave={e => e.currentTarget.style.borderColor = 'hsl(240,16%,22%)'}
+        onMouseEnter={e => {
+          e.currentTarget.style.borderColor = 'hsl(214,100%,60%)';
+          e.currentTarget.style.background = 'hsl(240,18%,17%)';
+        }}
+        onMouseLeave={e => {
+          if (!open) {
+            e.currentTarget.style.borderColor = 'hsl(240,16%,22%)';
+            e.currentTarget.style.background = 'hsl(240,18%,14%)';
+          }
+        }}
       >
-        <span style={{ fontSize: 14 }}>{FLAGS[lang]}</span>
-        {!compact && <span>{LABELS[lang]}</span>}
+        {/* Bandeira */}
+        <img
+          src={current.flag}
+          alt={current.name}
+          style={{
+            width: 22, height: 15,
+            borderRadius: 2,
+            objectFit: 'cover',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+            flexShrink: 0,
+          }}
+          onError={e => { e.target.style.display = 'none'; }}
+        />
+        {/* Label */}
+        {!compact && (
+          <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.04em' }}>
+            {current.label}
+          </span>
+        )}
+        {/* Chevron */}
+        <ChevronDown
+          size={12}
+          color="hsl(215,16%,55%)"
+          style={{
+            transition: 'transform 0.2s',
+            transform: open ? 'rotate(180deg)' : 'rotate(0)',
+            flexShrink: 0,
+          }}
+        />
       </button>
 
+      {/* Dropdown */}
       {open && (
         <div style={{
-          position: 'absolute', top: '110%', right: 0,
+          position: 'absolute', top: 'calc(100% + 6px)', right: 0,
           background: 'hsl(240,26%,10%)',
           border: '1px solid hsl(240,16%,22%)',
-          borderRadius: 10, overflow: 'hidden',
-          zIndex: 500, minWidth: 100,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          borderRadius: 12, overflow: 'hidden',
+          zIndex: 500, minWidth: 150,
+          boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
+          animation: 'fadeInDown 0.15s ease',
         }}>
-          {Object.entries(FLAGS).map(([code, flag]) => (
-            <button
-              key={code}
-              data-testid={`lang-option-${code}`}
-              onClick={() => { changeLang(code); setOpen(false); }}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 8,
-                padding: '9px 14px', border: 'none', cursor: 'pointer',
-                background: lang === code ? 'rgba(58,134,255,0.12)' : 'transparent',
-                color: lang === code ? '#3A86FF' : 'hsl(215,16%,70%)',
-                fontSize: 13, fontWeight: lang === code ? 700 : 500,
-                textAlign: 'left',
-              }}
-              onMouseEnter={e => { if (lang !== code) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-              onMouseLeave={e => { if (lang !== code) e.currentTarget.style.background = 'transparent'; }}
-            >
-              <span style={{ fontSize: 16 }}>{flag}</span>
-              <span>{{ pt: 'Português', en: 'English', es: 'Español' }[code]}</span>
-            </button>
-          ))}
+          {LANGUAGES.map((l) => {
+            const isActive = lang === l.code;
+            return (
+              <button
+                key={l.code}
+                data-testid={`lang-option-${l.code}`}
+                onClick={() => { changeLang(l.code); setOpen(false); }}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '10px 14px', border: 'none', cursor: 'pointer',
+                  background: isActive ? 'rgba(58,134,255,0.12)' : 'transparent',
+                  color: isActive ? '#3A86FF' : 'hsl(215,16%,75%)',
+                  fontSize: 13, fontWeight: isActive ? 700 : 500,
+                  textAlign: 'left', transition: 'background 0.1s',
+                }}
+                onMouseEnter={e => {
+                  if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                }}
+                onMouseLeave={e => {
+                  if (!isActive) e.currentTarget.style.background = 'transparent';
+                }}
+              >
+                {/* Bandeira */}
+                <img
+                  src={l.flag}
+                  alt={l.name}
+                  style={{
+                    width: 24, height: 16,
+                    borderRadius: 2,
+                    objectFit: 'cover',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                    flexShrink: 0,
+                  }}
+                  onError={e => { e.target.style.display = 'none'; }}
+                />
+                {/* Nome */}
+                <span style={{ flex: 1 }}>{l.name}</span>
+                {/* Check ativo */}
+                {isActive && <Check size={13} color="#3A86FF" />}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
