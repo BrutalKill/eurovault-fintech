@@ -3068,6 +3068,376 @@ async def seed_default_template():
 
 
 # ════════════════════════════════════════════════════════════════
+#  GERADOR DE RECIBOS / JUSTIFICAÇÃO DE RECEBIMENTO
+# ════════════════════════════════════════════════════════════════
+import hashlib as _hl_receipt
+import io as _io_receipt
+
+SECURITY_CLAUSE = (
+    "O presente serviço é considerado integralmente prestado e executado no momento da "
+    "disponibilização das credenciais de acesso ou da consultoria via meios telemáticos "
+    "(Chamada de Voz/WhatsApp). Dada a natureza digital e imediata do serviço, o cliente "
+    "reconhece que não há lugar a direito de livre resolução ou reembolso após o início da "
+    "execução, conforme a legislação de serviços digitais em vigor na União Europeia."
+)
+
+SERVICE_OBJECT = (
+    "Prestação de serviços de consultoria em análise de dados financeiros e licenciamento "
+    "temporário de plataforma de software de apoio à decisão."
+)
+
+
+class ReceiptRequest(BaseModel):
+    client_name: str
+    value: str
+    date: Optional[str] = ""
+    notes: Optional[str] = ""
+
+
+class ReceiptProviderRequest(BaseModel):
+    name: str
+    nif: str
+    address: str
+    signature_name: Optional[str] = ""
+
+
+def _generate_receipt_pdf(provider: dict, client_name: str, value: str,
+                           date_str: str, notes: str = "") -> bytes:
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer, Table,
+                                    TableStyle, HRFlowable, KeepTogether)
+    from reportlab.pdfgen import canvas as pdfcanvas
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
+    from reportlab.lib.utils import ImageReader
+    from PIL import Image as PILImage
+
+    NAVY   = colors.HexColor('#0A1628')
+    GOLD   = colors.HexColor('#C9A84C')
+    GOLD2  = colors.HexColor('#E8C96A')
+    WHITE  = colors.white
+    TEXT   = colors.HexColor('#0d1b2a')
+    MUTED  = colors.HexColor('#5a6280')
+    LIGHT  = colors.HexColor('#F0F4FF')
+    BORDER = colors.HexColor('#E5E7EB')
+
+    W, H = A4
+
+    # Ref única para o documento
+    ref_data = f"{client_name}|{value}|{date_str}"
+    ref_hash = _hl_receipt.sha256(ref_data.encode()).hexdigest()[:12].upper()
+
+    # Logo da empresa (se disponível)
+    company_settings = None
+    logo_reader = None
+    try:
+        import asyncio
+        # Tentativa de usar logo da company_settings sincronamente via cache
+        pass
+    except Exception:
+        pass
+
+    def draw_page(canv, doc):
+        canv.saveState()
+        # Fundo branco
+        canv.setFillColor(WHITE)
+        canv.rect(0, 0, W, H, fill=1, stroke=0)
+
+        # Header navy
+        canv.setFillColor(NAVY)
+        canv.rect(0, H - 3.2*cm, W, 3.2*cm, fill=1, stroke=0)
+        # Linha dourada
+        canv.setFillColor(GOLD)
+        canv.rect(0, H - 3.2*cm - 0.12*cm, W, 0.12*cm, fill=1, stroke=0)
+
+        # Título no header
+        canv.setFillColor(WHITE)
+        canv.setFont('Helvetica-Bold', 11)
+        canv.drawCentredString(W/2, H - 1.4*cm, "CONTRATO DE PRESTAÇÃO DE SERVIÇOS")
+        canv.setFillColor(GOLD2)
+        canv.setFont('Helvetica', 8)
+        canv.drawCentredString(W/2, H - 2.1*cm, "CONSULTORIA TECNOLÓGICA E LICENCIAMENTO")
+        canv.setFont('Helvetica', 7)
+        canv.drawCentredString(W/2, H - 2.7*cm, f"Ref.: {ref_hash}   ·   Data: {date_str}")
+
+        # Footer navy
+        canv.setFillColor(NAVY)
+        canv.rect(0, 0, W, 1.1*cm, fill=1, stroke=0)
+        canv.setFillColor(GOLD)
+        canv.rect(0, 1.1*cm, W, 0.08*cm, fill=1, stroke=0)
+        canv.setFillColor(GOLD2)
+        canv.setFont('Helvetica', 6.5)
+        canv.drawString(1.2*cm, 0.38*cm, f"Ref.: {ref_hash}")
+        canv.drawCentredString(W/2, 0.38*cm, "Documento confidencial de uso exclusivo entre as partes")
+        canv.drawRightString(W - 1.2*cm, 0.38*cm, f"Pág. {canv.getPageNumber()}")
+
+        # Borda dourada lateral
+        canv.setFillColor(GOLD)
+        canv.rect(0, 1.18*cm, 0.18*cm, H - 3.32*cm - 1.18*cm, fill=1, stroke=0)
+
+        canv.restoreState()
+
+    buf = _io_receipt.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+        leftMargin=1.0*cm, rightMargin=1.4*cm, topMargin=4.0*cm, bottomMargin=2.0*cm)
+
+    styles = getSampleStyleSheet()
+    def sty(name, **kw):
+        return ParagraphStyle(name, parent=styles['Normal'], **kw)
+
+    s_section = sty('S', fontSize=8, fontName='Helvetica-Bold', alignment=TA_CENTER,
+                    textColor=WHITE)
+    s_label   = sty('L', fontSize=8.5, fontName='Helvetica-Bold', textColor=MUTED)
+    s_value   = sty('V', fontSize=9.5, fontName='Helvetica', textColor=TEXT)
+    s_body    = sty('B', fontSize=9.5, fontName='Helvetica', leading=15,
+                    alignment=TA_JUSTIFY, textColor=TEXT)
+    s_clause  = sty('C', fontSize=9, fontName='Helvetica', leading=14.5,
+                    alignment=TA_JUSTIFY, textColor=TEXT)
+    s_title   = sty('T', fontSize=13, fontName='Helvetica-Bold', alignment=TA_CENTER,
+                    textColor=NAVY, spaceAfter=4)
+
+    story = []
+    story.append(Spacer(1, 0.2*cm))
+
+    # Título principal
+    story.append(Paragraph(
+        "CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE<br/>CONSULTORIA TECNOLÓGICA E LICENCIAMENTO",
+        s_title))
+    story.append(HRFlowable(width="70%", thickness=1.5, color=GOLD, hAlign='CENTER',
+                             spaceAfter=6, spaceBefore=2))
+    story.append(Spacer(1, 0.3*cm))
+
+    # ── Tabela Prestador / Cliente lado a lado ──
+    col_w = (W - doc.leftMargin - doc.rightMargin - 0.4*cm) / 2
+
+    def info_rows(rows, bg):
+        t = Table(rows, colWidths=[2.8*cm, col_w - 2.8*cm])
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,-1), bg),
+            ('TOPPADDING', (0,0), (-1,-1), 5),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+            ('LEFTPADDING', (0,0), (-1,-1), 8),
+            ('RIGHTPADDING', (0,0), (-1,-1), 6),
+            ('LINEBELOW', (0,0), (-1,-2), 0.3, BORDER),
+        ]))
+        return t
+
+    prov_rows = [
+        [Paragraph("Nome:", s_label), Paragraph(provider.get("name",""), s_value)],
+        [Paragraph("NIF:", s_label), Paragraph(provider.get("nif",""), s_value)],
+        [Paragraph("Morada:", s_label), Paragraph(provider.get("address",""), s_value)],
+    ]
+    cli_rows = [
+        [Paragraph("Nome:", s_label), Paragraph(client_name, s_value)],
+        [Paragraph("Valor:", s_label), Paragraph(f"€ {value}", sty('VG', fontSize=10, fontName='Helvetica-Bold', textColor=GOLD))],
+        [Paragraph("Data:", s_label), Paragraph(date_str, s_value)],
+    ]
+
+    header = [
+        Paragraph("DADOS DO PRESTADOR", s_section),
+        Paragraph("DADOS DO CLIENTE / CONTRATANTE", s_section),
+    ]
+    outer = Table(
+        [header, [info_rows(prov_rows, LIGHT), info_rows(cli_rows, WHITE)]],
+        colWidths=[col_w, col_w], hAlign='LEFT',
+    )
+    outer.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), NAVY),
+        ('LINEBELOW', (0,0), (-1,0), 2, GOLD),
+        ('BOX', (0,0), (-1,-1), 0.8, GOLD),
+        ('LINEBEFORE', (1,0), (1,-1), 0.5, GOLD),
+        ('TOPPADDING', (0,0), (-1,0), 7), ('BOTTOMPADDING', (0,0), (-1,0), 7),
+        ('TOPPADDING', (0,1), (-1,1), 0), ('BOTTOMPADDING', (0,1), (-1,1), 0),
+        ('LEFTPADDING', (0,0), (-1,-1), 0), ('RIGHTPADDING', (0,0), (-1,-1), 0),
+    ]))
+    story.append(outer)
+    story.append(Spacer(1, 0.7*cm))
+
+    # ── Objeto do Serviço ──
+    story.append(KeepTogether([
+        Table([[Paragraph("OBJETO DO SERVIÇO", s_section)]], colWidths=[W - doc.leftMargin - doc.rightMargin],
+              style=TableStyle([('BACKGROUND',(0,0),(-1,-1),NAVY),('TOPPADDING',(0,0),(-1,-1),7),
+                                ('BOTTOMPADDING',(0,0),(-1,-1),7),('LINEBELOW',(0,0),(-1,-1),2,GOLD)])),
+        Table([[Paragraph(SERVICE_OBJECT, s_body)]],
+              colWidths=[W - doc.leftMargin - doc.rightMargin],
+              style=TableStyle([('BACKGROUND',(0,0),(-1,-1),LIGHT),
+                                ('BOX',(0,0),(-1,-1),0.8,GOLD),
+                                ('TOPPADDING',(0,0),(-1,-1),10),('BOTTOMPADDING',(0,0),(-1,-1),10),
+                                ('LEFTPADDING',(0,0),(-1,-1),10),('RIGHTPADDING',(0,0),(-1,-1),10)])),
+    ]))
+    story.append(Spacer(1, 0.5*cm))
+
+    # ── Cláusula de Segurança ──
+    story.append(KeepTogether([
+        Table([[Paragraph("CLÁUSULA DE NÃO RESOLUÇÃO / DIREITO DE ARREPENDIMENTO", s_section)]],
+              colWidths=[W - doc.leftMargin - doc.rightMargin],
+              style=TableStyle([('BACKGROUND',(0,0),(-1,-1),colors.HexColor('#1E3A5F')),
+                                ('TOPPADDING',(0,0),(-1,-1),7),('BOTTOMPADDING',(0,0),(-1,-1),7),
+                                ('LINEBELOW',(0,0),(-1,-1),2,GOLD)])),
+        Table([[Paragraph(SECURITY_CLAUSE, s_clause)]],
+              colWidths=[W - doc.leftMargin - doc.rightMargin],
+              style=TableStyle([('BACKGROUND',(0,0),(-1,-1),colors.HexColor('#FFF9EC')),
+                                ('BOX',(0,0),(-1,-1),1.2,GOLD),
+                                ('TOPPADDING',(0,0),(-1,-1),10),('BOTTOMPADDING',(0,0),(-1,-1),10),
+                                ('LEFTPADDING',(0,0),(-1,-1),10),('RIGHTPADDING',(0,0),(-1,-1),10)])),
+    ]))
+    story.append(Spacer(1, 0.5*cm))
+
+    # ── Notas adicionais ──
+    if notes and notes.strip():
+        story.append(KeepTogether([
+            Table([[Paragraph("NOTAS ADICIONAIS", s_section)]],
+                  colWidths=[W - doc.leftMargin - doc.rightMargin],
+                  style=TableStyle([('BACKGROUND',(0,0),(-1,-1),NAVY),
+                                    ('TOPPADDING',(0,0),(-1,-1),6),('BOTTOMPADDING',(0,0),(-1,-1),6),
+                                    ('LINEBELOW',(0,0),(-1,-1),1.5,GOLD)])),
+            Table([[Paragraph(notes, s_body)]],
+                  colWidths=[W - doc.leftMargin - doc.rightMargin],
+                  style=TableStyle([('BACKGROUND',(0,0),(-1,-1),LIGHT),('BOX',(0,0),(-1,-1),0.8,GOLD),
+                                    ('TOPPADDING',(0,0),(-1,-1),8),('BOTTOMPADDING',(0,0),(-1,-1),8),
+                                    ('LEFTPADDING',(0,0),(-1,-1),10),('RIGHTPADDING',(0,0),(-1,-1),10)])),
+        ]))
+        story.append(Spacer(1, 0.5*cm))
+
+    # ── Declaração de Recebimento ──
+    story.append(HRFlowable(width="100%", thickness=0.8, color=GOLD, spaceAfter=6))
+    story.append(Paragraph(
+        f"O presente documento certifica que o valor de <b>€ {value}</b> foi recebido "
+        f"pelo Prestador a título de pagamento pelos serviços acima descritos, "
+        f"ficando o serviço considerado integralmente executado.",
+        sty('D', fontSize=9, fontName='Helvetica', leading=14, alignment=TA_JUSTIFY, textColor=TEXT)
+    ))
+    story.append(Spacer(1, 0.6*cm))
+    story.append(HRFlowable(width="100%", thickness=0.8, color=GOLD, spaceAfter=6))
+
+    # ── Assinaturas ──
+    sig_name = provider.get("signature_name","") or provider.get("name","")
+    sig_hash  = _hl_receipt.sha256(f"{ref_hash}{sig_name}".encode()).hexdigest()[:24]
+
+    prov_sig = [
+        Paragraph("ASSINATURA DO PRESTADOR", s_section),
+        Spacer(1, 0.3*cm),
+        Paragraph(f"<i>{sig_name}</i>",
+                  sty('SN', fontSize=14, fontName='Helvetica-BoldOblique', alignment=TA_CENTER, textColor=NAVY)),
+        Spacer(1, 0.05*cm),
+        HRFlowable(width="80%", thickness=0.5, color=NAVY, hAlign='CENTER'),
+        Spacer(1, 0.08*cm),
+        Paragraph(f"Assinatura Digital Certificada",
+                  sty('SL', fontSize=7, fontName='Helvetica', alignment=TA_CENTER, textColor=MUTED)),
+        Paragraph(f"Hash: {sig_hash}",
+                  sty('SH', fontSize=6, fontName='Courier', alignment=TA_CENTER, textColor=colors.HexColor('#9ca3c0'))),
+    ]
+    cli_sig = [
+        Paragraph("ASSINATURA DO CLIENTE", s_section),
+        Spacer(1, 0.3*cm),
+        Paragraph("_________________________",
+                  sty('BL', fontSize=14, fontName='Helvetica', alignment=TA_CENTER, textColor=MUTED)),
+        Spacer(1, 0.05*cm),
+        Paragraph(client_name,
+                  sty('CL', fontSize=9, fontName='Helvetica', alignment=TA_CENTER, textColor=MUTED)),
+        Spacer(1, 0.08*cm),
+        Paragraph(f"Data: {date_str}",
+                  sty('DT', fontSize=8, fontName='Helvetica', alignment=TA_CENTER, textColor=MUTED)),
+    ]
+
+    sig_t = Table(
+        [[Paragraph("ASSINATURA DO PRESTADOR", s_section), Paragraph("ASSINATURA DO CLIENTE", s_section)],
+         [prov_sig[1:], cli_sig[1:]]],
+        colWidths=[col_w, col_w], hAlign='LEFT',
+    )
+    sig_t.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), NAVY),
+        ('LINEBELOW', (0,0), (-1,0), 2, GOLD),
+        ('BOX', (0,0), (-1,-1), 0.8, GOLD),
+        ('LINEBEFORE', (1,0), (1,-1), 0.5, GOLD),
+        ('BACKGROUND', (0,1), (0,1), LIGHT),
+        ('BACKGROUND', (1,1), (1,1), WHITE),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('TOPPADDING', (0,0), (-1,0), 7), ('BOTTOMPADDING', (0,0), (-1,0), 7),
+        ('TOPPADDING', (0,1), (-1,1), 10), ('BOTTOMPADDING', (0,1), (-1,1), 14),
+        ('LEFTPADDING', (0,0), (-1,-1), 0), ('RIGHTPADDING', (0,0), (-1,-1), 0),
+    ]))
+    story.append(sig_t)
+
+    doc.build(story, onFirstPage=draw_page, onLaterPages=draw_page)
+    return buf.getvalue()
+
+
+# ── Provider settings
+@app.get("/api/admin/receipt-provider")
+async def get_receipt_provider(admin = Depends(get_admin_user)):
+    p = await db.receipt_provider.find_one({}, {"_id": 0})
+    if not p:
+        return {"name": "", "nif": "", "address": "", "signature_name": ""}
+    return p
+
+@app.put("/api/admin/receipt-provider")
+async def update_receipt_provider(req: ReceiptProviderRequest, admin = Depends(get_admin_user)):
+    await db.receipt_provider.update_one({}, {"$set": req.dict()}, upsert=True)
+    return {"success": True}
+
+# ── Generate receipt PDF
+@app.post("/api/admin/generate-receipt")
+async def generate_receipt(req: ReceiptRequest, admin = Depends(get_admin_user)):
+    from fastapi.responses import Response as FastAPIResponse
+    provider = await db.receipt_provider.find_one({}, {"_id": 0}) or {
+        "name": "Prestador de Serviços", "nif": "000 000 000", "address": "Portugal", "signature_name": ""}
+    date_str = req.date or datetime.utcnow().strftime("%d/%m/%Y")
+    try:
+        pdf_bytes = _generate_receipt_pdf(provider, req.client_name, req.value, date_str, req.notes or "")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao gerar PDF: {str(e)}")
+    safe_name = req.client_name.replace(" ", "_").replace("/", "")[:30]
+    return FastAPIResponse(
+        content=pdf_bytes, media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="recibo_{safe_name}_{req.value}eur.pdf"'}
+    )
+
+# ── EXIF Metadata Cleaner
+@app.post("/api/admin/clean-image")
+async def clean_image_exif(file: UploadFile = File(...), admin = Depends(get_admin_user)):
+    from fastapi.responses import Response as FastAPIResponse
+    allowed = {"image/jpeg", "image/jpg", "image/png", "image/webp"}
+    if file.content_type not in allowed:
+        raise HTTPException(status_code=400, detail="Formato não suportado. Use JPG, PNG ou WebP.")
+    content = await file.read()
+    if len(content) > 20 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Ficheiro demasiado grande. Máximo 20MB.")
+    try:
+        from PIL import Image as PILImg
+        img = PILImg.open(_io_receipt.BytesIO(content))
+        # Detectar modo para preservar qualidade
+        mode = img.mode
+        if mode in ('RGBA', 'LA', 'PA'):
+            # Preservar transparência para PNG
+            clean = PILImg.new(mode, img.size)
+            clean.putdata(list(img.getdata()))
+            fmt, ext, mime = "PNG", "png", "image/png"
+        else:
+            rgb = img.convert("RGB")
+            clean = PILImg.new("RGB", rgb.size)
+            clean.putdata(list(rgb.getdata()))
+            fmt, ext, mime = "JPEG", "jpg", "image/jpeg"
+        buf = _io_receipt.BytesIO()
+        if fmt == "JPEG":
+            clean.save(buf, format="JPEG", quality=95, optimize=True)
+        else:
+            clean.save(buf, format="PNG", optimize=True)
+        clean_bytes = buf.getvalue()
+        # Nome aleatório sem rastreio
+        rand_name = _hl_receipt.md5(clean_bytes + str(datetime.utcnow().timestamp()).encode()).hexdigest()[:14]
+        return FastAPIResponse(
+            content=clean_bytes, media_type=mime,
+            headers={"Content-Disposition": f'attachment; filename="doc_{rand_name}.{ext}"'}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao processar imagem: {str(e)}")
+
+
+# ════════════════════════════════════════════════════════════════
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 @app.exception_handler(StarletteHTTPException)
