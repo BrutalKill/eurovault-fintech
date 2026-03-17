@@ -1226,7 +1226,6 @@ async def get_user_orders(user_id: str, admin = Depends(get_admin_user)):
 #  KYC — DOCUMENTOS DE IDENTIDADE
 # ════════════════════════════════════════════════════════════════
 import base64
-from fastapi import UploadFile, File, Form
 
 @app.post("/api/kyc/upload")
 async def upload_kyc(
@@ -1581,26 +1580,6 @@ async def get_referral(current_user = Depends(get_current_user)):
 # ════════════════════════════════════════════════════════════════
 #  CONTA DEMO
 # ════════════════════════════════════════════════════════════════
-class DemoModeRequest(BaseModel):
-    demo_mode: bool
-
-@app.put("/api/me/demo")
-async def toggle_demo(req: DemoModeRequest, current_user = Depends(get_current_user)):
-    user_id = current_user["sub"]
-    user = await db.users.find_one({"_id": ObjectId(user_id)})
-    if req.demo_mode:
-        await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": {
-            "demo_mode": True, "real_balance": user.get("balance", 0),
-            "real_profit": user.get("profit", 0), "balance": 10000.0, "profit": 0.0
-        }})
-    else:
-        await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": {
-            "demo_mode": False,
-            "balance": user.get("real_balance", 0),
-            "profit":  user.get("real_profit", 0)
-        }})
-    return {"success": True, "demo_mode": req.demo_mode}
-
 
 # ════════════════════════════════════════════════════════════════
 #  ANALYTICS ADMIN — KPIs e gráficos
@@ -1959,67 +1938,6 @@ async def get_balance_history(current_user = Depends(get_current_user)):
     return history
 
 
-# ════════════════════════════════════════════════════════════════
-#  2FA — AUTENTICAÇÃO DE DOIS FATORES (TOTP)
-# ════════════════════════════════════════════════════════════════
-import hashlib, time as time_module, struct, base64 as b64
-
-def generate_totp_secret():
-    return b64.b32encode(os.urandom(20)).decode()
-
-def verify_totp(secret: str, code: str, window: int = 1) -> bool:
-    try:
-        import hmac as _hmac
-        key = b64.b32decode(secret.upper())
-        for offset in range(-window, window + 1):
-            counter = int(time_module.time()) // 30 + offset
-            msg = struct.pack(">Q", counter)
-            h = _hmac.new(key, msg, hashlib.sha1).digest()
-            ov = h[-1] & 0x0f
-            otp = struct.unpack(">I", h[ov:ov+4])[0] & 0x7fffffff
-            if str(otp % 1000000).zfill(6) == str(code):
-                return True
-    except Exception:
-        pass
-    return False
-
-class TwoFASetupResponse(BaseModel):
-    secret: str
-    uri: str
-
-class TwoFACodeRequest(BaseModel):
-    code: str
-
-@app.post("/api/me/2fa/setup")
-async def setup_2fa(current_user = Depends(get_current_user)):
-    secret = generate_totp_secret()
-    await db.users.update_one({"_id": ObjectId(current_user["sub"])}, {"$set": {"totp_secret_pending": secret}})
-    email = current_user.get("email", "user")
-    uri = f"otpauth://totp/EuroVault:{email}?secret={secret}&issuer=EuroVault"
-    return {"secret": secret, "uri": uri}
-
-@app.post("/api/me/2fa/confirm")
-async def confirm_2fa(req: TwoFACodeRequest, current_user = Depends(get_current_user)):
-    user = await db.users.find_one({"_id": ObjectId(current_user["sub"])})
-    secret = user.get("totp_secret_pending")
-    if not secret or not verify_totp(secret, req.code):
-        raise HTTPException(status_code=400, detail="Código inválido. Verifique a app autenticadora.")
-    await db.users.update_one({"_id": ObjectId(current_user["sub"])}, {
-        "$set": {"totp_secret": secret, "two_fa_enabled": True},
-        "$unset": {"totp_secret_pending": ""}
-    })
-    return {"success": True}
-
-@app.post("/api/me/2fa/disable")
-async def disable_2fa(req: TwoFACodeRequest, current_user = Depends(get_current_user)):
-    user = await db.users.find_one({"_id": ObjectId(current_user["sub"])})
-    secret = user.get("totp_secret")
-    if not secret or not verify_totp(secret, req.code):
-        raise HTTPException(status_code=400, detail="Código inválido")
-    await db.users.update_one({"_id": ObjectId(current_user["sub"])}, {
-        "$set": {"two_fa_enabled": False}, "$unset": {"totp_secret": ""}
-    })
-    return {"success": True}
 
 
 # ════════════════════════════════════════════════════════════════
