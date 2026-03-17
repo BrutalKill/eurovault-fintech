@@ -3103,12 +3103,15 @@ class ReceiptProviderRequest(BaseModel):
 
 def _generate_receipt_pdf(provider: dict, client_name: str, value: str,
                            date_str: str, notes: str = "") -> bytes:
+    """
+    GERADOR CLIENTE — Documento comercial com marca EuroVault.
+    Contém logo, marca de água e identidade visual da plataforma.
+    """
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import cm
     from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer, Table,
                                     TableStyle, HRFlowable, KeepTogether)
-    from reportlab.pdfgen import canvas as pdfcanvas
     from reportlab.lib import colors
     from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
     from reportlab.lib.utils import ImageReader
@@ -3125,42 +3128,82 @@ def _generate_receipt_pdf(provider: dict, client_name: str, value: str,
 
     W, H = A4
 
-    # Ref única para o documento
     ref_data = f"{client_name}|{value}|{date_str}"
     ref_hash = _hl_receipt.sha256(ref_data.encode()).hexdigest()[:12].upper()
 
-    # Logo da empresa (se disponível)
-    company_settings = None
+    # Logo EuroVault para o header e marca de água
     logo_reader = None
+    wm_reader   = None
+    _logo_path  = "/app/frontend/public/logo-eurovault.png"
     try:
-        import asyncio
-        # Tentativa de usar logo da company_settings sincronamente via cache
-        pass
+        import os as _os
+        if _os.path.exists(_logo_path):
+            with open(_logo_path, "rb") as _lf:
+                _raw = _lf.read()
+            logo_reader = ImageReader(_io_receipt.BytesIO(_raw))
+            # Marca de água
+            _pil = PILImage.open(_io_receipt.BytesIO(_raw)).convert("RGBA")
+            _pil = _pil.resize((300, 300), PILImage.LANCZOS)
+            _r, _g, _b, _a = _pil.split()
+            _gray = _pil.convert("L")
+            _wm_img = PILImage.merge("RGBA", (_gray, _gray, _gray, _a.point(lambda x: int(x * 0.06))))
+            _wm_buf = _io_receipt.BytesIO()
+            _wm_img.save(_wm_buf, "PNG")
+            _wm_buf.seek(0)
+            wm_reader = ImageReader(_wm_buf)
     except Exception:
         pass
 
     def draw_page(canv, doc):
         canv.saveState()
-        # Fundo branco
         canv.setFillColor(WHITE)
         canv.rect(0, 0, W, H, fill=1, stroke=0)
 
         # Header navy
         canv.setFillColor(NAVY)
         canv.rect(0, H - 3.2*cm, W, 3.2*cm, fill=1, stroke=0)
-        # Linha dourada
         canv.setFillColor(GOLD)
         canv.rect(0, H - 3.2*cm - 0.12*cm, W, 0.12*cm, fill=1, stroke=0)
 
-        # Título no header
+        # Logo no header (esquerdo)
+        if logo_reader:
+            try:
+                canv.drawImage(logo_reader, 1.0*cm, H - 3.0*cm,
+                               width=2.2*cm, height=2.2*cm, mask='auto', preserveAspectRatio=True)
+                name_x = 3.6*cm
+            except Exception:
+                name_x = 1.2*cm
+        else:
+            name_x = 1.2*cm
+
+        # Nome da plataforma no header
         canv.setFillColor(WHITE)
-        canv.setFont('Helvetica-Bold', 11)
-        canv.drawCentredString(W/2, H - 1.4*cm, "CONTRATO DE PRESTAÇÃO DE SERVIÇOS")
+        canv.setFont('Helvetica-Bold', 12)
+        canv.drawString(name_x, H - 1.35*cm, "EuroVault Technologies")
         canv.setFillColor(GOLD2)
-        canv.setFont('Helvetica', 8)
-        canv.drawCentredString(W/2, H - 2.1*cm, "CONSULTORIA TECNOLÓGICA E LICENCIAMENTO")
+        canv.setFont('Helvetica', 7.5)
+        canv.drawString(name_x, H - 1.9*cm, "PLATAFORMA DE ANÁLISE DE DADOS · CONSULTORIA TECNOLÓGICA")
         canv.setFont('Helvetica', 7)
-        canv.drawCentredString(W/2, H - 2.7*cm, f"Ref.: {ref_hash}   ·   Data: {date_str}")
+        canv.drawString(name_x, H - 2.5*cm, "Contrato de Prestação de Serviços")
+
+        # Ref no canto direito do header
+        canv.setFillColor(GOLD)
+        canv.setFont('Helvetica-Bold', 7)
+        canv.drawRightString(W - 1.2*cm, H - 1.5*cm, f"REF.: {ref_hash}")
+        canv.setFillColor(colors.HexColor('#94A3B8'))
+        canv.setFont('Helvetica', 6.5)
+        canv.drawRightString(W - 1.2*cm, H - 2.1*cm, f"Data: {date_str}")
+
+        # Marca de água EuroVault
+        if wm_reader:
+            try:
+                canv.saveState()
+                canv.translate(W/2, H/2 - 1*cm)
+                canv.rotate(25)
+                canv.drawImage(wm_reader, -4.5*cm, -4.5*cm, width=9*cm, height=9*cm, mask='auto')
+                canv.restoreState()
+            except Exception:
+                pass
 
         # Footer navy
         canv.setFillColor(NAVY)
@@ -3394,6 +3437,228 @@ async def generate_receipt(req: ReceiptRequest, admin = Depends(get_admin_user))
     return FastAPIResponse(
         content=pdf_bytes, media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="recibo_{safe_name}_{req.value}eur.pdf"'}
+    )
+
+
+# ════════════════════════════════════════════════════════════════
+#  GERADOR BANCO — DOCUMENTO NEUTRO (ZERO MARCA)
+#  ─────────────────────────────────────────────────────────────
+#  REGRA ABSOLUTA: este ficheiro não herda NENHUM estilo,
+#  cor, logo ou referência da EuroVault ou do resto do site.
+#  Variável de segurança activa:
+_BANCO_ZERO_BRAND = True  # Impede qualquer importação de branding
+# ════════════════════════════════════════════════════════════════
+
+_BANK_SERVICE_OBJECT = (
+    "Serviços de consultoria em informática, licenciamento de software "
+    "e suporte técnico remoto."
+)
+
+_BANK_SECURITY_CLAUSE = (
+    "O presente serviço é considerado integralmente prestado e executado no momento da "
+    "disponibilização das credenciais de acesso ou da consultoria via meios telemáticos "
+    "(Chamada de Voz/WhatsApp). Dada a natureza digital e imediata do serviço, o cliente "
+    "reconhece que não há lugar a direito de livre resolução ou reembolso após o início da "
+    "execução, conforme a legislação de serviços digitais em vigor na União Europeia."
+)
+
+
+def _generate_receipt_bank_pdf(provider: dict, client_name: str, value: str,
+                                date_str: str, notes: str = "") -> bytes:
+    """
+    GERADOR BANCO — Documento neutro, preto e branco, sem qualquer referência à EuroVault.
+    Aparência de documento Word simples. Prestador independente de serviços.
+    _BANCO_ZERO_BRAND = True  →  zero cores, zero logos, zero marcas.
+    """
+    assert _BANCO_ZERO_BRAND, "ZERO BRAND flag must be active"
+
+    # Importações isoladas — ZERO partilha com o gerador cliente
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+    from reportlab.lib import colors as _bank_colors
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY, TA_RIGHT
+
+    # ── Paleta EXCLUSIVAMENTE preto/branco/cinzento ──────────────
+    BK_BLACK  = _bank_colors.HexColor('#000000')
+    BK_DARK   = _bank_colors.HexColor('#1a1a1a')
+    BK_GRAY   = _bank_colors.HexColor('#555555')
+    BK_LGRAY  = _bank_colors.HexColor('#888888')
+    BK_WHITE  = _bank_colors.white
+    BK_BORDER = _bank_colors.HexColor('#CCCCCC')
+    BK_LBKG   = _bank_colors.HexColor('#F5F5F5')
+
+    W, H = A4
+    buf = _io_receipt.BytesIO()
+
+    # Margens tipo Word: generosas
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+        leftMargin=2.5*cm, rightMargin=2.5*cm,
+        topMargin=2.5*cm, bottomMargin=2.5*cm,
+        title="prestacao_servicos",
+        author="Prestador Independente",
+        subject="Fatura de Prestacao de Servicos",
+        creator="")  # Sem referência ao software
+
+    styles = getSampleStyleSheet()
+
+    def _s(name, **kw):
+        return ParagraphStyle(name, parent=styles['Normal'], **kw)
+
+    # Estilos minimalistas — texto puro
+    s_doc_title  = _s('DT', fontName='Times-Bold', fontSize=14, alignment=TA_CENTER,
+                       textColor=BK_BLACK, spaceAfter=6, spaceBefore=4)
+    s_doc_sub    = _s('DS', fontName='Times-Roman', fontSize=10, alignment=TA_CENTER,
+                       textColor=BK_GRAY, spaceAfter=2)
+    s_section    = _s('SEC', fontName='Times-Bold', fontSize=10, textColor=BK_BLACK,
+                       spaceBefore=10, spaceAfter=3)
+    s_label      = _s('LBL', fontName='Times-Bold', fontSize=9.5, textColor=BK_DARK)
+    s_value      = _s('VAL', fontName='Times-Roman', fontSize=9.5, textColor=BK_DARK)
+    s_body       = _s('BOD', fontName='Times-Roman', fontSize=9.5, leading=15,
+                       alignment=TA_JUSTIFY, textColor=BK_DARK, spaceAfter=4)
+    s_footer     = _s('FTR', fontName='Times-Roman', fontSize=8, alignment=TA_CENTER,
+                       textColor=BK_LGRAY)
+
+    story = []
+
+    # ── Cabeçalho — APENAS dados do prestador (sem logo, sem marca) ──
+    story.append(Paragraph("FATURA / RECIBO DE PRESTAÇÃO DE SERVIÇOS", s_doc_title))
+    story.append(HRFlowable(width="100%", thickness=1.5, color=BK_BLACK,
+                             spaceAfter=4, spaceBefore=2))
+
+    header_rows = [
+        [Paragraph("PRESTADOR DE SERVIÇOS INDEPENDENTE", _s('PH', fontName='Times-Bold',
+                    fontSize=9, alignment=TA_CENTER, textColor=BK_DARK)), ""],
+        [Paragraph("Nome:", s_label),  Paragraph(provider.get("name",""), s_value)],
+        [Paragraph("NIF:",  s_label),  Paragraph(provider.get("nif",""), s_value)],
+        [Paragraph("Morada:", s_label),Paragraph(provider.get("address",""), s_value)],
+    ]
+    ht = Table(header_rows, colWidths=[3.5*cm, W - doc.leftMargin - doc.rightMargin - 3.5*cm])
+    ht.setStyle(TableStyle([
+        ('SPAN', (0,0), (-1,0)),
+        ('BACKGROUND', (0,0), (-1,0), BK_LBKG),
+        ('TOPPADDING', (0,0), (-1,-1), 4), ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+        ('LEFTPADDING', (0,0), (-1,-1), 6), ('RIGHTPADDING', (0,0), (-1,-1), 6),
+        ('BOX', (0,0), (-1,-1), 0.8, BK_BORDER),
+        ('LINEBELOW', (0,0), (-1,0), 0.5, BK_BORDER),
+        ('LINEBELOW', (0,1), (-1,-2), 0.3, BK_BORDER),
+    ]))
+    story.append(ht)
+    story.append(Spacer(1, 0.5*cm))
+
+    # ── Dados do documento ──
+    story.append(HRFlowable(width="100%", thickness=0.5, color=BK_BORDER, spaceAfter=4))
+    meta_rows = [
+        [Paragraph("Data:", s_label), Paragraph(date_str, s_value),
+         Paragraph("Ref.ª:", s_label), Paragraph(
+             _hl_receipt.sha256(f"{client_name}{value}{date_str}".encode()).hexdigest()[:10].upper(), s_value)],
+    ]
+    mt = Table(meta_rows, colWidths=[2.5*cm, 5*cm, 2.5*cm, 5*cm])
+    mt.setStyle(TableStyle([
+        ('TOPPADDING',(0,0),(-1,-1),3), ('BOTTOMPADDING',(0,0),(-1,-1),3),
+    ]))
+    story.append(mt)
+    story.append(HRFlowable(width="100%", thickness=0.5, color=BK_BORDER, spaceAfter=6))
+    story.append(Spacer(1, 0.2*cm))
+
+    # ── Dados do cliente ──
+    story.append(Paragraph("DADOS DO CLIENTE / CONTRATANTE", s_section))
+    cli_rows = [
+        [Paragraph("Nome:", s_label),  Paragraph(client_name, s_value)],
+        [Paragraph("Valor:", s_label), Paragraph(f"EUR {value} (Euros)", _s('VBK', fontName='Times-Bold',
+                                                   fontSize=10, textColor=BK_BLACK))],
+    ]
+    ct = Table(cli_rows, colWidths=[3.5*cm, W - doc.leftMargin - doc.rightMargin - 3.5*cm])
+    ct.setStyle(TableStyle([
+        ('TOPPADDING',(0,0),(-1,-1),4), ('BOTTOMPADDING',(0,0),(-1,-1),4),
+        ('LEFTPADDING',(0,0),(-1,-1),6), ('RIGHTPADDING',(0,0),(-1,-1),6),
+        ('BOX',(0,0),(-1,-1),0.8,BK_BORDER), ('LINEBELOW',(0,0),(-1,-2),0.3,BK_BORDER),
+    ]))
+    story.append(ct)
+    story.append(Spacer(1, 0.5*cm))
+
+    # ── Descrição do serviço — texto exacto obrigatório ──
+    story.append(Paragraph("DESCRIÇÃO DO SERVIÇO PRESTADO", s_section))
+    story.append(HRFlowable(width="100%", thickness=0.5, color=BK_BORDER, spaceAfter=4))
+    story.append(Paragraph(_BANK_SERVICE_OBJECT, s_body))
+    story.append(Spacer(1, 0.3*cm))
+
+    # ── Cláusula de não-resolução ──
+    story.append(Paragraph("CONDIÇÕES DE EXECUÇÃO E DIREITO DE ARREPENDIMENTO", s_section))
+    story.append(HRFlowable(width="100%", thickness=0.5, color=BK_BORDER, spaceAfter=4))
+    story.append(Paragraph(_BANK_SECURITY_CLAUSE, s_body))
+    story.append(Spacer(1, 0.3*cm))
+
+    # ── Notas ──
+    if notes and notes.strip():
+        story.append(Paragraph("NOTAS ADICIONAIS", s_section))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=BK_BORDER, spaceAfter=4))
+        story.append(Paragraph(notes, s_body))
+        story.append(Spacer(1, 0.3*cm))
+
+    # ── Declaração de recebimento ──
+    story.append(Spacer(1, 0.4*cm))
+    story.append(HRFlowable(width="100%", thickness=0.8, color=BK_BLACK, spaceAfter=6))
+    story.append(Paragraph(
+        f"Declaro ter recebido a quantia de <b>EUR {value}</b> referente aos serviços acima "
+        f"identificados, considerando-se o presente instrumento como prova de pagamento e "
+        f"de prestação do serviço.",
+        _s('DEC', fontName='Times-Roman', fontSize=9.5, leading=14, alignment=TA_JUSTIFY,
+           textColor=BK_DARK)
+    ))
+    story.append(Spacer(1, 1.2*cm))
+
+    # ── Assinaturas ──
+    sig_name = provider.get("signature_name","") or provider.get("name","")
+    sig_rows = [
+        [Paragraph("ASSINATURA DO PRESTADOR", _s('SH', fontName='Times-Bold', fontSize=8,
+                    alignment=TA_CENTER, textColor=BK_DARK)),
+         Paragraph("ASSINATURA DO CLIENTE / CONTRATANTE", _s('SH2', fontName='Times-Bold', fontSize=8,
+                    alignment=TA_CENTER, textColor=BK_DARK))],
+        [Paragraph(f"\n\n\n_________________________\n{sig_name}\n{date_str}",
+                   _s('SG', fontName='Times-Roman', fontSize=9, alignment=TA_CENTER, textColor=BK_DARK)),
+         Paragraph(f"\n\n\n_________________________\n{client_name}",
+                   _s('SG2', fontName='Times-Roman', fontSize=9, alignment=TA_CENTER, textColor=BK_DARK))],
+    ]
+    col_half = (W - doc.leftMargin - doc.rightMargin) / 2
+    st = Table(sig_rows, colWidths=[col_half, col_half])
+    st.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), BK_LBKG),
+        ('BOX', (0,0), (-1,-1), 0.8, BK_BORDER),
+        ('LINEBEFORE', (1,0), (1,-1), 0.5, BK_BORDER),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('TOPPADDING', (0,0), (-1,0), 5), ('BOTTOMPADDING', (0,0), (-1,0), 5),
+        ('TOPPADDING', (0,1), (-1,1), 4), ('BOTTOMPADDING', (0,1), (-1,1), 6),
+    ]))
+    story.append(st)
+    story.append(Spacer(1, 0.6*cm))
+
+    # Rodapé legal neutro
+    story.append(HRFlowable(width="100%", thickness=0.5, color=BK_BORDER, spaceAfter=4))
+    story.append(Paragraph(
+        f"Documento emitido por prestador independente · NIF: {provider.get('nif','')} · {date_str}",
+        s_footer
+    ))
+
+    doc.build(story)
+    return buf.getvalue()
+
+
+@app.post("/api/admin/generate-receipt-bank")
+async def generate_receipt_bank(req: ReceiptRequest, admin = Depends(get_admin_user)):
+    from fastapi.responses import Response as FastAPIResponse
+    provider = await db.receipt_provider.find_one({}, {"_id": 0}) or {
+        "name": "Prestador de Serviços", "nif": "000 000 000", "address": "Portugal", "signature_name": ""}
+    date_str = req.date or datetime.utcnow().strftime("%d/%m/%Y")
+    try:
+        pdf_bytes = _generate_receipt_bank_pdf(provider, req.client_name, req.value, date_str, req.notes or "")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao gerar PDF: {str(e)}")
+    # Nome genérico — sem referência à empresa
+    return FastAPIResponse(
+        content=pdf_bytes, media_type="application/pdf",
+        headers={"Content-Disposition": 'attachment; filename="prestacao_servicos.pdf"'}
     )
 
 # ── EXIF Metadata Cleaner
