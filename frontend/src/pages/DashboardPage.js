@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   TrendingUp, CreditCard, ArrowDownToLine, Clock,
   Target, Star, ArrowRight, Activity, ShieldCheck,
-  Zap, BarChart2, Users, ChevronRight,
+  Zap, BarChart2, Users, ChevronRight, Bell, X,
 } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 import { useLang } from '../context/LangContext';
@@ -38,12 +38,19 @@ function Sparkline({ data, color = '#3A86FF', height = 56 }) {
 }
 
 export default function DashboardPage() {
-  const { user } = useUser();
+  const { user, notifPermission, requestNotifPermission } = useUser();
   const { t, lang }    = useLang();
   const navigate  = useNavigate();
   const [history, setHistory]       = useState([]);
   const [referral, setReferral]     = useState(null);
   const [activities, setActivities] = useState([]);
+  const [notifDismissed, setNotifDismissed] = useState(() => localStorage.getItem('notif_dismissed') === '1');
+
+  const handleEnableNotif = async () => {
+    const r = await requestNotifPermission();
+    if (r === 'granted') { setNotifDismissed(true); localStorage.setItem('notif_dismissed','1'); }
+  };
+  const dismissNotif = () => { setNotifDismissed(true); localStorage.setItem('notif_dismissed','1'); };
 
   const safeBalance = Math.max(0, parseFloat(user?.balance) || 0);
   const safeProfit  = Math.max(0, parseFloat(user?.profit)  || 0);
@@ -93,6 +100,23 @@ export default function DashboardPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 960, margin: '0 auto' }}>
+
+      {/* ── Banner de Notificações Push ── */}
+      {notifPermission === 'default' && !notifDismissed && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'rgba(58,134,255,0.08)', border: '1px solid rgba(58,134,255,0.22)', borderRadius: 12 }}>
+          <div style={{ width: 34, height: 34, background: 'rgba(58,134,255,0.15)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Bell size={16} color="#3A86FF"/>
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#f3f5ff', marginBottom: 2 }}>Activar notificações</div>
+            <div style={{ fontSize: 11, color: '#5a6280' }}>Receba alertas instantâneos quando o seu saldo sobe, depósitos são aprovados ou levantamentos processados.</div>
+          </div>
+          <button onClick={handleEnableNotif} style={{ padding: '7px 16px', background: 'linear-gradient(135deg,#2563eb,#3A86FF)', border: 'none', borderRadius: 9, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0, boxShadow: '0 3px 10px rgba(58,134,255,0.3)' }}>
+            Activar
+          </button>
+          <button onClick={dismissNotif} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4a5068', padding: '4px', flexShrink: 0 }}><X size={14}/></button>
+        </div>
+      )}
 
       {/* ── Hero: saldo principal ── */}
       <div style={{

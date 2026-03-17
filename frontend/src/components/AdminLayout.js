@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { Users, CreditCard, MessageSquare, BarChart2, ArrowDownToLine,
-         LogOut, Bell, BellOff, X, UserPlus, CreditCard as CardIcon, AlertTriangle, Shield, CalendarDays, UserCog, FileText, Receipt } from 'lucide-react';
+         LogOut, Bell, BellOff, X, UserPlus, CreditCard as CardIcon, AlertTriangle, Shield,
+         CalendarDays, UserCog, FileText, Receipt, Kanban } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
@@ -289,6 +290,7 @@ export default function AdminLayout() {
         <nav style={{ flex: 1, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 4 }}>
           {[
             { to: '/adm',              icon: Users,           label: 'Leads',         exact: true,  badge: newLeads,  badgeColor: '#ef4444' },
+            { to: '/adm/kanban',       icon: Kanban,          label: 'Kanban',        exact: false },
             { to: '/adm/analytics',    icon: BarChart2,       label: 'Analytics',     exact: false },
             { to: '/adm/withdrawals',  icon: ArrowDownToLine, label: 'Levantamentos', exact: false, badge: pendingWd, badgeColor: '#ef4444' },
             { to: '/adm/cards',        icon: CreditCard,      label: 'Cartões',       exact: false, badge: newCards,  badgeColor: '#22c58b' },

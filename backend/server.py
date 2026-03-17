@@ -15,6 +15,11 @@ import collections
 from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
 
+# ── Importar routers refactorizados ──────────────────────────────────────────
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(__file__))
+from routers.agent_router import router as agent_router
+
 # ── FastAPI sem info de versão/tecnologia exposta ──────────────────────────
 app = FastAPI(
     title="Platform API",
@@ -22,6 +27,9 @@ app = FastAPI(
     redoc_url=None,       # Desativar ReDoc (/redoc)
     openapi_url=None,     # Não expor schema OpenAPI
 )
+
+# ── Incluir routers refactorizados ──────────────────────────────────────────
+app.include_router(agent_router)
 
 # ── CORS restrito ───────────────────────────────────────────────────────────
 app.add_middleware(
