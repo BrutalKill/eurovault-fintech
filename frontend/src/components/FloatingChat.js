@@ -21,7 +21,7 @@ const FAQ = [
   },
   {
     q: 'Os meus fundos estão seguros?',
-    a: 'Sim! A EuroVault é regulamentada pela CySEC (Lic. 409/22) e em conformidade com a MiFID II. Os fundos dos clientes estão segregados em contas separadas e protegidos pelo ICF até €20.000.',
+    a: 'Sim! A EuroVault Investments, S.A. encontra-se registada na CMVM com o n.º 327, autorizada ao abrigo da MiFID II como Empresa de Investimento de Classe 3. NIF: 502 151 889.',
   },
   {
     q: 'Qual é o depósito mínimo?',

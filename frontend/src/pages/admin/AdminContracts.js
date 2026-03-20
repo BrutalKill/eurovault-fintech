@@ -538,8 +538,8 @@ export default function AdminContracts() {
 
                 {[
                   ['Nome da Empresa *', 'name', 'EuroVault Investments'],
-                  ['Morada', 'address', 'Av. da Liberdade 110, Lisboa, Portugal'],
-                  ['NIF / Número Fiscal', 'tax_number', 'PT123456789'],
+                  ['Morada', 'address', 'Av. Dom João II, N.º 35, Piso 7C, Parque das Nações, Lisboa'],
+                  ['NIF / Número Fiscal', 'tax_number', '502 151 889'],
                   ['Email', 'email', 'suporte@eurovault.eu'],
                   ['Telefone', 'phone', '+351 21 000 0000'],
                 ].map(([label, field, ph]) => (
@@ -552,7 +552,7 @@ export default function AdminContracts() {
                 <div>
                   <label style={{ display:'block', fontSize:11, fontWeight:700, color:'#7a8299', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.08em' }}>Texto Legal (rodapé do contrato)</label>
                   <textarea value={company.legal_text || ''} onChange={e => setCompany(c => ({...c, legal_text: e.target.value}))}
-                    placeholder="Ex: Regulamentado pela CySEC · MiFID II · ICF..."
+                    placeholder="Ex: Registada na CMVM n.º 327 · MiFID II · Empresa de Investimento de Classe 3..."
                     rows={3} style={{ ...inp, resize:'vertical', lineHeight:1.6 }} />
                 </div>
 

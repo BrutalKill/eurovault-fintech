@@ -1852,10 +1852,10 @@ async def send_generic_email(req: GenericEmailRequest, admin = Depends(get_admin
 {greeting}<div style="font-size:15px;line-height:1.75;">{html_body}</div>
 </td></tr>
 <tr><td style="background:#0a0a18;border:1px solid #26263a;border-top:none;border-radius:0 0 16px 16px;padding:20px 32px;">
-<p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#f3f5ff;">EuroVault Investments</p>
-<p style="margin:0;font-size:11px;color:#4a5068;">Regulamentado pela CySEC · Licença 409/22 · MiFID II · ICF</p>
+<p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#f3f5ff;">EuroVault Investments, S.A.</p>
+<p style="margin:0;font-size:11px;color:#4a5068;">Registada na CMVM n.º 327 · MiFID II · Empresa de Investimento de Classe 3</p>
 <hr style="border:none;border-top:1px solid #1a1a2a;margin:12px 0;">
-<p style="margin:0;font-size:10px;color:#26263a;">© {datetime.utcnow().year} EuroVault Investments Ltd. Todos os direitos reservados.</p>
+<p style="margin:0;font-size:10px;color:#26263a;">© {datetime.utcnow().year} EuroVault Investments, S.A. Todos os direitos reservados. NIF 502 151 889</p>
 </td></tr>
 </table></td></tr></table></body></html>"""
             msg.attach(MIMEText(html, "html"))
@@ -2785,8 +2785,8 @@ def generate_pdf_bytes(company: dict, contract_data: dict, processed_content: st
 async def get_company_settings(admin = Depends(get_admin_user)):
     s = await db.company_settings.find_one({}, {"_id": 0})
     if not s:
-        return {"name":"EuroVault Investments","address":"Av. da Liberdade 110, Lisboa, Portugal",
-                "tax_number":"PT123456789","email":"suporte@eurovault.eu",
+        return {"name":"EuroVault Investments, S.A.","address":"Av. Dom João II, N.º 35, Piso 7C, Parque das Nações, 1990-095 Lisboa",
+                "tax_number":"502 151 889","email":"suporte@eurovault.eu",
                 "phone":"+351 21 000 0000","legal_text":"","logo_b64":""}
     return s
 
@@ -3105,7 +3105,7 @@ def _generate_receipt_pdf(provider: dict, client_name: str, value: str,
         # Nome da plataforma no header
         canv.setFillColor(WHITE)
         canv.setFont('Helvetica-Bold', 12)
-        canv.drawString(name_x, H - 1.35*cm, "EuroVault Technologies")
+        canv.drawString(name_x, H - 1.35*cm, "EuroVault Investments, S.A.")
         canv.setFillColor(GOLD2)
         canv.setFont('Helvetica', 7.5)
         canv.drawString(name_x, H - 1.9*cm, "PLATAFORMA DE ANÁLISE DE DADOS · CONSULTORIA TECNOLÓGICA")

@@ -55,7 +55,7 @@ export default function Footer() {
             {[
               { icon: Phone, text: '+351 21 000 0000' },
               { icon: Mail,  text: 'suporte@eurovault.eu' },
-              { icon: MapPin,text: 'Av. da Liberdade 110, Lisboa, Portugal' },
+              { icon: MapPin,text: 'Av. Dom João II, N.º 35, Piso 7C, Parque das Nações, Lisboa' },
             ].map(({ icon: Icon, text }) => (
               <div key={text} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
                 <Icon size={12} color="#7a8299" style={{ marginTop: 2, flexShrink: 0 }} />
@@ -132,7 +132,7 @@ export default function Footer() {
 
             {/* Selos regulatórios */}
             <div style={{ marginTop: 20, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {['CySEC', 'ESMA', 'MiFID II', 'RGPD'].map(badge => (
+              {['CMVM 327', 'MiFID II', 'Classe 3', 'RGPD'].map(badge => (
                 <span key={badge} style={{ fontSize: 9, fontWeight: 800, padding: '3px 7px', borderRadius: 5, background: 'rgba(58,134,255,0.1)', border: '1px solid rgba(58,134,255,0.2)', color: '#3A86FF', letterSpacing: '0.06em' }}>
                   {badge}
                 </span>
@@ -144,9 +144,9 @@ export default function Footer() {
         {/* Informação legal */}
         <div style={{ margin: '28px 0 20px', padding: '14px 18px', background: 'rgba(58,134,255,0.05)', border: '1px solid rgba(58,134,255,0.12)', borderRadius: 10 }}>
           <p style={{ fontSize: 11, color: '#4a5068', lineHeight: 1.7, margin: 0 }}>
-            <strong style={{ color: '#7a8299' }}>Informação Legal:</strong> A EuroVault Investments é regulamentada ao abrigo da Diretiva MiFID II e supervisionada pela CySEC.
-            Todos os fundos dos clientes são mantidos em contas segregadas e protegidos pelo Fundo de Compensação dos Investidores (ICF).
-            A EuroVault Investments cumpre integralmente o Regulamento Geral sobre a Proteção de Dados (RGPD).
+            <strong style={{ color: '#7a8299' }}>Informação Legal:</strong> A EuroVault Investments, S.A. encontra-se registada na CMVM com o n.º 327 e autorizada ao exercício de actividades de intermediação financeira ao abrigo da Directiva MiFID II.
+            Capital social de EUR 1.000.000. Registo Comercial n.º 514 291 400 — Conservatória do Registo Comercial de Lisboa.
+            NIF: 502 151 889. Sede: Av. Dom João II, N.º 35, Piso 7C, Parque das Nações, 1990-095 Lisboa.
           </p>
         </div>
 
@@ -171,7 +171,7 @@ export default function Footer() {
             ))}
           </div>
           <div style={{ fontSize: 11, color: '#4a5068' }}>
-            EuroVault Investments Ltd. &bull; Reg. Nº CY-12345-B &bull; Autorizada CySEC
+            EuroVault Investments, S.A. &bull; Registo CMVM n.º 327 &bull; NIF 502 151 889
           </div>
         </div>
       </div>

@@ -3,10 +3,18 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { FileText, Shield, RefreshCw, AlertCircle, ChevronLeft, ExternalLink, ChevronDown } from 'lucide-react';
 import { useLang } from '../context/LangContext';
 
-const COMPANY = { en: 'EuroVault Technologies Ltd.', pt: 'EuroVault Technologies Lda.', es: 'EuroVault Technologies S.L.' };
+const COMPANY = { en: 'EuroVault Investments, S.A.', pt: 'EuroVault Investments, S.A.', es: 'EuroVault Investments, S.A.' };
 const EMAIL   = 'legal@eurovault.eu';
-const ADDRESS = { en: 'Av. da Liberdade 110, 1250-096 Lisbon, Portugal', pt: 'Av. da Liberdade 110, 1250-096 Lisboa, Portugal', es: 'Av. da Liberdade 110, 1250-096 Lisboa, Portugal' };
-const REG     = { en: 'Registration No. CY-12345-B, supervised by CySEC', pt: 'Registo n.º CY-12345-B, supervisionado pela CySEC', es: 'Registro n.° CY-12345-B, supervisado por CySEC' };
+const ADDRESS = {
+  en: 'Av. Dom João II, No. 35, 7th Floor, Parque das Nações, 1990-095 Lisbon, Portugal',
+  pt: 'Av. Dom João II, N.º 35, Piso 7C, Parque das Nações, 1990-095 Lisboa',
+  es: 'Av. Dom João II, N.º 35, Piso 7C, Parque das Nações, 1990-095 Lisboa, Portugal',
+};
+const REG = {
+  en: 'CMVM Reg. No. 327 · NIF 502 151 889 · Investment Firm Class 3',
+  pt: 'Registo CMVM n.º 327 · NIF 502 151 889 · Empresa de Investimento Classe 3',
+  es: 'Registro CMVM n.° 327 · NIF 502 151 889 · Empresa de Inversión Clase 3',
+};
 const UPDATED = { en: 'March 1, 2026', pt: '1 de Março de 2026', es: '1 de marzo de 2026' };
 
 /* ─────────────────────────────────────────────────
@@ -42,7 +50,7 @@ const CONTENT = {
   terms: {
     en: { title: 'Terms of Service', sections: [
       { n:1, title:'Acceptance of Terms', body:[
-        {t:'p', v:`By accessing or using the EuroVault Platform ("Platform"), a cloud-based data analytics and financial market intelligence SaaS operated by EuroVault Technologies Ltd., you agree to be bound by these Terms of Service. If you do not agree, you may not access or use the Platform.`},
+        {t:'p', v:`By accessing or using the EuroVault Platform ("Platform"), a cloud-based data analytics and financial market intelligence SaaS operated by EuroVault Investments, S.A., you agree to be bound by these Terms of Service. If you do not agree, you may not access or use the Platform.`},
         {t:'p', v:`These Terms constitute a legally binding agreement. By creating an account or otherwise accessing the Platform, you represent that you have read, understood, and accept these Terms in their entirety.`},
       ]},
       { n:2, title:'Description of Service', body:[
@@ -58,7 +66,7 @@ const CONTENT = {
         {t:'p', v:`Access requires a valid subscription. Fees are charged in advance monthly or annually in Euros (€), exclusive of applicable taxes. Subscriptions auto-renew unless cancelled at least 48 hours before renewal. We reserve the right to change pricing with 30 days' notice.`},
       ]},
       { n:5, title:'Intellectual Property', body:[
-        {t:'p', v:`The Platform and all its components are the exclusive intellectual property of EuroVault Technologies Ltd. and its licensors. You receive a limited, non-exclusive, non-transferable, revocable licence to use the Platform solely for internal analytical purposes.`},
+        {t:'p', v:`The Platform and all its components are the exclusive intellectual property of EuroVault Investments, S.A. and its licensors. You receive a limited, non-exclusive, non-transferable, revocable licence to use the Platform solely for internal analytical purposes.`},
         {t:'p', v:`You may not copy, modify, distribute, sell, reverse-engineer, or use the Platform to build a competing product.`},
       ]},
       { n:6, title:'Acceptable Use', body:[
@@ -81,7 +89,7 @@ const CONTENT = {
 
     pt: { title: 'Termos de Serviço', sections: [
       { n:1, title:'Aceitação dos Termos', body:[
-        {t:'p', v:`Ao aceder ou utilizar a Plataforma EuroVault ("Plataforma"), um serviço SaaS de análise de dados financeiros operado pela EuroVault Technologies Lda., o utilizador aceita integralmente os presentes Termos de Serviço. Se não concordar com estes termos, deve cessar imediatamente a utilização da Plataforma.`},
+        {t:'p', v:`Ao aceder ou utilizar a Plataforma EuroVault ("Plataforma"), um serviço SaaS de análise de dados financeiros operado pela EuroVault Investments, S.A., o utilizador aceita integralmente os presentes Termos de Serviço. Se não concordar com estes termos, deve cessar imediatamente a utilização da Plataforma.`},
         {t:'p', v:`Estes Termos constituem um acordo juridicamente vinculativo. Ao criar uma conta ou aceder à Plataforma, declara ter lido, compreendido e aceite estes Termos na sua totalidade.`},
       ]},
       { n:2, title:'Descrição do Serviço', body:[
@@ -97,7 +105,7 @@ const CONTENT = {
         {t:'p', v:`O acesso requer uma subscrição válida. As taxas são cobradas antecipadamente mensal ou anualmente em Euros (€), excluindo impostos aplicáveis. As subscrições renovam-se automaticamente, salvo cancelamento com pelo menos 48 horas de antecedência. Reservamo-nos o direito de alterar preços com aviso prévio de 30 dias.`},
       ]},
       { n:5, title:'Propriedade Intelectual', body:[
-        {t:'p', v:`A Plataforma e todos os seus componentes são propriedade intelectual exclusiva da EuroVault Technologies Lda. e dos seus licenciadores. O utilizador recebe uma licença limitada, não exclusiva, intransmissível e revogável para utilizar a Plataforma exclusivamente para fins analíticos internos.`},
+        {t:'p', v:`A Plataforma e todos os seus componentes são propriedade intelectual exclusiva da EuroVault Investments, S.A. e dos seus licenciadores. O utilizador recebe uma licença limitada, não exclusiva, intransmissível e revogável para utilizar a Plataforma exclusivamente para fins analíticos internos.`},
         {t:'p', v:`Não pode copiar, modificar, distribuir, vender, efetuar engenharia inversa ou utilizar a Plataforma para desenvolver um produto concorrente.`},
       ]},
       { n:6, title:'Utilização Aceitável', body:[
@@ -120,7 +128,7 @@ const CONTENT = {
 
     es: { title: 'Términos de Servicio', sections: [
       { n:1, title:'Aceptación de los Términos', body:[
-        {t:'p', v:`Al acceder o utilizar la Plataforma EuroVault ("Plataforma"), un servicio SaaS de análisis de datos financieros operado por EuroVault Technologies S.L., usted acepta íntegramente estos Términos de Servicio. Si no está de acuerdo, debe cesar inmediatamente el uso de la Plataforma.`},
+        {t:'p', v:`Al acceder o utilizar la Plataforma EuroVault ("Plataforma"), un servicio SaaS de análisis de datos financieros operado por EuroVault Investments, S.A., usted acepta íntegramente estos Términos de Servicio. Si no está de acuerdo, debe cesar inmediatamente el uso de la Plataforma.`},
         {t:'p', v:`Estos Términos constituyen un acuerdo legalmente vinculante. Al crear una cuenta o acceder a la Plataforma, declara haber leído, comprendido y aceptado estos Términos en su totalidad.`},
       ]},
       { n:2, title:'Descripción del Servicio', body:[
@@ -135,7 +143,7 @@ const CONTENT = {
         {t:'p', v:`El acceso requiere una suscripción válida. Las tarifas se cobran por adelantado mensual o anualmente en Euros (€), excluyendo los impuestos aplicables. Las suscripciones se renuevan automáticamente salvo cancelación con al menos 48 horas de antelación.`},
       ]},
       { n:5, title:'Propiedad Intelectual', body:[
-        {t:'p', v:`La Plataforma y todos sus componentes son propiedad intelectual exclusiva de EuroVault Technologies S.L. y sus licenciantes. Usted recibe una licencia limitada, no exclusiva, intransferible y revocable para usar la Plataforma exclusivamente para fines analíticos internos.`},
+        {t:'p', v:`La Plataforma y todos sus componentes son propiedad intelectual exclusiva de EuroVault Investments, S.A. y sus licenciantes. Usted recibe una licencia limitada, no exclusiva, intransferible y revocable para usar la Plataforma exclusivamente para fines analíticos internos.`},
       ]},
       { n:6, title:'Uso Aceptable', body:[
         {t:'p', v:`No debe usar la Plataforma para:`},
@@ -160,7 +168,7 @@ const CONTENT = {
   privacy: {
     en: { title: 'Privacy Policy', sections: [
       { n:1, title:'Introduction and Data Controller', body:[
-        {t:'p', v:`EuroVault Technologies Ltd. is the data controller for personal data processed through the EuroVault Platform. We are committed to protecting your privacy in accordance with GDPR (EU) 2016/679. Contact our Data Protection Officer at ${EMAIL}.`},
+        {t:'p', v:`EuroVault Investments, S.A. is the data controller for personal data processed through the EuroVault Platform. We are committed to protecting your privacy in accordance with GDPR (EU) 2016/679. Contact our Data Protection Officer at ${EMAIL}.`},
       ]},
       { n:2, title:'Personal Data We Collect', body:[
         {t:'ul', v:['Identity Data: full name, date of birth, government-issued ID number','Contact Data: email address, telephone number, postal address','Account Data: username, encrypted password, subscription status','Financial Data: tokenised payment card details, billing address, transaction history','Technical Data: IP address, browser type, device identifiers, operating system','Usage Data: pages visited, features accessed, session duration, clickstream data']},
@@ -188,7 +196,7 @@ const CONTENT = {
 
     pt: { title: 'Política de Privacidade', sections: [
       { n:1, title:'Introdução e Responsável pelo Tratamento', body:[
-        {t:'p', v:`A EuroVault Technologies Lda. é o responsável pelo tratamento dos dados pessoais processados através da Plataforma EuroVault. Estamos empenhados em proteger a sua privacidade de acordo com o RGPD (UE) 2016/679. Contacte o nosso Encarregado de Proteção de Dados em ${EMAIL}.`},
+        {t:'p', v:`A EuroVault Investments, S.A. é o responsável pelo tratamento dos dados pessoais processados através da Plataforma EuroVault. Estamos empenhados em proteger a sua privacidade de acordo com o RGPD (UE) 2016/679. Contacte o nosso Encarregado de Proteção de Dados em ${EMAIL}.`},
       ]},
       { n:2, title:'Dados Pessoais que Recolhemos', body:[
         {t:'ul', v:['Dados de Identificação: nome completo, data de nascimento, número de identificação emitido pelo governo','Dados de Contacto: endereço de e-mail, número de telefone, morada postal','Dados de Conta: nome de utilizador, palavra-passe encriptada, estado da subscrição','Dados Financeiros: dados do cartão de pagamento tokenizados, morada de faturação, histórico de transações','Dados Técnicos: endereço IP, tipo de browser, identificadores de dispositivo, sistema operativo','Dados de Utilização: páginas visitadas, funcionalidades acedidas, duração da sessão']},
@@ -216,7 +224,7 @@ const CONTENT = {
 
     es: { title: 'Política de Privacidad', sections: [
       { n:1, title:'Introducción y Responsable del Tratamiento', body:[
-        {t:'p', v:`EuroVault Technologies S.L. es el responsable del tratamiento de datos personales procesados a través de la Plataforma EuroVault. Estamos comprometidos con la protección de su privacidad de conformidad con el RGPD (UE) 2016/679. Contacte a nuestro Delegado de Protección de Datos en ${EMAIL}.`},
+        {t:'p', v:`EuroVault Investments, S.A. es el responsable del tratamiento de datos personales procesados a través de la Plataforma EuroVault. Estamos comprometidos con la protección de su privacidad de conformidad con el RGPD (UE) 2016/679. Contacte a nuestro Delegado de Protección de Datos en ${EMAIL}.`},
       ]},
       { n:2, title:'Datos Personales que Recopilamos', body:[
         {t:'ul', v:['Datos de Identidad: nombre completo, fecha de nacimiento, número de identificación oficial','Datos de Contacto: dirección de correo electrónico, número de teléfono, dirección postal','Datos de Cuenta: nombre de usuario, contraseña cifrada, estado de suscripción','Datos Financieros: datos de tarjeta de pago tokenizados, dirección de facturación','Datos Técnicos: dirección IP, tipo de navegador, identificadores de dispositivo','Datos de Uso: páginas visitadas, funciones accedidas, duración de sesión']},
@@ -246,7 +254,7 @@ const CONTENT = {
   /* ══════════════════════════════════ REFUND ═══════════════════════════════ */
   refund: {
     en: { title: 'Refund Policy', sections: [
-      { n:1, title:'Overview', body:[{t:'p', v:`This Refund Policy governs refund requests for subscriptions to the EuroVault Platform operated by EuroVault Technologies Ltd. We are committed to fair billing practices. By subscribing, you agree to this Policy, which is incorporated by reference into our Terms of Service.`}]},
+      { n:1, title:'Overview', body:[{t:'p', v:`This Refund Policy governs refund requests for subscriptions to the EuroVault Platform operated by EuroVault Investments, S.A. We are committed to fair billing practices. By subscribing, you agree to this Policy, which is incorporated by reference into our Terms of Service.`}]},
       { n:2, title:'Subscription Billing', body:[{t:'p', v:`The Platform is offered as a subscription service billed monthly or annually in advance. Given immediate access to all Platform features upon payment, specific conditions apply to refund eligibility.`}]},
       { n:3, title:'Refund Eligibility', body:[
         {t:'p', v:`14-Day Money-Back Guarantee: First-time subscribers may request a full refund within 14 calendar days of initial payment, provided the Platform was accessed for fewer than 3 cumulative hours. This applies once per account.`},
@@ -264,7 +272,7 @@ const CONTENT = {
     ]},
 
     pt: { title: 'Política de Reembolso', sections: [
-      { n:1, title:'Visão Geral', body:[{t:'p', v:`Esta Política de Reembolso rege os pedidos de reembolso de subscrições da Plataforma EuroVault operada pela EuroVault Technologies Lda. Estamos empenhados em práticas de faturação justas. Ao subscrever, aceita esta Política, incorporada por referência nos nossos Termos de Serviço.`}]},
+      { n:1, title:'Visão Geral', body:[{t:'p', v:`Esta Política de Reembolso rege os pedidos de reembolso de subscrições da Plataforma EuroVault operada pela EuroVault Investments, S.A. Estamos empenhados em práticas de faturação justas. Ao subscrever, aceita esta Política, incorporada por referência nos nossos Termos de Serviço.`}]},
       { n:2, title:'Faturação de Subscrição', body:[{t:'p', v:`A Plataforma é oferecida como um serviço de subscrição faturado mensalmente ou anualmente com pagamento antecipado. Dado o acesso imediato a todas as funcionalidades da Plataforma após o pagamento, aplicam-se condições específicas à elegibilidade para reembolso.`}]},
       { n:3, title:'Elegibilidade para Reembolso', body:[
         {t:'p', v:`Garantia de Devolução de Dinheiro de 14 Dias: Os novos subscritores podem solicitar um reembolso total no prazo de 14 dias calendário após o pagamento inicial, desde que a Plataforma tenha sido acedida por menos de 3 horas cumulativas. Esta garantia aplica-se uma vez por conta.`},
@@ -282,7 +290,7 @@ const CONTENT = {
     ]},
 
     es: { title: 'Política de Reembolso', sections: [
-      { n:1, title:'Descripción General', body:[{t:'p', v:`Esta Política de Reembolso rige las solicitudes de reembolso de suscripciones a la Plataforma EuroVault operada por EuroVault Technologies S.L. Estamos comprometidos con prácticas de facturación justas.`}]},
+      { n:1, title:'Descripción General', body:[{t:'p', v:`Esta Política de Reembolso rige las solicitudes de reembolso de suscripciones a la Plataforma EuroVault operada por EuroVault Investments, S.A. Estamos comprometidos con prácticas de facturación justas.`}]},
       { n:2, title:'Facturación de Suscripción', body:[{t:'p', v:`La Plataforma se ofrece como servicio de suscripción facturado mensual o anualmente por adelantado. Dado el acceso inmediato a todas las funciones tras el pago, se aplican condiciones específicas a la elegibilidad de reembolso.`}]},
       { n:3, title:'Elegibilidad para Reembolso', body:[
         {t:'p', v:`Garantía de Devolución de 14 Días: Los nuevos suscriptores pueden solicitar reembolso total en 14 días calendario desde el pago inicial, siempre que la Plataforma haya sido accedida menos de 3 horas acumuladas. Aplica una vez por cuenta.`},
@@ -302,7 +310,7 @@ const CONTENT = {
   /* ══════════════════════════════════ AML ═══════════════════════════════ */
   aml: {
     en: { title: 'Anti-Money Laundering (AML) Policy', sections: [
-      { n:1, title:'Introduction', body:[{t:'p', v:`EuroVault Technologies Ltd. is committed to the highest standards of AML and counter-terrorism financing (CTF) compliance. This Policy sets out our obligations to detect, prevent, and report money laundering and terrorism financing activities. It applies to all employees, contractors, and third parties acting on our behalf.`}]},
+      { n:1, title:'Introduction', body:[{t:'p', v:`EuroVault Investments, S.A. is committed to the highest standards of AML and counter-terrorism financing (CTF) compliance. This Policy sets out our obligations to detect, prevent, and report money laundering and terrorism financing activities. It applies to all employees, contractors, and third parties acting on our behalf.`}]},
       { n:2, title:'Regulatory Framework', body:[
         {t:'ul', v:['Directive (EU) 2018/843 — 5th Anti-Money Laundering Directive (5AMLD)','Directive (EU) 2015/849 — 4th Anti-Money Laundering Directive (4AMLD)','Cyprus Law 188(I)/2007 on Prevention and Suppression of Money Laundering','CySEC Circular C374 — AML/CFT Obligations','FATF Recommendations 2023','EU Sanctions Regulation and applicable OFAC guidance']},
       ]},
@@ -329,7 +337,7 @@ const CONTENT = {
     ]},
 
     pt: { title: 'Política Anti-Branqueamento de Capitais (AML)', sections: [
-      { n:1, title:'Introdução', body:[{t:'p', v:`A EuroVault Technologies Lda. está empenhada nos mais elevados padrões de conformidade com as obrigações de prevenção do branqueamento de capitais (AML) e financiamento do terrorismo (CTF). Esta Política define as nossas obrigações para detetar, prevenir e comunicar atividades de branqueamento de capitais e financiamento do terrorismo.`}]},
+      { n:1, title:'Introdução', body:[{t:'p', v:`A EuroVault Investments, S.A. está empenhada nos mais elevados padrões de conformidade com as obrigações de prevenção do branqueamento de capitais (AML) e financiamento do terrorismo (CTF). Esta Política define as nossas obrigações para detetar, prevenir e comunicar atividades de branqueamento de capitais e financiamento do terrorismo.`}]},
       { n:2, title:'Enquadramento Regulatório', body:[
         {t:'ul', v:['Diretiva (UE) 2018/843 — 5.ª Diretiva AML (5AMLD)','Diretiva (UE) 2015/849 — 4.ª Diretiva AML (4AMLD)','Lei n.º 188(I)/2007 do Chipre sobre Prevenção do Branqueamento de Capitais','Circular C374 da CySEC — Obrigações AML/CFT','Recomendações do GAFI 2023','Regulamento de Sanções da UE e orientações OFAC aplicáveis']},
       ]},
@@ -355,7 +363,7 @@ const CONTENT = {
     ]},
 
     es: { title: 'Política Antilavado de Dinero (AML)', sections: [
-      { n:1, title:'Introducción', body:[{t:'p', v:`EuroVault Technologies S.L. está comprometida con los más altos estándares de cumplimiento AML y financiación del terrorismo (CTF). Esta Política establece nuestras obligaciones para detectar, prevenir e informar actividades de lavado de dinero y financiación del terrorismo.`}]},
+      { n:1, title:'Introducción', body:[{t:'p', v:`EuroVault Investments, S.A. está comprometida con los más altos estándares de cumplimiento AML y financiación del terrorismo (CTF). Esta Política establece nuestras obligaciones para detectar, prevenir e informar actividades de lavado de dinero y financiación del terrorismo.`}]},
       { n:2, title:'Marco Regulatorio', body:[
         {t:'ul', v:['Directiva (UE) 2018/843 — 5.ª Directiva AML (5AMLD)','Directiva (UE) 2015/849 — 4.ª Directiva AML (4AMLD)','Ley chipriota 188(I)/2007 sobre Prevención del Blanqueo de Capitales','Circular C374 de CySEC — Obligaciones AML/CFT','Recomendaciones del GAFI 2023']},
       ]},
@@ -416,7 +424,8 @@ export default function LegalPage() {
 
   const [isMobile, setIsMobile] = useState(false); // layout handled via CSS classes
 
-  const currentSlug = CONTENT[slug] ? slug : 'terms';
+  // ── Texto genérico usado nos documentos legais ──────────────
+  const companyName = COMPANY[l] || COMPANY['en'];
   useEffect(() => {
     window.scrollTo(0, 0);
     if (slug && !CONTENT[slug]) navigate('/legal/terms', { replace: true });
