@@ -424,8 +424,8 @@ export default function LegalPage() {
 
   const [isMobile, setIsMobile] = useState(false); // layout handled via CSS classes
 
-  // ── Texto genérico usado nos documentos legais ──────────────
-  const companyName = COMPANY[l] || COMPANY['en'];
+  const currentSlug = CONTENT[slug] ? slug : 'terms';
+
   useEffect(() => {
     window.scrollTo(0, 0);
     if (slug && !CONTENT[slug]) navigate('/legal/terms', { replace: true });
