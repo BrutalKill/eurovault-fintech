@@ -319,51 +319,6 @@ export default function ProfilePage() {
         )}
       </div>
 
-      {/* ── Histórico de Sessões ── */}
-      <div style={{ marginTop: 20, ...card }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-          <div style={{ width: 36, height: 36, background: 'rgba(58,134,255,0.1)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Clock size={17} color="#3A86FF" />
-          </div>
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#f3f5ff' }}>Histórico de Sessões</div>
-            <div style={{ fontSize: 12, color: 'hsl(215,16%,55%)' }}>Últimos acessos à sua conta</div>
-          </div>
-        </div>
-        {sessions.length === 0 ? (
-          <div style={{ padding: '20px 0', textAlign: 'center', color: 'hsl(215,16%,45%)', fontSize: 13 }}>
-            Sem sessões registadas ainda.
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {sessions.map((s, i) => {
-              const DevIcon = getDeviceIcon(s.user_agent);
-              return (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'hsl(240,18%,10%)', borderRadius: 10, border: '1px solid hsl(240,16%,16%)' }}>
-                  <div style={{ width: 34, height: 34, background: 'rgba(58,134,255,0.08)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <DevIcon size={15} color="#3A86FF" />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#f3f5ff' }}>
-                      {getDeviceLabel(s.user_agent)} · {getBrowserLabel(s.user_agent)}
-                    </div>
-                    <div style={{ display: 'flex', gap: 10, marginTop: 2 }}>
-                      <span style={{ fontSize: 11, color: 'hsl(215,16%,55%)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <Globe size={10} />{s.ip}
-                      </span>
-                    </div>
-                  </div>
-                  <div style={{ fontSize: 11, color: 'hsl(215,16%,50%)', textAlign: 'right', flexShrink: 0 }}>
-                    {s.created_at ? new Date(s.created_at).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'}
-                  </div>
-                  {i === 0 && <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 5, background: 'rgba(34,197,139,0.12)', color: '#22c58b', border: '1px solid rgba(34,197,139,0.25)', fontWeight: 700, flexShrink: 0 }}>Atual</span>}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
       {/* Verificação KYC */}
       <div style={{ marginTop: 20, ...card }}>
         {/* Cabeçalho */}

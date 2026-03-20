@@ -44,6 +44,8 @@ export default function Register() {
   const [dialCode, setDialCode] = useState('+351');
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
+  const [welcomeModal, setWelcomeModal] = useState(false);
+  const [registeredName, setRegisteredName] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -51,7 +53,6 @@ export default function Register() {
     setLoading(true);
     const fullPhone = form.phone ? `${dialCode} ${form.phone}` : '';
 
-    // Usar XHR em vez de fetch para evitar 'body stream already read' no mobile
     const doRegister = () => new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open('POST', `${BACKEND_URL}/api/auth/register`);
@@ -74,8 +75,9 @@ export default function Register() {
     try {
       const data = await doRegister();
       localStorage.setItem('token', data.token);
-      toast.success('Conta criada com sucesso!');
-      navigate('/app/dashboard');
+      // Mostrar popup de boas-vindas antes de navegar
+      setRegisteredName(form.full_name.split(' ')[0]);
+      setWelcomeModal(true);
     } catch (err) {
       toast.error(err.message || 'Erro ao criar conta.');
     } finally {
@@ -97,6 +99,42 @@ export default function Register() {
   return (
     <div style={{ minHeight: '100vh', background: 'hsl(240,33%,5%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, position: 'relative', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(900px circle at 20% 10%, rgba(58,134,255,0.12), transparent 60%), radial-gradient(700px circle at 85% 25%, rgba(255,190,11,0.07), transparent 55%)' }} />
+
+      {/* ── Popup de Boas-vindas ── */}
+      {welcomeModal && (
+        <>
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 500, backdropFilter: 'blur(6px)' }} />
+          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 501, background: 'linear-gradient(160deg, hsl(240,33%,9%), hsl(220,40%,11%))', border: '1px solid rgba(58,134,255,0.3)', borderRadius: 24, padding: '40px 36px', width: 380, maxWidth: '92vw', textAlign: 'center', boxShadow: '0 32px 80px rgba(0,0,0,0.8)' }}>
+            {/* Logo animada */}
+            <div style={{ position: 'relative', width: 72, height: 72, margin: '0 auto 20px' }}>
+              <div style={{ position: 'absolute', inset: -8, borderRadius: '50%', background: 'rgba(34,197,139,0.15)', animation: 'shimmer 2s ease infinite' }} />
+              <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'rgba(34,197,139,0.12)', border: '2px solid rgba(34,197,139,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                <img src="/logo-eurovault.png" alt="EuroVault" style={{ width: 48, height: 48, objectFit: 'contain' }} />
+              </div>
+            </div>
+
+            <div style={{ fontSize: 11, fontWeight: 800, color: '#22c58b', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 8 }}>
+              Bem-vindo à EuroVault
+            </div>
+            <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 24, fontWeight: 900, color: '#f3f5ff', margin: '0 0 10px', letterSpacing: '-0.02em' }}>
+              Olá, {registeredName}! 👋
+            </h2>
+            <p style={{ fontSize: 14, color: '#7a8299', lineHeight: 1.7, margin: '0 0 20px' }}>
+              A sua conta foi criada com sucesso.<br/>
+              <strong style={{ color: '#f3f5ff' }}>O seu gestor irá contactá-lo em breve</strong> para dar início ao seu plano de investimento.
+            </p>
+
+            <div style={{ padding: '12px 16px', background: 'rgba(255,190,11,0.07)', border: '1px solid rgba(255,190,11,0.2)', borderRadius: 11, marginBottom: 22, fontSize: 12, color: '#FFBE0B', lineHeight: 1.6 }}>
+              ⏱ Tempo médio de contacto: <strong>15–30 minutos</strong>
+            </div>
+
+            <button onClick={() => { setWelcomeModal(false); navigate('/app/dashboard'); }}
+              style={{ width: '100%', padding: '14px', background: 'linear-gradient(135deg, #2563eb, #3A86FF)', border: 'none', borderRadius: 12, color: '#fff', fontSize: 15, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 20px rgba(58,134,255,0.4)', fontFamily: 'var(--font-heading)' }}>
+              Aceder à Minha Conta
+            </button>
+          </div>
+        </>
+      )}
 
       <div style={{ position: 'absolute', top: 20, right: 24, zIndex: 10 }}>
         <LangSwitcher />

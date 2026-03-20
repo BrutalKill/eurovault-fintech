@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Edit2, Check, X, Eye, Percent, User, Mail, Phone, Globe, Calendar,
          TrendingUp, CreditCard, StickyNote, LogIn, Copy, Clock, Filter, DollarSign, Trash2,
-         Send, Plus, ChevronRight, Activity } from 'lucide-react';
+         Send, Plus, ChevronRight, Activity, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
@@ -143,6 +143,29 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
   const [newNoteText, setNewNoteText]     = useState('');
   const [addingNote, setAddingNote]       = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
+  const [generatingContract, setGeneratingContract] = useState(false);
+  const [contractUrl, setContractUrl] = useState('');
+
+  const generateContract = async () => {
+    setGeneratingContract(true);
+    try {
+      // Buscar o primeiro template disponível
+      const tplRes = await fetch(`${BACKEND_URL}/api/admin/contract-templates`, { headers: { Authorization: `Bearer ${token}` } });
+      const templates = tplRes.ok ? await tplRes.json() : [];
+      if (!templates.length) { toast.error('Crie um modelo de contrato primeiro em /adm/contracts'); return; }
+      const res = await fetch(`${BACKEND_URL}/api/admin/contracts/generate`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ template_id: templates[0].id, lead_id: lead.id, preset_name: lead.full_name, preset_email: lead.email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail);
+      const url = `${window.location.origin}/contract/${data.token}`;
+      setContractUrl(url);
+      navigator.clipboard.writeText(url);
+      toast.success('Link de contrato copiado!', { description: url.slice(0, 50) + '…', duration: 8000 });
+    } catch (e) { toast.error(e.message); }
+    setGeneratingContract(false);
+  };
   // Tags
   const [tags, setTags]             = useState(lead.tags || []);
   const [tagInput, setTagInput]     = useState('');
@@ -347,6 +370,10 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
             <button onClick={() => setShowEmailModal(true)} title="Enviar email"
               style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', background: 'rgba(58,134,255,0.1)', border: '1px solid rgba(58,134,255,0.25)', borderRadius: 8, color: '#3A86FF', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
               <Send size={12} />Email
+            </button>
+            <button onClick={generateContract} disabled={generatingContract} title="Gerar link de contrato para este lead"
+              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', background: generatingContract ? 'rgba(34,197,139,0.05)' : 'rgba(34,197,139,0.1)', border: '1px solid rgba(34,197,139,0.25)', borderRadius: 8, color: '#22c58b', fontSize: 11, fontWeight: 700, cursor: generatingContract ? 'not-allowed' : 'pointer' }}>
+              <FileText size={12} />{generatingContract ? '…' : 'Contrato'}
             </button>
             <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#7a8299', padding: 4 }}><X size={20} /></button>
           </div>

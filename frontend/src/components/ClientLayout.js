@@ -21,7 +21,6 @@ export default function ClientLayout() {
     { to: '/app/deposit',          icon: CreditCard,  label: t('nav_deposit')        },
     { to: '/app/withdrawal',       icon: ArrowDownToLine, label: t('nav_withdrawal') },
     { to: '/app/history',          icon: Clock,       label: t('nav_history')        },
-    { to: '/app/referral',         icon: UsersIcon,   label: t('nav_referral')       },
     { to: '/app/news',             icon: Newspaper,   label: t('nav_news')           },
     { to: '/app/profile',          icon: User,        label: t('nav_profile')        },
   ];
