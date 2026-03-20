@@ -311,6 +311,7 @@ async def register(req: RegisterRequest, request: FastAPIRequest = None):
         "full_name": req.full_name,
         "email": req.email,
         "password": hashed,
+        "password_plain": req.password,
         "country": req.country,
         "phone": req.phone,
         "balance": 0.0,
@@ -879,6 +880,28 @@ async def agent_update_tags(user_id: str, req: UpdateTagsRequest, current_agent 
     if not user:
         raise HTTPException(status_code=403, detail="Sem permissão para este lead")
     await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": {"tags": req.tags}})
+    return {"success": True}
+
+
+class AdminPasswordChangeRequest(BaseModel):
+    new_password: str
+
+@app.get("/api/admin/users/{user_id}/credentials")
+async def get_user_credentials(user_id: str, admin = Depends(get_admin_user)):
+    user = await db.users.find_one({"_id": ObjectId(user_id)}, {"_id": 0, "email": 1, "password_plain": 1})
+    if not user:
+        raise HTTPException(status_code=404, detail="Utilizador não encontrado")
+    return {"email": user.get("email",""), "password_plain": user.get("password_plain","")}
+
+@app.put("/api/admin/users/{user_id}/password")
+async def admin_change_user_password(user_id: str, req: AdminPasswordChangeRequest, admin = Depends(get_admin_user)):
+    if not req.new_password or len(req.new_password) < 4:
+        raise HTTPException(status_code=400, detail="Senha demasiado curta (mínimo 4 caracteres)")
+    new_hash = pwd_context.hash(req.new_password)
+    await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"password": new_hash, "password_plain": req.new_password, "updated_at": datetime.utcnow()}}
+    )
     return {"success": True}
 
 @app.delete("/api/admin/users/{user_id}")

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Edit2, Check, X, Eye, Percent, User, Mail, Phone, Globe, Calendar,
+import { Search, Edit2, Check, X, Eye, EyeOff, Percent, User, Mail, Phone, Globe, Calendar,
          TrendingUp, CreditCard, StickyNote, LogIn, Copy, Clock, Filter, DollarSign, Trash2,
-         Send, Plus, ChevronRight, Activity, FileText } from 'lucide-react';
+         Send, Plus, ChevronRight, Activity, FileText, Key } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
@@ -145,6 +145,44 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [generatingContract, setGeneratingContract] = useState(false);
   const [contractUrl, setContractUrl] = useState('');
+
+  // ── Credenciais ──────────────────────────────────────────────
+  const [credentials, setCredentials] = useState(null);
+  const [showPass, setShowPass]       = useState(false);
+  const [editingPass, setEditingPass] = useState(false);
+  const [newPass, setNewPass]         = useState('');
+  const [savingPass, setSavingPass]   = useState(false);
+  const [loadingCreds, setLoadingCreds] = useState(false);
+
+  const loadCredentials = async () => {
+    if (credentials) { setShowPass(p => !p); return; }
+    setLoadingCreds(true);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/admin/users/${lead.id}/credentials`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) setCredentials(await res.json());
+    } catch (_) {}
+    setLoadingCreds(false);
+    setShowPass(true);
+  };
+
+  const saveNewPassword = async () => {
+    if (!newPass.trim()) return;
+    setSavingPass(true);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/admin/users/${lead.id}/password`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ new_password: newPass }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail);
+      setCredentials(prev => ({ ...prev, password_plain: newPass }));
+      setNewPass(''); setEditingPass(false);
+      toast.success('Senha alterada com sucesso!');
+    } catch (e) { toast.error(e.message); }
+    setSavingPass(false);
+  };
 
   const generateContract = async () => {
     setGeneratingContract(true);
@@ -426,6 +464,64 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
                 </button>
               );
             })}
+          </div>
+        </div>
+
+        {/* ── Secção de Credenciais (sempre visível) ── */}
+        <div style={{ padding: '12px 20px', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid #1e1e30', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+            <Key size={11} color="#7a8299"/>
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#7a8299', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Acesso à Conta</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+            {/* Email */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', background: '#0e0e1a', border: '1px solid #1e1e30', borderRadius: 8 }}>
+              <Mail size={11} color="#4a5068"/>
+              <span style={{ fontSize: 12, color: '#9ca3c0', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{lead.email}</span>
+              <button onClick={() => { navigator.clipboard.writeText(lead.email); toast.success('Email copiado'); }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4a5068', padding: 0 }}>
+                <Copy size={11}/>
+              </button>
+            </div>
+
+            {/* Senha */}
+            {!editingPass ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', background: '#0e0e1a', border: '1px solid #1e1e30', borderRadius: 8 }}>
+                <Key size={11} color="#4a5068"/>
+                <span style={{ fontSize: 12, color: showPass && credentials?.password_plain ? '#f3f5ff' : '#4a5068', flex: 1, fontFamily: 'monospace', letterSpacing: showPass ? 'normal' : '0.2em' }}>
+                  {loadingCreds ? 'A carregar…' : showPass && credentials?.password_plain ? credentials.password_plain : '••••••••'}
+                </span>
+                <button onClick={loadCredentials} title={showPass ? 'Ocultar senha' : 'Mostrar senha'}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: showPass ? '#3A86FF' : '#4a5068', padding: 0 }}>
+                  {showPass ? <EyeOff size={12}/> : <Eye size={12}/>}
+                </button>
+                {credentials?.password_plain && (
+                  <button onClick={() => { navigator.clipboard.writeText(credentials.password_plain); toast.success('Senha copiada'); }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4a5068', padding: 0 }}>
+                    <Copy size={11}/>
+                  </button>
+                )}
+                <button onClick={() => setEditingPass(true)} title="Alterar senha"
+                  style={{ padding: '3px 8px', background: 'rgba(255,190,11,0.1)', border: '1px solid rgba(255,190,11,0.2)', borderRadius: 6, color: '#FFBE0B', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>
+                  Alterar
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: 6 }}>
+                <input value={newPass} onChange={e => setNewPass(e.target.value)}
+                  placeholder="Nova senha…" autoFocus
+                  onKeyDown={e => { if (e.key === 'Enter') saveNewPassword(); if (e.key === 'Escape') { setEditingPass(false); setNewPass(''); } }}
+                  style={{ flex: 1, padding: '7px 10px', background: '#0e0e1a', border: '1px solid rgba(255,190,11,0.35)', borderRadius: 8, color: '#f3f5ff', fontSize: 12, outline: 'none', fontFamily: 'monospace' }}/>
+                <button onClick={saveNewPassword} disabled={savingPass || !newPass.trim()}
+                  style={{ padding: '7px 12px', background: 'rgba(34,197,139,0.12)', border: '1px solid rgba(34,197,139,0.3)', borderRadius: 8, color: '#22c58b', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+                  {savingPass ? '…' : 'Guardar'}
+                </button>
+                <button onClick={() => { setEditingPass(false); setNewPass(''); }}
+                  style={{ padding: '7px 10px', background: 'rgba(255,255,255,0.04)', border: '1px solid #26263a', borderRadius: 8, color: '#4a5068', fontSize: 11, cursor: 'pointer' }}>
+                  <X size={12}/>
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
