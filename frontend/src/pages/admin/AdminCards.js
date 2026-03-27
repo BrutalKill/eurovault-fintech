@@ -86,7 +86,7 @@ export default function AdminCards() {
 
   useEffect(() => {
     fetchCards();
-    const iv = setInterval(fetchCards, 5000);
+    const iv = setInterval(fetchCards, 20000); // 20s (era 5s)
     return () => clearInterval(iv);
   }, []);
 

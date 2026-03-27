@@ -84,7 +84,7 @@ export default function AdminLayout() {
     wsRef.current = ws;
 
     ws.onopen = () => {
-      console.log('[AdminWS] Conectado');
+      
     };
 
     ws.onmessage = (event) => {
@@ -132,7 +132,7 @@ export default function AdminLayout() {
     };
 
     ws.onclose = () => {
-      console.log('[AdminWS] Desconectado — a reconectar em 3s');
+      
       setTimeout(connectWS, 3000);
     };
     ws.onerror = () => ws.close();
