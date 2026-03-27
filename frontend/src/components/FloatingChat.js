@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageCircle, X, Send, Headphones, Bot, ChevronRight, ArrowLeft } from 'lucide-react';
+import { useLang } from '../context/LangContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -74,6 +75,7 @@ const matchFAQ = (text) => {
    Componente FloatingChat
 ──────────────────────────────────────────── */
 export default function FloatingChat() {
+  const { t } = useLang();
   const [open, setOpen]         = useState(false);
   // modo: 'home' | 'bot' | 'agent'
   const [mode, setMode]         = useState('home');
@@ -261,7 +263,7 @@ export default function FloatingChat() {
 
               <button onClick={() => setMode('agent')}
                 style={{ width: '100%', marginTop: 12, padding: '10px', background: 'rgba(34,197,139,0.1)', border: '1px solid rgba(34,197,139,0.25)', borderRadius: 10, color: '#22c58b', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
-                <Headphones size={14} />Falar com agente ao vivo
+                <Headphones size={14} />{t('chat_live_agent')}
               </button>
             </div>
           )}
@@ -288,7 +290,7 @@ export default function FloatingChat() {
               <div style={{ padding: '6px 10px 6px', background: 'rgba(0,0,0,0.3)', borderTop: '1px solid #1e1e30' }}>
                 <button onClick={() => setMode('agent')}
                   style={{ width: '100%', padding: '7px', background: 'rgba(34,197,139,0.08)', border: '1px solid rgba(34,197,139,0.2)', borderRadius: 8, color: '#22c58b', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 6 }}>
-                  <Headphones size={12} />Falar com agente ao vivo
+                  <Headphones size={12} />{t('chat_live_agent')}
                 </button>
                 <div style={{ display: 'flex', gap: 7 }}>
                   <input value={text} onChange={e => setText(e.target.value)}
@@ -313,7 +315,7 @@ export default function FloatingChat() {
                   <div style={{ textAlign: 'center', padding: '30px 14px' }}>
                     <Headphones size={24} color="#3A86FF" style={{ marginBottom: 8, opacity: 0.6 }} />
                     <p style={{ fontSize: 12, color: '#7a8299', margin: 0, lineHeight: 1.5 }}>
-                      Ligação com agente estabelecida.<br />Aguarde ou envie a sua mensagem.
+                      {t('chat_connected_msg')}
                     </p>
                   </div>
                 )}

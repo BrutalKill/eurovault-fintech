@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, Calendar, RefreshCw, ArrowUp } from 'lucide-react';
 import { useUser } from '../context/UserContext';
+import { useLang } from '../context/LangContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 const fmt = (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v || 0);
@@ -63,6 +64,7 @@ function LineChart({ data, color = '#3A86FF', height = 200 }) {
 }
 
 export default function BalanceHistoryPage() {
+  const { t } = useLang();
   const { user } = useUser();
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -132,7 +134,7 @@ export default function BalanceHistoryPage() {
       <div style={{ ...card, marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#f3f5ff' }}>Saldo ao Longo do Tempo</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#f3f5ff' }}>{t('nav_balance')}</div>
             <div style={{ fontSize: 11, color: 'hsl(215,16%,55%)', marginTop: 2 }}>Últimos 30 dias</div>
           </div>
           {history.length > 0 && (
@@ -173,7 +175,7 @@ export default function BalanceHistoryPage() {
 
       {/* Tabela de histórico */}
       <div style={{ ...card }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#f3f5ff', marginBottom: 14 }}>Histórico Detalhado</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#f3f5ff', marginBottom: 14 }}>{t('hist_title') || 'Historial'}</div>
         {loading ? (
           <div style={{ padding: '20px 0', textAlign: 'center', color: '#4a5068' }}>A carregar…</div>
         ) : history.length === 0 ? (
@@ -185,7 +187,7 @@ export default function BalanceHistoryPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: 'hsl(240,18%,10%)' }}>
-                  {['Data', 'Saldo', 'Lucro', 'Variação'].map(h => (
+                  {[t('adm_dep_date'), t('nav_balance'), t('nav_profit'), 'Δ'].map(h => (
                     <th key={h} style={{ padding: '9px 14px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: '#4a5068', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</th>
                   ))}
                 </tr>

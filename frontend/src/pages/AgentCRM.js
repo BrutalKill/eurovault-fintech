@@ -7,6 +7,8 @@ import {
   BarChart3, AlertCircle, Zap, Filter
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useLang } from '../context/LangContext';
+import LangSwitcher from '../components/LangSwitcher';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -563,7 +565,7 @@ function AgentProfileDropdown({ agent, token, onLogout, onPhotoUpdate }) {
               onMouseLeave={e => e.currentTarget.style.background = 'rgba(58,134,255,0.08)'}
             >
               <Camera size={14} />
-              {uploading ? 'A carregar…' : 'Alterar foto de perfil'}
+              {uploading ? t('agent_login_loading') : t('adm_action_edit')}
             </button>
 
             {/* Logout */}
@@ -597,6 +599,7 @@ function AgentProfileDropdown({ agent, token, onLogout, onPhotoUpdate }) {
 ══════════════════════════════════════════════════════════════ */
 export default function AgentCRM() {
   const navigate = useNavigate();
+  const { t } = useLang();
   const [agent, setAgent] = useState(null);
   const [leads, setLeads] = useState([]);
   const [search, setSearch] = useState('');
@@ -656,7 +659,7 @@ export default function AgentCRM() {
     <div style={{ minHeight: '100vh', background: '#06061a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ textAlign: 'center', color: '#7a8299' }}>
         <div style={{ width: 44, height: 44, border: '3px solid rgba(58,134,255,0.15)', borderTopColor: '#3A86FF', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 14px' }} />
-        <p style={{ fontSize: 13, margin: 0, fontWeight: 600 }}>A carregar CRM…</p>
+        <p style={{ fontSize: 13, margin: 0, fontWeight: 600 }}>{t('adm_loading')}</p>
       </div>
     </div>
   );
@@ -712,6 +715,9 @@ export default function AgentCRM() {
         </div>
 
         <div style={{ flex: 1 }} />
+
+        {/* LangSwitcher no CRM */}
+        <LangSwitcher compact />
 
         {/* Perfil do Agente */}
         <AgentProfileDropdown

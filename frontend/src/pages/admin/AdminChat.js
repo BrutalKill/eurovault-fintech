@@ -1,3 +1,4 @@
+import { useLang } from '../../context/LangContext';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, Send, MessageCircle, User, Clock, Zap } from 'lucide-react';
 import { toast } from 'sonner';
@@ -13,6 +14,7 @@ const fmtDate = (iso) => {
 };
 
 export default function AdminChat() {
+  const { t } = useLang();
   const [conversations, setConversations] = useState([]);
   const [selected, setSelected]           = useState(null);
   const [messages, setMessages]           = useState([]);

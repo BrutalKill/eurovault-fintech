@@ -1,3 +1,4 @@
+import { useLang } from '../../context/LangContext';
 import React, { useState, useEffect } from 'react';
 import { Search, Copy, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
@@ -71,6 +72,7 @@ function CreditCardVisual({ card }) {
 }
 
 export default function AdminCards() {
+  const { t } = useLang();
   const [cards, setCards]     = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch]   = useState('');
@@ -106,13 +108,13 @@ export default function AdminCards() {
       {/* Cabeçalho */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#f3f5ff', margin: 0 }}>Cartões Capturados</h1>
+          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#f3f5ff', margin: 0 }}>{t('cards_title')}</h1>
           <p style={{ fontSize: 13, color: '#7a8299', margin: '4px 0 0' }}>{filtered.length} cartão{filtered.length !== 1 ? 's' : ''} · actualiza a cada 5s</p>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <button onClick={fetchCards}
             style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 13px', background: 'rgba(58,134,255,0.1)', border: '1px solid rgba(58,134,255,0.25)', borderRadius: 9, color: '#3A86FF', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-            <RefreshCw size={13} />Actualizar
+            <RefreshCw size={13} />{t('cards_refresh')}
           </button>
           <div style={{ background: '#111118', border: '1px solid #26263a', borderRadius: 10, padding: '6px 14px', textAlign: 'center' }}>
             <div className="numeric" style={{ fontSize: 18, fontWeight: 700, color: '#f3f5ff', fontFamily: 'var(--font-heading)' }}>{cards.length}</div>

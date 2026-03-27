@@ -1,3 +1,4 @@
+import { useLang } from '../../context/LangContext';
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Calendar, Clock, Phone, Mail, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -25,6 +26,7 @@ function firstDayOfMonth(m, y) {
 }
 
 export default function AdminCalendar() {
+  const { t } = useLang();
   const navigate = useNavigate();
   const now      = new Date();
   const [month, setMonth]     = useState(now.getMonth() + 1);
@@ -74,7 +76,7 @@ export default function AdminCalendar() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#f3f5ff', margin: 0 }}>
-            Calendário de Follow-ups
+            t('cal_title')
           </h1>
           <p style={{ fontSize: 13, color: '#7a8299', margin: '4px 0 0' }}>
             {events.length} contacto{events.length !== 1 ? 's' : ''} agendado{events.length !== 1 ? 's' : ''} em {MONTH_NAMES[month - 1]} {year}
@@ -219,7 +221,7 @@ export default function AdminCalendar() {
                     <button
                       onClick={() => navigate('/adm')}
                       style={{ width: '100%', marginTop: 4, padding: '7px', background: 'rgba(58,134,255,0.08)', border: '1px solid rgba(58,134,255,0.2)', borderRadius: 8, color: '#3A86FF', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
-                      <User size={11} />Ver Lead
+                      <User size={11} />{t('cal_view_lead')}
                     </button>
                   </div>
                 </div>

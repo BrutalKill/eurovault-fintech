@@ -1,3 +1,4 @@
+import { useLang } from '../../context/LangContext';
 import React, { useState, useEffect } from 'react';
 import { Users, TrendingUp, DollarSign, Percent, BarChart2, Globe, ArrowDown, ArrowUp, Download, Bell } from 'lucide-react';
 
@@ -23,6 +24,7 @@ function MiniBar({ data, color = '#3A86FF' }) {
 }
 
 export default function AdminAnalytics() {
+  const { t } = useLang();
   const [data, setData] = useState(null);
   const [followups, setFollowups] = useState([]);
   const [pendingKyc, setPendingKyc] = useState([]);
@@ -74,12 +76,12 @@ export default function AdminAnalytics() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#f3f5ff', margin: 0 }}>Analytics & KPIs</h1>
+          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#f3f5ff', margin: 0 }}>{t('anal_title')}</h1>
           <p style={{ fontSize: 13, color: '#7a8299', margin: '4px 0 0' }}>Visão geral do negócio em tempo real</p>
         </div>
         <button onClick={handleExport}
           style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', background: 'rgba(34,197,139,0.12)', border: '1px solid rgba(34,197,139,0.3)', borderRadius: 10, color: '#22c58b', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-          <Download size={14} />Exportar CSV
+          <Download size={14} />{t('anal_export')}
         </button>
       </div>
 

@@ -274,7 +274,7 @@ export default function ProfilePage() {
             <button
               onClick={() => setEditingGoal(e => !e)}
               style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', background: editingGoal ? 'rgba(239,68,68,0.1)' : 'rgba(255,190,11,0.1)', border: `1px solid ${editingGoal ? 'rgba(239,68,68,0.3)' : 'rgba(255,190,11,0.3)'}`, borderRadius: 8, color: editingGoal ? '#ef4444' : '#FFBE0B', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-              {editingGoal ? <><X size={12} />Cancelar</> : <><Edit2 size={12} />Editar</>}
+              {editingGoal ? <><X size={12} />{t('adm_cancel')}</> : <><Edit2 size={12} />{t('prof_goal_edit')}</>}
             </button>
           )}
         </div>
@@ -357,9 +357,9 @@ export default function ProfilePage() {
               <label style={labelStyle}>Tipo de Documento</label>
               <select value={kycDocType} onChange={e => setKycDocType(e.target.value)}
                 style={{ ...inputStyle, maxWidth: 280 }} data-testid="kyc-doc-type-select">
-                <option value="bi">Bilhete de Identidade / Cartão Cidadão</option>
-                <option value="passport">Passaporte</option>
-                <option value="driver_license">Carta de Condução</option>
+                <option value="bi">{t('prof_bi_label')}</option>
+                <option value="passport">{t('prof_passport_label')}</option>
+                <option value="driver_license">{t('prof_license_label')}</option>
               </select>
             </div>
 
