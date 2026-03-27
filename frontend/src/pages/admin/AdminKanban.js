@@ -1,3 +1,4 @@
+import { useLang } from '../../context/LangContext';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -169,6 +170,7 @@ function KanbanColumn({ column, leads, onDrop, onDragStart, onDragOver, onDragLe
 
 // ── Página Principal ─────────────────────────────────────────────────────────
 export default function AdminKanban() {
+  const { t } = useLang();
   const navigate   = useNavigate();
   const [leads, setLeads]       = useState([]);
   const [loading, setLoading]   = useState(true);
@@ -233,17 +235,17 @@ export default function AdminKanban() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, flexShrink: 0, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 800, color: '#f3f5ff', margin: 0 }}>Pipeline Kanban</h1>
-          <p style={{ fontSize: 12, color: '#7a8299', margin: '2px 0 0' }}>Arraste os leads entre colunas para actualizar o estado</p>
+          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 800, color: '#f3f5ff', margin: 0 }}>{t('adm_kb_title')}</h1>
+          <p style={{ fontSize: 12, color: '#7a8299', margin: '2px 0 0' }}>{t('adm_kb_subtitle')}</p>
         </div>
         <div style={{ flex: 1 }} />
 
         {/* Stats rápidas */}
         <div style={{ display: 'flex', gap: 8 }}>
           {[
-            { label: 'Total', value: totalLeads, color: '#7a8299' },
-            { label: 'Depositados', value: totalDeposited, color: '#22c58b' },
-            { label: 'Capital', value: fmt(totalBalance), color: '#22c58b' },
+            { label: t('adm_kb_total'),     value: totalLeads, color: '#7a8299' },
+            { label: t('adm_kb_deposited'), value: totalDeposited, color: '#22c58b' },
+            { label: t('adm_kb_capital'),   value: fmt(totalBalance), color: '#22c58b' },
           ].map(({ label, value, color }) => (
             <div key={label} style={{ padding: '6px 12px', background: 'hsl(240,26%,8%)', border: '1px solid hsl(240,16%,18%)', borderRadius: 9, textAlign: 'center' }}>
               <div className="numeric" style={{ fontSize: 14, fontWeight: 800, color, fontFamily: 'var(--font-heading)' }}>{value}</div>

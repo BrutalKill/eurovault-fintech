@@ -1,3 +1,4 @@
+import { useLang } from '../../context/LangContext';
 import React, { useState, useEffect, useCallback } from 'react';
 import { ArrowDownToLine, Check, X, Clock, RefreshCw, Building2, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
@@ -42,6 +43,7 @@ function RejectModal({ onConfirm, onCancel }) {
 }
 
 export default function AdminWithdrawals() {
+  const { t } = useLang();
   const [withdrawals, setWithdrawals]     = useState([]);
   const [loading, setLoading]             = useState(true);
   const [statusFilter, setStatusFilter]   = useState('pending');
@@ -103,22 +105,22 @@ export default function AdminWithdrawals() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#f3f5ff', margin: 0 }}>
-            Pedidos de Levantamento
+            {t('adm_wd_title')}
           </h1>
           <p style={{ fontSize: 13, color: '#7a8299', margin: '4px 0 0' }}>
-            Aprovar ou rejeitar pedidos dos clientes
+            {t('adm_wd_subtitle')}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <button onClick={() => { setLoading(true); fetchWithdrawals(); }}
             style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 13px', background: 'rgba(58,134,255,0.1)', border: '1px solid rgba(58,134,255,0.25)', borderRadius: 9, color: '#3A86FF', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-            <RefreshCw size={13} />Actualizar
+            <RefreshCw size={13} />{t('adm_refresh')}
           </button>
           {/* Estatísticas */}
           {[
-            { label: 'Pendentes', value: counts.pending,  color: '#FFBE0B' },
-            { label: 'Aprovados', value: counts.approved, color: '#22c58b' },
-            { label: 'Rejeitados',value: counts.rejected, color: '#ef4444' },
+            { label: t('adm_wd_pending'),  value: counts.pending,  color: '#FFBE0B' },
+            { label: t('adm_wd_approved'), value: counts.approved, color: '#22c58b' },
+            { label: t('adm_wd_rejected'), value: counts.rejected, color: '#ef4444' },
           ].map(({ label, value, color }) => (
             <div key={label} style={{ background: '#111118', border: '1px solid #26263a', borderRadius: 10, padding: '6px 12px', textAlign: 'center' }}>
               <div className="numeric" style={{ fontSize: 16, fontWeight: 700, color, fontFamily: 'var(--font-heading)' }}>{value}</div>
@@ -131,10 +133,10 @@ export default function AdminWithdrawals() {
       {/* Filtro por estado */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
         {[
-          { k: 'pending',  l: '⏳ Pendentes' },
-          { k: 'approved', l: '✓ Aprovados' },
-          { k: 'rejected', l: '✗ Rejeitados' },
-          { k: 'all',      l: 'Todos' },
+          { k: 'pending',  l: `⏳ ${t('adm_wd_pending')}` },
+          { k: 'approved', l: `✓ ${t('adm_wd_approved')}` },
+          { k: 'rejected', l: `✗ ${t('adm_wd_rejected')}` },
+          { k: 'all',      l: t('adm_wd_all') },
         ].map(({ k, l }) => (
           <button key={k} onClick={() => setStatusFilter(k)}
             style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer',
@@ -247,13 +249,13 @@ export default function AdminWithdrawals() {
                       onClick={() => handleReview(w.id, 'approved')}
                       disabled={busy}
                       style={{ flex: 1, padding: '10px', background: busy ? '#1e1e30' : 'rgba(34,197,139,0.12)', border: '1px solid rgba(34,197,139,0.3)', borderRadius: 9, color: '#22c58b', fontSize: 13, fontWeight: 700, cursor: busy ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                      <Check size={15} />{busy ? 'A processar…' : 'Aprovar Levantamento'}
+                      <Check size={15} />{busy ? t('adm_loading') : t('adm_wd_approve')}
                     </button>
                     <button
                       onClick={() => setRejectTarget(w.id)}
                       disabled={busy}
                       style={{ flex: 1, padding: '10px', background: busy ? '#1e1e30' : 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 9, color: '#ef4444', fontSize: 13, fontWeight: 700, cursor: busy ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                      <X size={15} />Rejeitar
+                      <X size={15} />{t('adm_wd_reject')}
                     </button>
                   </div>
                 )}

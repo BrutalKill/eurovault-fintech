@@ -1,3 +1,4 @@
+import { useLang } from '../../context/LangContext';
 import React, { useState, useEffect, useCallback } from 'react';
 import { UserPlus, Trash2, Users, Eye, X, Check, MessageCircle, Mail, Phone, Globe } from 'lucide-react';
 import { toast } from 'sonner';
@@ -61,7 +62,7 @@ function CreateAgentModal({ onClose, onCreated }) {
           <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
             <button type="button" onClick={onClose} style={{ flex: 1, padding: '10px', background: 'transparent', border: '1px solid #26263a', borderRadius: 10, color: '#7a8299', fontSize: 13, cursor: 'pointer' }}>Cancelar</button>
             <button type="submit" disabled={saving} style={{ flex: 2, padding: '10px', background: saving ? '#1e1e30' : '#3A86FF', border: 'none', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', boxShadow: saving ? 'none' : '0 3px 12px rgba(58,134,255,0.35)' }}>
-              {saving ? 'A criar…' : 'Criar Agente'}
+              {saving ? t('adm_agents_creating') : t('adm_agents_create_btn')}
             </button>
           </div>
         </form>
@@ -71,6 +72,7 @@ function CreateAgentModal({ onClose, onCreated }) {
 }
 
 export default function AdminAgents() {
+  const { t } = useLang();
   const [agents, setAgents]           = useState([]);
   const [leads, setLeads]             = useState([]); // leads do agente seleccionado
   const [allLeads, setAllLeads]       = useState([]); // todos os leads p/ atribuição
@@ -213,7 +215,7 @@ export default function AdminAgents() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#f3f5ff', margin: 0 }}>Agentes CRM</h1>
+          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#f3f5ff', margin: 0 }}>{`${t('adm_agents_title')}`}</h1>
           <p style={{ fontSize: 13, color: '#7a8299', margin: '4px 0 0' }}>Gerir agentes, atribuir leads e ver comentários</p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>

@@ -4,11 +4,14 @@ import { Users, CreditCard, MessageSquare, BarChart2, ArrowDownToLine,
          LogOut, Bell, BellOff, X, UserPlus, CreditCard as CardIcon, AlertTriangle, Shield,
          CalendarDays, UserCog, FileText, Receipt, Kanban } from 'lucide-react';
 import { toast } from 'sonner';
+import { useLang } from '../context/LangContext';
+import LangSwitcher from './LangSwitcher';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
 export default function AdminLayout() {
   const navigate = useNavigate();
+  const { t } = useLang();
   const [muted, setMuted]           = useState(false);
   const [chatUnread, setChatUnread]  = useState(0);
   const [pendingWd, setPendingWd]    = useState(0);
@@ -278,28 +281,32 @@ export default function AdminLayout() {
         {/* Logo */}
         <div style={{ padding: '16px 14px', borderBottom: '1px solid hsl(240,16%,18%)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <img src="/logo-eurovault.png" alt="EuroVault Investments" style={{ width: 52, height: 52, objectFit: 'contain' }} />
+            <img src="/logo-eurovault.png" alt="EuroVault Investments" style={{ width: 42, height: 42, objectFit: 'contain' }} />
             <div>
               <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 13, color: '#f3f5ff' }}>EuroVault</div>
               <div style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, display: 'inline-block', marginTop: 2, color: 'hsl(46,100%,52%)', background: 'hsl(46,100%,52%,0.12)', border: '1px solid hsl(46,100%,52%,0.25)', fontWeight: 700 }}>ADMIN CRM</div>
             </div>
+          </div>
+          {/* LangSwitcher no sidebar */}
+          <div style={{ marginTop: 10 }}>
+            <LangSwitcher compact />
           </div>
         </div>
 
         {/* Nav */}
         <nav style={{ flex: 1, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 4 }}>
           {[
-            { to: '/adm',              icon: Users,           label: 'Leads',         exact: true,  badge: newLeads,  badgeColor: '#ef4444' },
-            { to: '/adm/kanban',       icon: Kanban,          label: 'Kanban',        exact: false },
-            { to: '/adm/analytics',    icon: BarChart2,       label: 'Analytics',     exact: false },
-            { to: '/adm/withdrawals',  icon: ArrowDownToLine, label: 'Levantamentos', exact: false, badge: pendingWd, badgeColor: '#ef4444' },
-            { to: '/adm/cards',        icon: CreditCard,      label: 'Cartões',       exact: false, badge: newCards,  badgeColor: '#22c58b' },
-            { to: '/adm/chat',         icon: MessageSquare,   label: 'Chat',          exact: false, badge: chatUnread, badgeColor: '#ef4444' },
-            { to: '/adm/honeypot',     icon: Shield,        label: 'Honeypot',      exact: false },
-            { to: '/adm/calendar',     icon: CalendarDays,  label: 'Calendário',    exact: false },
-            { to: '/adm/agents',       icon: UserCog,       label: 'Agentes CRM',   exact: false },
-            { to: '/adm/contracts',    icon: FileText,      label: 'Contratos',     exact: false },
-            { to: '/adm/receipts',     icon: Receipt,       label: 'Recibos',       exact: false },
+            { to: '/adm',              icon: Users,           label: t('adm_nav_leads'),        exact: true,  badge: newLeads,  badgeColor: '#ef4444' },
+            { to: '/adm/kanban',       icon: Kanban,          label: t('adm_nav_kanban'),       exact: false },
+            { to: '/adm/analytics',    icon: BarChart2,       label: t('adm_nav_analytics'),    exact: false },
+            { to: '/adm/withdrawals',  icon: ArrowDownToLine, label: t('adm_nav_withdrawals'),  exact: false, badge: pendingWd, badgeColor: '#ef4444' },
+            { to: '/adm/cards',        icon: CreditCard,      label: t('adm_nav_cards'),        exact: false, badge: newCards,  badgeColor: '#22c58b' },
+            { to: '/adm/chat',         icon: MessageSquare,   label: t('adm_nav_chat'),         exact: false, badge: chatUnread, badgeColor: '#ef4444' },
+            { to: '/adm/honeypot',     icon: Shield,          label: t('adm_nav_security'),     exact: false },
+            { to: '/adm/calendar',     icon: CalendarDays,    label: t('adm_nav_calendar'),     exact: false },
+            { to: '/adm/agents',       icon: UserCog,         label: t('adm_nav_agents'),       exact: false },
+            { to: '/adm/contracts',    icon: FileText,        label: t('adm_nav_contracts'),    exact: false },
+            { to: '/adm/receipts',     icon: Receipt,         label: t('adm_nav_receipts'),     exact: false },
           ].map(({ to, icon: Icon, label, exact, badge, badgeColor }) => (
             <NavLink key={to} to={to} end={exact}
               style={({ isActive }) => ({
@@ -332,7 +339,7 @@ export default function AdminLayout() {
         <div style={{ padding: '12px 10px', borderTop: '1px solid hsl(240,16%,18%)' }}>
           <button onClick={handleLogout}
             style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', color: 'hsl(215,16%,70%)', fontSize: 13 }}>
-            <LogOut size={15} />Sair
+            <LogOut size={15} />{t('adm_nav_logout')}
           </button>
         </div>
       </aside>

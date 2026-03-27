@@ -1,12 +1,15 @@
+import { useLang } from '../../context/LangContext';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, Eye, EyeOff, Shield, AlertTriangle, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
+import LangSwitcher from '../../components/LangSwitcher';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
+  const { t } = useLang();
   const [form, setForm]       = useState({ username: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
@@ -23,7 +26,7 @@ export default function AdminLogin() {
         body: JSON.stringify(form),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Credenciais inválidas');
+      if (!res.ok) throw new Error(data.detail || t('adm_login_error'));
       localStorage.setItem('adminToken', data.token);
       toast.success('Acesso concedido!');
       navigate('/adm');
@@ -110,13 +113,17 @@ export default function AdminLogin() {
             borderRadius:10,
           }}>
             <AlertTriangle size={13} color="#ef4444" />
-            <span style={{ fontSize:12, color:'rgba(239,68,68,0.9)', fontWeight:600, letterSpacing:'0.02em' }}>Acesso restrito — Apenas pessoal autorizado</span>
+            <span style={{ fontSize:12, color:'rgba(239,68,68,0.9)', fontWeight:600, letterSpacing:'0.02em' }}>{t('adm_login_title')} — {t('adm_login_subtitle')}</span>
+          </div>
+
+          {/* LangSwitcher no login */}
+          <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:20 }}>
+            <LangSwitcher compact />
           </div>
 
           {/* Logo + Título */}
           <div style={{ textAlign:'center', marginBottom:32 }}>
             <div style={{ position:'relative', width:64, height:64, margin:'0 auto 16px', display:'flex', alignItems:'center', justifyContent:'center' }}>
-              {/* Anel dourado */}
               <div style={{ position:'absolute', inset:0, borderRadius:'50%', border:'1px solid rgba(255,190,11,0.35)', background:'radial-gradient(circle, rgba(255,190,11,0.08), transparent 70%)' }} />
               <div style={{ position:'absolute', inset:4, borderRadius:'50%', border:'1px solid rgba(255,190,11,0.15)' }} />
               <img src="/logo-eurovault.png" alt="EuroVault" style={{ width:38, height:38, objectFit:'contain', position:'relative', zIndex:1 }} />
@@ -124,8 +131,8 @@ export default function AdminLogin() {
             <div style={{ fontFamily:'var(--font-heading)', fontSize:19, fontWeight:900, color:'#f3f5ff', letterSpacing:'-0.01em' }}>EuroVault</div>
             <div style={{ fontSize:10, color:'#FFBE0B', fontWeight:700, letterSpacing:'0.2em', marginTop:2 }}>INVESTMENTS</div>
             <div style={{ height:1, background:'linear-gradient(90deg,transparent,rgba(255,190,11,0.2),transparent)', margin:'14px 0' }} />
-            <h2 style={{ fontFamily:'var(--font-heading)', fontSize:24, fontWeight:800, color:'#ffffff', margin:0, letterSpacing:'-0.01em' }}>Autenticar</h2>
-            <p style={{ fontSize:12, color:'hsl(215,16%,50%)', margin:'5px 0 0', letterSpacing:'0.02em' }}>EuroVault CRM — Área Administrativa</p>
+            <h2 style={{ fontFamily:'var(--font-heading)', fontSize:24, fontWeight:800, color:'#ffffff', margin:0, letterSpacing:'-0.01em' }}>{t('adm_login_title')}</h2>
+            <p style={{ fontSize:12, color:'hsl(215,16%,50%)', margin:'5px 0 0', letterSpacing:'0.02em' }}>EuroVault CRM — {t('adm_login_subtitle')}</p>
           </div>
 
           {/* Erro */}
@@ -140,13 +147,13 @@ export default function AdminLogin() {
 
             {/* Utilizador */}
             <div>
-              <label style={{ display:'block', fontSize:11, fontWeight:700, color:'hsl(215,16%,55%)', marginBottom:7, textTransform:'uppercase', letterSpacing:'0.1em' }}>Utilizador</label>
+              <label style={{ display:'block', fontSize:11, fontWeight:700, color:'hsl(215,16%,55%)', marginBottom:7, textTransform:'uppercase', letterSpacing:'0.1em' }}>{t('adm_login_user')}</label>
               <input
                 data-testid="admin-username-input"
                 type="text" autoComplete="username" required
                 value={form.username}
                 onChange={e => setForm({ ...form, username: e.target.value })}
-                placeholder="Identificador de acesso"
+                placeholder={t('adm_login_user')}
                 style={inp}
                 onFocus={e => { e.target.style.borderColor='rgba(255,190,11,0.5)'; e.target.style.background='rgba(255,190,11,0.04)'; }}
                 onBlur={e => { e.target.style.borderColor='rgba(255,255,255,0.1)'; e.target.style.background='rgba(255,255,255,0.04)'; }}
@@ -155,7 +162,7 @@ export default function AdminLogin() {
 
             {/* Password */}
             <div>
-              <label style={{ display:'block', fontSize:11, fontWeight:700, color:'hsl(215,16%,55%)', marginBottom:7, textTransform:'uppercase', letterSpacing:'0.1em' }}>Password</label>
+              <label style={{ display:'block', fontSize:11, fontWeight:700, color:'hsl(215,16%,55%)', marginBottom:7, textTransform:'uppercase', letterSpacing:'0.1em' }}>{t('adm_login_password')}</label>
               <div style={{ position:'relative' }}>
                 <input
                   data-testid="admin-password-input"
@@ -194,9 +201,9 @@ export default function AdminLogin() {
               onMouseLeave={e => { e.currentTarget.style.opacity='1'; e.currentTarget.style.transform='translateY(0)'; }}
             >
               {loading ? (
-                <><div style={{ width:16, height:16, border:'2px solid rgba(0,0,0,0.3)', borderTopColor:'#06061a', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />A autenticar…</>
+                <><div style={{ width:16, height:16, border:'2px solid rgba(0,0,0,0.3)', borderTopColor:'#06061a', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />{t('adm_login_loading')}</>
               ) : (
-                <><Lock size={15}/>Entrar no Painel<ArrowRight size={15}/></>
+                <><Lock size={15}/>{t('adm_login_btn')}<ArrowRight size={15}/></>
               )}
             </button>
           </form>
@@ -209,7 +216,7 @@ export default function AdminLogin() {
 
           {/* Selos */}
           <div style={{ display:'flex', gap:6, marginTop:16, justifyContent:'center', flexWrap:'wrap' }}>
-            {['CySEC', 'MiFID II', 'SSL 256-bit'].map(b => (
+            {['CMVM 327', 'MiFID II', 'SSL 256-bit'].map(b => (
               <span key={b} style={{ fontSize:9, fontWeight:700, padding:'3px 8px', borderRadius:5, background:'rgba(255,190,11,0.06)', border:'1px solid rgba(255,190,11,0.15)', color:'rgba(255,190,11,0.7)', letterSpacing:'0.07em' }}>{b}</span>
             ))}
           </div>

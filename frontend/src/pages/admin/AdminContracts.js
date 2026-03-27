@@ -1,3 +1,4 @@
+import { useLang } from '../../context/LangContext';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   FileText, Plus, Trash2, Download, Eye, Copy, CheckCircle,
@@ -64,7 +65,7 @@ function GenerateModal({ templates, leads, onClose, onSuccess }) {
             <Link size={16} color="#3A86FF" />
           </div>
           <div>
-            <div style={{ fontSize:14, fontWeight:700, color:'#f3f5ff' }}>Gerar Contrato</div>
+            <div style={{ fontSize:14, fontWeight:700, color:'#f3f5ff' }}>{t('adm_ct_new')}</div>
             <div style={{ fontSize:11, color:'#7a8299' }}>Crie um link único para o cliente assinar</div>
           </div>
           <button onClick={onClose} style={{ marginLeft:'auto', background:'none', border:'none', cursor:'pointer', color:'#7a8299' }}><X size={18}/></button>
@@ -216,6 +217,7 @@ function TemplateModal({ template, onClose, onSaved }) {
 
 /* ── Main Component ── */
 export default function AdminContracts() {
+  const { t } = useLang();
   const [tab, setTab]             = useState('contracts');
   const [contracts, setContracts] = useState([]);
   const [templates, setTemplates] = useState([]);
@@ -298,9 +300,9 @@ export default function AdminContracts() {
   };
 
   const TABS = [
-    { id:'contracts', icon:FileText, label:'Contratos', count: contracts.length },
-    { id:'templates', icon:Edit2,    label:'Modelos',   count: templates.length },
-    { id:'company',   icon:Building2, label:'Empresa' },
+    { id:'contracts', icon:FileText, label:t('adm_ct_tab_list'), count: contracts.length },
+    { id:'templates', icon:Edit2,    label:t('adm_ct_tab_models'),   count: templates.length },
+    { id:'company',   icon:Building2, label:t('adm_ct_tab_company') },
   ];
 
   const inp = { width:'100%', padding:'10px 13px', background:'hsl(240,18%,12%)', border:'1px solid hsl(240,16%,22%)', borderRadius:9, color:'#f3f5ff', fontSize:13, outline:'none', boxSizing:'border-box' };
@@ -310,8 +312,8 @@ export default function AdminContracts() {
       {/* Header */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:22 }}>
         <div>
-          <h1 style={{ fontFamily:'var(--font-heading)', fontSize:22, fontWeight:800, color:'#f3f5ff', margin:0 }}>Contratos</h1>
-          <p style={{ fontSize:13, color:'#7a8299', margin:'4px 0 0' }}>Geração e gestão de contratos digitais</p>
+          <h1 style={{ fontFamily:'var(--font-heading)', fontSize:22, fontWeight:800, color:'#f3f5ff', margin:0 }}>{t('adm_ct_title')}</h1>
+          <p style={{ fontSize:13, color:'#7a8299', margin:'4px 0 0' }}>{t('adm_ct_subtitle')}</p>
         </div>
         <div style={{ display:'flex', gap:8 }}>
           <button onClick={load} style={{ padding:'9px 12px', background:'rgba(255,255,255,0.04)', border:'1px solid #26263a', borderRadius:9, color:'#7a8299', cursor:'pointer', display:'flex', alignItems:'center', gap:5, fontSize:12 }}>

@@ -1,9 +1,9 @@
+import { useLang } from '../../context/LangContext';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Edit2, Check, X, Eye, EyeOff, Percent, User, Mail, Phone, Globe, Calendar,
          TrendingUp, CreditCard, StickyNote, LogIn, Copy, Clock, Filter, DollarSign, Trash2,
          Send, Plus, ChevronRight, Activity, FileText, Key } from 'lucide-react';
 import { toast } from 'sonner';
-
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
 const STATUS_OPTIONS = [
@@ -113,6 +113,7 @@ function EmailModal({ lead, token, onClose }) {
    DRAWER DE DETALHES DO LEAD
 ══════════════════════════════════════════════════════════════════ */
 function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
+  const { t } = useLang();
   const [activeTab, setActiveTab] = useState('finance');
   const [editVals, setEditVals]   = useState({
     balance: String(lead.balance || 0),
@@ -371,13 +372,13 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
   };
 
   const TABS = [
-    { key: 'finance',  label: 'Financeiro',  icon: TrendingUp },
-    { key: 'tags',     label: 'Tags',         icon: Filter },
-    { key: 'notes',    label: 'Notas',        icon: StickyNote },
-    { key: 'deposits', label: 'Depósitos',    icon: CreditCard },
-    { key: 'kyc',      label: 'KYC',          icon: User       },
-    { key: 'followup', label: 'Follow-up',    icon: Clock },
-    { key: 'audit',    label: 'Histórico',    icon: Filter },
+    { key: 'finance',  label: t('adm_tab_finance'),  icon: TrendingUp },
+    { key: 'tags',     label: t('adm_tab_tags'),      icon: Filter },
+    { key: 'notes',    label: t('adm_tab_notes'),     icon: StickyNote },
+    { key: 'deposits', label: t('adm_tab_deposits'),  icon: CreditCard },
+    { key: 'kyc',      label: t('adm_tab_kyc'),       icon: User       },
+    { key: 'followup', label: t('adm_tab_followup'),  icon: Clock },
+    { key: 'audit',    label: t('adm_tab_history'),   icon: Filter },
   ];
 
   return (
@@ -407,11 +408,11 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => setShowEmailModal(true)} title="Enviar email"
               style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', background: 'rgba(58,134,255,0.1)', border: '1px solid rgba(58,134,255,0.25)', borderRadius: 8, color: '#3A86FF', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
-              <Send size={12} />Email
+              <Send size={12} />{t('adm_drawer_email_btn')}
             </button>
             <button onClick={generateContract} disabled={generatingContract} title="Gerar link de contrato para este lead"
               style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', background: generatingContract ? 'rgba(34,197,139,0.05)' : 'rgba(34,197,139,0.1)', border: '1px solid rgba(34,197,139,0.25)', borderRadius: 8, color: '#22c58b', fontSize: 11, fontWeight: 700, cursor: generatingContract ? 'not-allowed' : 'pointer' }}>
-              <FileText size={12} />{generatingContract ? '…' : 'Contrato'}
+              <FileText size={12} />{generatingContract ? '…' : t('adm_drawer_contract_btn')}
             </button>
             <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#7a8299', padding: 4 }}><X size={20} /></button>
           </div>
@@ -471,7 +472,7 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
         <div style={{ padding: '12px 20px', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid #1e1e30', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
             <Key size={11} color="#7a8299"/>
-            <span style={{ fontSize: 10, fontWeight: 700, color: '#7a8299', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Acesso à Conta</span>
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#7a8299', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t('adm_drawer_access')}</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
             {/* Email */}
@@ -503,7 +504,7 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
                 )}
                 <button onClick={() => setEditingPass(true)} title="Alterar senha"
                   style={{ padding: '3px 8px', background: 'rgba(255,190,11,0.1)', border: '1px solid rgba(255,190,11,0.2)', borderRadius: 6, color: '#FFBE0B', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>
-                  Alterar
+                  {t('adm_drawer_change_pass')}
                 </button>
               </div>
             ) : (
@@ -514,7 +515,7 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
                   style={{ flex: 1, padding: '7px 10px', background: '#0e0e1a', border: '1px solid rgba(255,190,11,0.35)', borderRadius: 8, color: '#f3f5ff', fontSize: 12, outline: 'none', fontFamily: 'monospace' }}/>
                 <button onClick={saveNewPassword} disabled={savingPass || !newPass.trim()}
                   style={{ padding: '7px 12px', background: 'rgba(34,197,139,0.12)', border: '1px solid rgba(34,197,139,0.3)', borderRadius: 8, color: '#22c58b', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
-                  {savingPass ? '…' : 'Guardar'}
+                  {savingPass ? '…' : t('adm_drawer_save_pass')}
                 </button>
                 <button onClick={() => { setEditingPass(false); setNewPass(''); }}
                   style={{ padding: '7px 10px', background: 'rgba(255,255,255,0.04)', border: '1px solid #26263a', borderRadius: 8, color: '#4a5068', fontSize: 11, cursor: 'pointer' }}>
@@ -545,8 +546,8 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
           {activeTab === 'finance' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {[
-                { label: 'Saldo', key: 'balance', icon: CreditCard, color: '#f3f5ff' },
-                { label: 'Lucro', key: 'profit',  icon: TrendingUp, color: '#22c58b' },
+                { label: t('adm_fin_balance').replace(' (€)',''), key: 'balance', icon: CreditCard, color: '#f3f5ff' },
+                { label: t('adm_fin_profit').replace(' (€)',''),  key: 'profit',  icon: TrendingUp, color: '#22c58b' },
               ].map(({ label, key, icon: Icon, color }) => (
                 <div key={key}>
                   <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#7a8299', marginBottom: 6 }}>{label} (€)</label>
@@ -560,7 +561,7 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
               ))}
 
               <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#7a8299', marginBottom: 6 }}>Taxa Lucro Diária (%/dia)</label>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#7a8299', marginBottom: 6 }}>{t('adm_fin_daily_rate')}</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Percent size={14} color="#FFBE0B" style={{ flexShrink: 0 }} />
                   <input type="number" step="0.01" min="0" max="100" value={editVals.daily_profit_rate}
@@ -571,7 +572,7 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#7a8299', marginBottom: 6 }}>Limite Levantamento Diário (€)</label>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#7a8299', marginBottom: 6 }}>{t('adm_fin_daily_limit')}</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <DollarSign size={14} color="#F87171" style={{ flexShrink: 0 }} />
                   <input type="number" step="0.01" min="0" value={editVals.daily_withdrawal_limit}
@@ -584,7 +585,7 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
 
               <button onClick={handleSave} disabled={saving}
                 style={{ width: '100%', padding: '11px', background: saving ? '#1e1e30' : '#3A86FF', border: 'none', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                <Check size={14} />{saving ? 'A guardar…' : 'Guardar Dados Financeiros'}
+                <Check size={14} />{saving ? t('adm_fin_saving') : t('adm_fin_save')}
               </button>
             </div>
           )}
@@ -594,9 +595,9 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {/* Tags actuais */}
               <div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#7a8299', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Tags Activas</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#7a8299', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t('adm_tag_active')}</div>
                 {tags.length === 0 ? (
-                  <div style={{ fontSize: 12, color: '#3a3d5a', fontStyle: 'italic' }}>Sem tags ainda — adicione abaixo</div>
+                  <div style={{ fontSize: 12, color: '#3a3d5a', fontStyle: 'italic' }}>{t('adm_tag_empty')}</div>
                 ) : (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
                     {tags.map(t => {
@@ -913,6 +914,7 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
    DASHBOARD PRINCIPAL
 ══════════════════════════════════════════════════════════════════ */
 export default function AdminDashboard() {
+  const { t } = useLang();
   const [users, setUsers]           = useState([]);
   const [loading, setLoading]       = useState(true);
   const [search, setSearch]         = useState('');
@@ -1269,7 +1271,7 @@ export default function AdminDashboard() {
       {/* Cabeçalho */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#f3f5ff', marginBottom: 4 }}>Dashboard de Leads</h1>
+          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#f3f5ff', marginBottom: 4 }}>{t('adm_dash_title')}</h1>
           <p style={{ fontSize: 13, color: '#7a8299', margin: 0 }}>{users.length} utilizadores · do mais recente</p>
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -1295,7 +1297,7 @@ export default function AdminDashboard() {
       <div style={{ display: 'flex', gap: 10, marginBottom: selectedIds.size > 0 ? 8 : 14, flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
           <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#7a8299' }} />
-          <input data-testid="admin-leads-search-input" type="text" placeholder="Pesquisar por nome ou e-mail…"
+          <input data-testid="admin-leads-search-input" type="text" placeholder={t('adm_dash_search')}
             value={search} onChange={e => setSearch(e.target.value)}
             style={{ width: '100%', padding: '8px 12px 8px 30px', background: '#111118', border: '1px solid #26263a', borderRadius: 9, color: '#f3f5ff', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
         </div>
@@ -1347,14 +1349,14 @@ export default function AdminDashboard() {
                     onChange={toggleSelectAll}
                     style={{ cursor: 'pointer', accentColor: '#3A86FF' }} />
                 </th>
-                {['#', 'Nome / E-mail', 'País', 'Saldo', 'Lucro', '% Dia', 'Acções'].map(h => (
+                {['#', `${t('adm_dash_col_name')} / E-mail`, t('adm_dash_col_country'), t('adm_dash_col_balance'), t('adm_dash_col_profit'), '% Dia', t('adm_dash_col_actions')].map(h => (
                   <th key={h} style={{ padding: '11px 14px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: '#4a5068', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#7a8299', fontSize: 13 }}>A carregar…</td></tr>
+                <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#7a8299', fontSize: 13 }}>{t('adm_loading')}</td></tr>
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#7a8299', fontSize: 13 }}>Nenhum lead encontrado</td></tr>
               ) : filtered.map((user, idx) => {

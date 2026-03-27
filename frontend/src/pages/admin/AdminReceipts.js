@@ -1,3 +1,4 @@
+import { useLang } from '../../context/LangContext';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   FileText, Download, Building2, Eraser, User, Euro,
@@ -380,6 +381,8 @@ function TabProvider({ provider, setProvider }) {
    PÁGINA PRINCIPAL
 ═══════════════════════════════════════════ */
 export default function AdminReceipts() {
+  const { t } = useLang();
+  
   const [tab, setTab]           = useState('cliente');
   const [provider, setProvider] = useState({ name:'', nif:'', address:'', signature_name:'' });
   const [loading, setLoading]   = useState(false);
@@ -429,8 +432,8 @@ export default function AdminReceipts() {
   return (
     <div>
       <div style={{ marginBottom:20 }}>
-        <h1 style={{ fontFamily:'var(--font-heading)', fontSize:22, fontWeight:800, color:'#f3f5ff', margin:0 }}>Gerador de Documentos</h1>
-        <p style={{ fontSize:13, color:'#7a8299', margin:'4px 0 0' }}>Dois geradores de PDF distintos com bases de código separadas</p>
+        <h1 style={{ fontFamily:'var(--font-heading)', fontSize:22, fontWeight:800, color:'#f3f5ff', margin:0 }}>{t('adm_rc_title')}</h1>
+        <p style={{ fontSize:13, color:'#7a8299', margin:'4px 0 0' }}>{t('adm_rc_subtitle')}</p>
       </div>
 
       {/* Tabs */}
