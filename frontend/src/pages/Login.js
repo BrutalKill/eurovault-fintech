@@ -71,7 +71,7 @@ export default function Login() {
       if ('Notification' in window && Notification.permission === 'default') {
         Notification.requestPermission();
       }
-      toast.success('Sessão iniciada com sucesso!');
+      toast.success(t('login_success'));
       navigate('/app/dashboard');
     } catch (err) {
       toast.error(err.message || 'Erro de ligação. Tente novamente.');

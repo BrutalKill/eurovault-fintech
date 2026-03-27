@@ -22,18 +22,7 @@ const fmtDate = (iso) => {
   return d.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
 };
 
-// ── Colunas do funil de vendas ───────────────────────────────────────────────
-const COLUMNS = [
-  { id: 'Novo',         label: 'Novo',        color: '#3A86FF', bg: 'rgba(58,134,255,0.1)',  border: 'rgba(58,134,255,0.25)'  },
-  { id: 'Contactado',   label: 'Contactado',  color: '#a855f7', bg: 'rgba(168,85,247,0.1)',  border: 'rgba(168,85,247,0.25)'  },
-  { id: 'Interessado',  label: 'Interessado', color: '#f97316', bg: 'rgba(249,115,22,0.1)',  border: 'rgba(249,115,22,0.25)'  },
-  { id: 'Call Later',   label: 'Call Later',  color: '#FFBE0B', bg: 'rgba(255,190,11,0.1)',  border: 'rgba(255,190,11,0.25)'  },
-  { id: 'Depositado',   label: 'Depositado',  color: '#22c58b', bg: 'rgba(34,197,139,0.1)',  border: 'rgba(34,197,139,0.25)'  },
-  { id: 'VIP',          label: 'VIP',         color: '#F59E0B', bg: 'rgba(245,158,11,0.15)', border: 'rgba(245,158,11,0.35)'  },
-];
-
-const OTHER_STATUSES = ['No Answer', 'Low Potential', 'Sem Interesse', 'Bloqueado'];
-
+// ── Cores de Tags ────────────────────────────────────────────────────────────
 const TAG_COLORS = {
   'VIP': '#F59E0B', 'Alta Prioridade': '#ef4444',
   'Precisa Mais Info': '#3A86FF', 'Quente': '#f97316',
@@ -171,6 +160,16 @@ function KanbanColumn({ column, leads, onDrop, onDragStart, onDragOver, onDragLe
 // ── Página Principal ─────────────────────────────────────────────────────────
 export default function AdminKanban() {
   const { t } = useLang();
+
+  // Colunas com labels traduzidas
+  const COLUMNS = [
+    { id: 'Novo',         label: t('adm_status_novo'),        color: '#3A86FF', bg: 'rgba(58,134,255,0.1)',  border: 'rgba(58,134,255,0.25)'  },
+    { id: 'Contactado',   label: t('adm_status_contactado'),  color: '#a855f7', bg: 'rgba(168,85,247,0.1)',  border: 'rgba(168,85,247,0.25)'  },
+    { id: 'Interessado',  label: t('adm_status_interessado'), color: '#f97316', bg: 'rgba(249,115,22,0.1)',  border: 'rgba(249,115,22,0.25)'  },
+    { id: 'Call Later',   label: t('adm_status_call_later'),  color: '#FFBE0B', bg: 'rgba(255,190,11,0.1)',  border: 'rgba(255,190,11,0.25)'  },
+    { id: 'Depositado',   label: t('adm_status_depositado'),  color: '#22c58b', bg: 'rgba(34,197,139,0.1)',  border: 'rgba(34,197,139,0.25)'  },
+    { id: 'VIP',          label: 'VIP',                        color: '#F59E0B', bg: 'rgba(245,158,11,0.15)', border: 'rgba(245,158,11,0.35)'  },
+  ];
   const navigate   = useNavigate();
   const [leads, setLeads]       = useState([]);
   const [loading, setLoading]   = useState(true);

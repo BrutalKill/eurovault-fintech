@@ -12,9 +12,9 @@ const token = () => localStorage.getItem('adminToken');
 const authH = () => ({ Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' });
 
 const STATUS_MAP = {
-  pending:  { label: 'Pendente',   color: '#FFBE0B', bg: 'rgba(255,190,11,0.12)',  border: 'rgba(255,190,11,0.3)'  },
-  filled:   { label: 'Preenchido', color: '#3A86FF', bg: 'rgba(58,134,255,0.12)',  border: 'rgba(58,134,255,0.3)'  },
-  signed:   { label: 'Assinado',   color: '#22c58b', bg: 'rgba(34,197,139,0.12)',  border: 'rgba(34,197,139,0.3)'  },
+  pending:  { labelKey: 'adm_ct_pending', color: '#FFBE0B', bg: 'rgba(255,190,11,0.12)',  border: 'rgba(255,190,11,0.3)'  },
+  filled:   { labelKey: 'adm_ct_filled',  color: '#3A86FF', bg: 'rgba(58,134,255,0.12)',  border: 'rgba(58,134,255,0.3)'  },
+  signed:   { labelKey: 'adm_ct_signed',  color: '#22c58b', bg: 'rgba(34,197,139,0.12)',  border: 'rgba(34,197,139,0.3)'  },
 };
 const fmtDate = (iso) => iso ? new Date(iso).toLocaleString('pt-PT', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
 
@@ -121,7 +121,7 @@ function GenerateModal({ templates, leads, onClose, onSuccess }) {
                 </button>
               </div>
               <button onClick={copyUrl} style={{ width:'100%', padding:'11px', background:'rgba(34,197,139,0.12)', border:'1px solid rgba(34,197,139,0.3)', borderRadius:10, color:'#22c58b', fontSize:13, fontWeight:700, cursor:'pointer', marginBottom:8 }}>
-                {copied ? 'Copiado!' : 'Copiar Link'}
+                {copied ? t('adm_ct_copied_ok') : t('adm_ct_copy_link')}
               </button>
               <button onClick={onClose} style={{ width:'100%', padding:'10px', background:'transparent', border:'1px solid #26263a', borderRadius:10, color:'#7a8299', fontSize:13, cursor:'pointer' }}>Fechar</button>
             </div>
@@ -390,12 +390,12 @@ export default function AdminContracts() {
                               {c.valor && <span style={{ color:'#22c58b', fontWeight:600 }}>€ {c.valor}</span>}
                               <span>{c.template_name}</span>
                               <span>Criado: {fmtDate(c.created_at)}</span>
-                              {c.submitted_at && <span style={{ color:'#22c58b' }}>✓ Assinado: {fmtDate(c.submitted_at)}</span>}
+                              {c.submitted_at && <span style={{ color:'#22c58b' }}>✓ {t('adm_ct_signed')}: {fmtDate(c.submitted_at)}</span>}
                             </div>
                           </div>
                           {/* Status badge */}
                           <span style={{ fontSize:11, padding:'4px 10px', borderRadius:7, background:ss.bg, color:ss.color, border:`1px solid ${ss.border}`, fontWeight:700, flexShrink:0 }}>
-                            {ss.label}
+                            {t(ss.labelKey)}
                           </span>
                           {/* Actions */}
                           <div style={{ display:'flex', gap:6, flexShrink:0 }}>
@@ -422,11 +422,11 @@ export default function AdminContracts() {
                           <button onClick={() => copyLink(c.token)}
                             data-testid={`copy-link-btn-${c.id}`}
                             style={{ padding:'5px 12px', background:'rgba(58,134,255,0.12)', border:'1px solid rgba(58,134,255,0.3)', borderRadius:7, color:'#3A86FF', cursor:'pointer', display:'flex', alignItems:'center', gap:5, fontSize:11, fontWeight:700, flexShrink:0, whiteSpace:'nowrap' }}>
-                            <Copy size={11}/>Copiar Link
+                            <Copy size={11}/>{t('adm_ct_copy_link')}
                           </button>
                           <a href={contractUrl} target="_blank" rel="noreferrer"
                             style={{ padding:'5px 10px', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:7, color:'#7a8299', cursor:'pointer', display:'flex', alignItems:'center', gap:4, fontSize:11, fontWeight:600, flexShrink:0, textDecoration:'none' }}>
-                            <Eye size={11}/>Abrir
+                            <Eye size={11}/>{t('adm_ct_open')}
                           </a>
                         </div>
                         {/* Linha de Certificação Digital — só para contratos assinados */}

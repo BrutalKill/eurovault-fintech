@@ -211,7 +211,7 @@ export default function AdminLogin() {
           {/* Rodapé */}
           <div style={{ marginTop:20, padding:'10px 14px', background:'rgba(34,197,139,0.05)', border:'1px solid rgba(34,197,139,0.12)', borderRadius:9, display:'flex', alignItems:'center', gap:8 }}>
             <Lock size={11} color="#22c58b" />
-            <span style={{ fontSize:11, color:'hsl(215,16%,50%)' }}>Sessão encriptada e registada por auditoria.</span>
+            <span style={{ fontSize:11, color:'hsl(215,16%,50%)' }}>{t('adm_login_audit')}</span>
           </div>
 
           {/* Selos */}

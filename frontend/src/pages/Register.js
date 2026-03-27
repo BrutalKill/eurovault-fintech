@@ -114,23 +114,23 @@ export default function Register() {
             </div>
 
             <div style={{ fontSize: 11, fontWeight: 800, color: '#22c58b', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 8 }}>
-              Bem-vindo à EuroVault
+              {t('reg_welcome_title')}
             </div>
             <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 24, fontWeight: 900, color: '#f3f5ff', margin: '0 0 10px', letterSpacing: '-0.02em' }}>
-              Olá, {registeredName}! 👋
+              {t('reg_welcome_greeting')} {registeredName}! 👋
             </h2>
             <p style={{ fontSize: 14, color: '#7a8299', lineHeight: 1.7, margin: '0 0 20px' }}>
-              A sua conta foi criada com sucesso.<br/>
-              <strong style={{ color: '#f3f5ff' }}>O seu gestor irá contactá-lo em breve</strong> para dar início ao seu plano de investimento.
+              {t('reg_welcome_msg1')}<br/>
+              <strong style={{ color: '#f3f5ff' }}>{t('reg_welcome_msg2')}</strong> {t('reg_welcome_msg3')}
             </p>
 
             <div style={{ padding: '12px 16px', background: 'rgba(255,190,11,0.07)', border: '1px solid rgba(255,190,11,0.2)', borderRadius: 11, marginBottom: 22, fontSize: 12, color: '#FFBE0B', lineHeight: 1.6 }}>
-              ⏱ Tempo médio de contacto: <strong>15–30 minutos</strong>
+              {t('reg_welcome_time')}
             </div>
 
             <button onClick={() => { setWelcomeModal(false); navigate('/app/dashboard'); }}
               style={{ width: '100%', padding: '14px', background: 'linear-gradient(135deg, #2563eb, #3A86FF)', border: 'none', borderRadius: 12, color: '#fff', fontSize: 15, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 20px rgba(58,134,255,0.4)', fontFamily: 'var(--font-heading)' }}>
-              Aceder à Minha Conta
+              {t('reg_welcome_btn')}
             </button>
           </div>
         </>

@@ -154,7 +154,7 @@ export default function AdminWithdrawals() {
       ) : filtered.length === 0 ? (
         <div style={{ padding: '60px 0', textAlign: 'center', color: '#4a5068' }}>
           <ArrowDownToLine size={32} style={{ opacity: 0.2, marginBottom: 12 }} />
-          <p style={{ fontSize: 13, margin: 0 }}>Sem pedidos {statusFilter !== 'all' ? `"${statusFilter}"` : ''}</p>
+          <p style={{ fontSize: 13, margin: 0 }}>{t('adm_wd_empty')}</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

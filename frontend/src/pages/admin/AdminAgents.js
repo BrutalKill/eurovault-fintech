@@ -44,7 +44,7 @@ function CreateAgentModal({ onClose, onCreated }) {
       <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 201, background: '#111118', border: '1px solid rgba(58,134,255,0.3)', borderRadius: 20, padding: '28px 26px', width: 420, maxWidth: '95vw', boxShadow: '0 32px 80px rgba(0,0,0,0.8)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 22 }}>
           <div style={{ width: 36, height: 36, background: 'rgba(58,134,255,0.1)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><UserPlus size={16} color="#3A86FF" /></div>
-          <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 16, fontWeight: 700, color: '#f3f5ff', margin: 0 }}>Criar Novo Agente</h3>
+          <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 16, fontWeight: 700, color: '#f3f5ff', margin: 0 }}>{`${t('adm_agents_new')}`}</h3>
           <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#7a8299' }}><X size={18} /></button>
         </div>
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -203,10 +203,10 @@ export default function AdminAgents() {
           <div onClick={() => setConfirmDelete(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 200 }} />
           <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 201, background: '#111118', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 16, padding: '24px 22px', width: 340, textAlign: 'center', boxShadow: '0 24px 64px rgba(0,0,0,0.7)' }}>
             <Trash2 size={22} color="#ef4444" style={{ marginBottom: 12 }} />
-            <p style={{ fontSize: 14, color: '#f3f5ff', margin: '0 0 20px' }}>Eliminar <strong>{confirmDelete.name}</strong>?</p>
+            <p style={{ fontSize: 14, color: '#f3f5ff', margin: '0 0 20px' }}>{`${t('adm_delete')}`} <strong>{confirmDelete.name}</strong>?</p>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setConfirmDelete(null)} style={{ flex: 1, padding: '9px', background: 'transparent', border: '1px solid #26263a', borderRadius: 9, color: '#7a8299', cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
-              <button onClick={() => deleteAgent(confirmDelete.id)} style={{ flex: 1, padding: '9px', background: '#ef4444', border: 'none', borderRadius: 9, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>Eliminar</button>
+              <button onClick={() => setConfirmDelete(null)} style={{ flex: 1, padding: '9px', background: 'transparent', border: '1px solid #26263a', borderRadius: 9, color: '#7a8299', cursor: 'pointer', fontSize: 13 }}>{t('adm_cancel')}</button>
+              <button onClick={() => deleteAgent(confirmDelete.id)} style={{ flex: 1, padding: '9px', background: '#ef4444', border: 'none', borderRadius: 9, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>{t('adm_delete')}</button>
             </div>
           </div>
         </>
@@ -225,7 +225,7 @@ export default function AdminAgents() {
           </a>
           <button onClick={() => setShowCreate(true)}
             style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 16px', background: '#3A86FF', border: 'none', borderRadius: 9, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 3px 12px rgba(58,134,255,0.35)' }}>
-            <UserPlus size={14} />Criar Agente
+            <UserPlus size={14} />{t('adm_agents_create_btn')}
           </button>
         </div>
       </div>
