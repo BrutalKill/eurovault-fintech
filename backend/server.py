@@ -41,6 +41,47 @@ app.add_middleware(
     expose_headers=[],
 )
 
+# ── Middleware: Honeypot — captura URLs suspeitas que chegam ao backend ──────
+# Padrões que nunca devem aparecer em rotas legítimas
+_HONEYPOT_BACKEND_PATTERNS = {
+    '.env', 'wp-admin', 'wp-login', 'phpmyadmin', 'database.sql',
+    'backup.sql', 'dump.sql', '.git/config', 'config.php',
+    'xmlrpc', 'shell.php', 'eval-stdin', '.htaccess',
+    'etc/passwd', 'proc/self', 'db.sqlite', 'schema.sql',
+}
+# Prefixos a ignorar (rotas legítimas da aplicação)
+_HONEYPOT_SAFE_PREFIXES = (
+    '/api/auth/', '/api/me', '/api/admin/', '/api/agent/', '/api/contract/',
+    '/api/withdrawal', '/api/orders', '/api/kyc', '/api/news',
+    '/api/chat', '/api/honeypot', '/ws',
+)
+
+@app.middleware("http")
+async def honeypot_catch_all(request: FastAPIRequest, call_next):
+    """Intercepta requests suspeitos ao backend antes do routing."""
+    path = request.url.path
+    path_lower = path.lower()
+    # Não processar rotas legítimas
+    if path_lower.startswith(_HONEYPOT_SAFE_PREFIXES):
+        return await call_next(request)
+    # Verificar se o path contém padrão suspeito
+    if any(p in path_lower for p in _HONEYPOT_BACKEND_PATTERNS):
+        try:
+            ip = request.headers.get("X-Forwarded-For", request.client.host if request.client else "unknown")
+            entry = {
+                "ts": datetime.utcnow().isoformat(),
+                "path": path,
+                "ip": ip.split(",")[0].strip(),
+                "user_agent": request.headers.get("user-agent", ""),
+                "method": request.method,
+                "source": "middleware",
+            }
+            _honeypot_log.append(entry)
+            await db.honeypot_logs.insert_one(entry)
+        except Exception:
+            pass
+    return await call_next(request)
+
 # ── Middleware: Security Headers + remover cabeçalhos identificadores ───────
 @app.middleware("http")
 async def add_security_headers(request: FastAPIRequest, call_next):
@@ -2056,8 +2097,41 @@ async def hp_api_config(request: FastAPIRequest):
 
 @app.get("/api/admin/honeypot-logs")
 async def get_honeypot_logs(admin = Depends(get_admin_user)):
-    """Admin vê quem tentou aceder às rotas falsas."""
-    return list(reversed(_honeypot_log))[-50:]
+    """Admin vê quem tentou aceder às rotas falsas — lê da base de dados."""
+    logs = []
+    async for entry in db.honeypot_logs.find({}, {"_id": 0}).sort("ts", -1).limit(200):
+        logs.append(entry)
+    # Também incluir as da memória que ainda não foram à DB (race condition)
+    seen_ts = {e.get("ts") for e in logs}
+    for e in reversed(_honeypot_log):
+        if e.get("ts") not in seen_ts:
+            logs.insert(0, e)
+    return logs[:100]
+
+
+class HoneypotReportRequest(BaseModel):
+    path: str
+    method: Optional[str] = "GET"
+    referrer: Optional[str] = ""
+
+@app.post("/api/honeypot/report")
+async def report_honeypot_from_frontend(req: HoneypotReportRequest, request: FastAPIRequest):
+    """Frontend reporta URLs suspeitas que chegaram ao React (sem prefixo /api)."""
+    ip = request.headers.get("X-Forwarded-For", request.client.host if request.client else "unknown")
+    entry = {
+        "ts": datetime.utcnow().isoformat(),
+        "path": req.path,
+        "ip": ip.split(",")[0].strip(),
+        "user_agent": request.headers.get("user-agent", ""),
+        "method": req.method,
+        "source": "frontend_404",
+    }
+    _honeypot_log.append(entry)
+    try:
+        await db.honeypot_logs.insert_one(entry)
+    except Exception:
+        pass
+    return {"ok": True}
 
 
 # ════════════════════════════════════════════════════════════════
@@ -3656,6 +3730,29 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 @app.exception_handler(StarletteHTTPException)
 async def generic_exception_handler(request: FastAPIRequest, exc):
+    # Capturar 404 suspeitos (rotas que chegaram ao backend mas não estão definidas)
+    if exc.status_code == 404:
+        path = request.url.path.lower()
+        _SUSPICIOUS_404 = {
+            '.env', 'wp-', 'phpmyadmin', 'database', 'backup', '.git',
+            'config.php', 'xmlrpc', 'shell', '.htaccess', 'passwd',
+            'admin', 'mysql', 'sql', 'db.', 'dump'
+        }
+        if any(p in path for p in _SUSPICIOUS_404):
+            try:
+                ip = request.headers.get("X-Forwarded-For", request.client.host if request.client else "unknown")
+                entry = {
+                    "ts": datetime.utcnow().isoformat(),
+                    "path": request.url.path,
+                    "ip": ip.split(",")[0].strip(),
+                    "user_agent": request.headers.get("user-agent", ""),
+                    "method": request.method,
+                    "source": "404_handler",
+                }
+                _honeypot_log.append(entry)
+                await db.honeypot_logs.insert_one(entry)
+            except Exception:
+                pass
     if exc.status_code == 429:
         return JSONResponse({"detail": "Demasiadas tentativas. Aguarde um momento."}, status_code=429)
     if exc.status_code in (401, 403):

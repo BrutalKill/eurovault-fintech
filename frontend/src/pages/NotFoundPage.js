@@ -1,10 +1,48 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home, TrendingUp, ArrowLeft } from 'lucide-react';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
+
+// Padrões de URL suspeitos que devem ser registados como tentativas de intrusão
+const HONEYPOT_PATTERNS = [
+  '.env', 'wp-admin', 'wp-login', 'phpmyadmin', 'database.sql',
+  'backup.sql', 'dump.sql', '.git', 'config.php', 'config.json',
+  'xmlrpc', 'shell.php', 'eval-stdin', '.htaccess', 'passwd',
+  'etc/passwd', 'proc/self', 'admin-panel', '/administrator',
+  'db.sqlite', 'schema.sql', 'myadmin', 'mysql', 'phpadmin',
+  'wp-content', 'wp-includes', 'wordpress', 'drupal', 'joomla',
+  'debug', 'console', '/admin', 'panel', 'manager', 'backend',
+  'secret', 'private', 'hidden', 'test.php', 'info.php',
+  'server-status', '.DS_Store', 'Thumbs.db', 'web.config',
+  'robots.txt', 'sitemap', 'crossdomain', 'clientaccesspolicy',
+];
+
+function isSuspiciousPath(path) {
+  const lower = path.toLowerCase();
+  return HONEYPOT_PATTERNS.some(p => lower.includes(p));
+}
 
 export default function NotFoundPage() {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
+
+  useEffect(() => {
+    const currentPath = window.location.pathname;
+
+    if (isSuspiciousPath(currentPath)) {
+      // Reportar silenciosamente ao backend — não bloqueia UI
+      fetch(`${BACKEND_URL}/api/honeypot/report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          path: currentPath,
+          method: 'GET',
+          referrer: document.referrer || '',
+        }),
+      }).catch(() => {}); // silencioso — não mostrar erro ao utilizador
+    }
+  }, []);
 
   return (
     <div style={{
@@ -39,7 +77,7 @@ export default function NotFoundPage() {
         404
       </div>
 
-      {/* Logo */}
+      {/* Conteúdo */}
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32, maxWidth: 480, textAlign: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <img src="/logo-eurovault.png" alt="EuroVault" style={{ width: 52, height: 52, objectFit: 'contain' }} />
@@ -49,7 +87,6 @@ export default function NotFoundPage() {
           </div>
         </div>
 
-        {/* Ícone e mensagem */}
         <div>
           <div style={{
             width: 72, height: 72, margin: '0 auto 20px',
@@ -69,7 +106,6 @@ export default function NotFoundPage() {
           </p>
         </div>
 
-        {/* Botões */}
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
           <button onClick={() => navigate(-1)}
             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 20px', background: 'transparent', border: '1px solid hsl(240,16%,26%)', borderRadius: 12, color: 'hsl(215,16%,65%)', fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
@@ -85,7 +121,6 @@ export default function NotFoundPage() {
           </button>
         </div>
 
-        {/* Rodapé */}
         <p style={{ fontSize: 12, color: 'hsl(215,16%,40%)', margin: 0 }}>
           Código de erro: 404 · EuroVault Investments
         </p>
