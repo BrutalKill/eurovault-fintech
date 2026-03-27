@@ -21,7 +21,26 @@ const STATUS_STYLES = {
   'Bloqueado':     { bg: 'rgba(239,68,68,0.12)',   color: '#ef4444',  border: 'rgba(239,68,68,0.25)'   },
 };
 
-const fmt  = (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v || 0);
+// Mapeamento de status para chaves de tradução
+const STATUS_KEY_MAP = {
+  'Novo':          'adm_status_novo',
+  'Depositado':    'adm_status_depositado',
+  'Call Later':    'adm_status_call_later',
+  'Sem Interesse': 'adm_status_sem_interesse',
+  'Low Potential': 'adm_status_low_potential',
+  'No Answer':     'adm_status_no_answer',
+  'VIP':           'adm_status_vip',
+  'Bloqueado':     'adm_status_blocked',
+  'Contactado':    'adm_status_contactado',
+  'Interessado':   'adm_status_interessado',
+};
+
+// Traduzir status para display (mantém valores DB inalterados)
+const getStatusLabel = (s, tFn) => {
+  const key = STATUS_KEY_MAP[s];
+  return key && tFn ? tFn(key) : s;
+};
+const fmt = (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v || 0);
 const fmtDate = (iso) => {
   if (!iso) return '—';
   return new Date(iso).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -451,7 +470,7 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
 
         {/* Estado */}
         <div style={{ padding: '14px 24px', borderBottom: '1px solid #1e1e30' }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#4a5068', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Estado</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: '#4a5068', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{t('adm_tab_history') === 'History' ? 'Status' : 'Estado'}</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
             {STATUS_OPTIONS.map(s => {
               const st = STATUS_STYLES[s];
@@ -461,7 +480,7 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
                     background: lead.status === s ? st.bg : 'transparent',
                     border: `1px solid ${lead.status === s ? st.border : '#26263a'}`,
                     color: lead.status === s ? st.color : '#7a8299' }}>
-                  {s}
+                  {getStatusLabel(s, t)}
                 </button>
               );
             })}
@@ -915,6 +934,11 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
 ══════════════════════════════════════════════════════════════════ */
 export default function AdminDashboard() {
   const { t } = useLang();
+  // Helper para traduzir status mantendo valor DB inalterado
+  const getStatusLabel = (s) => {
+    const key = STATUS_KEY_MAP[s];
+    return key ? t(key) : s;
+  };
   const [users, setUsers]           = useState([]);
   const [loading, setLoading]       = useState(true);
   const [search, setSearch]         = useState('');
@@ -1272,7 +1296,7 @@ export default function AdminDashboard() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#f3f5ff', marginBottom: 4 }}>{t('adm_dash_title')}</h1>
-          <p style={{ fontSize: 13, color: '#7a8299', margin: 0 }}>{users.length} utilizadores · do mais recente</p>
+          <p style={{ fontSize: 13, color: '#7a8299', margin: 0 }}>{users.length} {t('adm_dash_users_count')}</p>
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
           <button onClick={handleExportCSV}
@@ -1280,10 +1304,10 @@ export default function AdminDashboard() {
             <Copy size={12} />CSV
           </button>
           {[
-            { label: 'Total',       value: users.length,                                        color: '#f3f5ff' },
-            { label: 'Depositados', value: users.filter(u => u.status === 'Depositado').length,  color: '#22c58b' },
-            { label: 'Hoje',        value: countToday,                                          color: '#3A86FF' },
-            { label: 'Esta semana', value: countWeek,                                           color: '#FFBE0B' },
+            { label: t('adm_dash_stat_total'),  value: users.length,                                        color: '#f3f5ff' },
+            { label: t('adm_dash_stat_dep'),   value: users.filter(u => u.status === 'Depositado').length,  color: '#22c58b' },
+            { label: t('adm_dash_stat_today'), value: countToday,                                          color: '#3A86FF' },
+            { label: t('adm_dash_stat_week'),  value: countWeek,                                           color: '#FFBE0B' },
           ].map(({ label, value, color }) => (
             <div key={label} style={{ background: '#111118', border: '1px solid #26263a', borderRadius: 12, padding: '8px 14px', textAlign: 'center', minWidth: 70 }}>
               <div className="numeric" style={{ fontSize: 18, fontWeight: 700, color, fontFamily: 'var(--font-heading)' }}>{value}</div>
@@ -1303,12 +1327,12 @@ export default function AdminDashboard() {
         </div>
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
           style={{ padding: '8px 12px', background: '#111118', border: '1px solid #26263a', borderRadius: 9, color: '#f3f5ff', fontSize: 13, outline: 'none' }}>
-          <option value="Todos">Todos os estados</option>
-          {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+          <option value="Todos">{t('adm_dash_all_statuses')}</option>
+          {STATUS_OPTIONS.map(s => <option key={s} value={s}>{getStatusLabel(s, t)}</option>)}
         </select>
         <div style={{ display: 'flex', gap: 5 }}>
           <Filter size={13} color="#7a8299" style={{ alignSelf: 'center' }} />
-          {[{ k: 'all', l: 'Todos' }, { k: 'today', l: 'Hoje' }, { k: 'week', l: '7 dias' }, { k: 'month', l: 'Mês' }].map(({ k, l }) => (
+          {[{ k: 'all', l: t('adm_dash_all_time') }, { k: 'today', l: t('adm_dash_today') }, { k: 'week', l: t('adm_dash_week') }, { k: 'month', l: t('adm_dash_month') }].map(({ k, l }) => (
             <button key={k} onClick={() => setDateFilter(k)}
               style={{ padding: '5px 11px', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer', border: `1px solid ${dateFilter === k ? 'rgba(58,134,255,0.4)' : '#26263a'}`, background: dateFilter === k ? 'rgba(58,134,255,0.12)' : 'transparent', color: dateFilter === k ? '#3A86FF' : '#7a8299' }}>
               {l}
@@ -1320,19 +1344,19 @@ export default function AdminDashboard() {
       {/* Bulk Actions Bar */}
       {selectedIds.size > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, padding: '10px 14px', background: 'rgba(58,134,255,0.1)', border: '1px solid rgba(58,134,255,0.3)', borderRadius: 10, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: '#3A86FF' }}>{selectedIds.size} seleccionado{selectedIds.size !== 1 ? 's' : ''}</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: '#3A86FF' }}>{selectedIds.size} {t('adm_dash_selected')}</span>
           <select value={bulkStatus} onChange={e => setBulkStatus(e.target.value)}
             style={{ padding: '6px 10px', background: '#0e0e1a', border: '1px solid rgba(58,134,255,0.4)', borderRadius: 7, color: '#f3f5ff', fontSize: 12, outline: 'none' }}>
-            <option value="">Mudar estado para…</option>
-            {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+            <option value="">{t('adm_dash_change_status')}</option>
+            {STATUS_OPTIONS.map(s => <option key={s} value={s}>{getStatusLabel(s, t)}</option>)}
           </select>
           <button onClick={applyBulkStatus} disabled={!bulkStatus || applyingBulk}
             style={{ padding: '6px 14px', background: bulkStatus ? '#3A86FF' : '#1e1e30', border: 'none', borderRadius: 7, color: '#fff', fontSize: 12, fontWeight: 700, cursor: bulkStatus ? 'pointer' : 'not-allowed' }}>
-            {applyingBulk ? 'A aplicar…' : 'Aplicar'}
+            {applyingBulk ? t('adm_dash_applying') : t('adm_dash_apply')}
           </button>
           <button onClick={() => setSelectedIds(new Set())}
             style={{ padding: '6px 10px', background: 'transparent', border: '1px solid #26263a', borderRadius: 7, color: '#7a8299', fontSize: 12, cursor: 'pointer' }}>
-            Cancelar
+            {t('adm_cancel')}
           </button>
         </div>
       )}
@@ -1349,7 +1373,7 @@ export default function AdminDashboard() {
                     onChange={toggleSelectAll}
                     style={{ cursor: 'pointer', accentColor: '#3A86FF' }} />
                 </th>
-                {['#', `${t('adm_dash_col_name')} / E-mail`, t('adm_dash_col_country'), t('adm_dash_col_balance'), t('adm_dash_col_profit'), '% Dia', t('adm_dash_col_actions')].map(h => (
+                {['#', `${t('adm_dash_col_name')} / E-mail`, t('adm_dash_col_country'), t('adm_dash_col_balance'), t('adm_dash_col_profit'), t('adm_dash_col_daily'), t('adm_dash_col_actions')].map(h => (
                   <th key={h} style={{ padding: '11px 14px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: '#4a5068', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
@@ -1358,7 +1382,7 @@ export default function AdminDashboard() {
               {loading ? (
                 <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#7a8299', fontSize: 13 }}>{t('adm_loading')}</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#7a8299', fontSize: 13 }}>Nenhum lead encontrado</td></tr>
+                <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#7a8299', fontSize: 13 }}>{t('adm_dash_no_leads')}</td></tr>
               ) : filtered.map((user, idx) => {
                 const ss = STATUS_STYLES[user.status] || STATUS_STYLES['Novo'];
                 const isEd = editing === user.id;
@@ -1388,7 +1412,7 @@ export default function AdminDashboard() {
                           disabled={updatingStatus[user.id]}
                           onClick={e => e.stopPropagation()}
                           style={{ padding: '4px 7px', background: ss.bg, border: `1px solid ${ss.border}`, borderRadius: 6, color: ss.color, fontSize: 10, fontWeight: 700, cursor: 'pointer', outline: 'none', appearance: 'none', minWidth: 90, flexShrink: 0 }}>
-                          {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                          {STATUS_OPTIONS.map(s => <option key={s} value={s}>{getStatusLabel(s, t)}</option>)}
                         </select>
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -1472,7 +1496,7 @@ export default function AdminDashboard() {
                         <div style={{ display: 'flex', gap: 5 }}>
                           <button onClick={() => saveBalance(user.id, editVals)} disabled={saving}
                             style={{ padding: '6px 10px', background: 'rgba(34,197,139,0.12)', border: '1px solid rgba(34,197,139,0.3)', borderRadius: 7, color: '#22c58b', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <Check size={13} />{saving ? '…' : 'Guardar'}
+                            <Check size={13} />{saving ? '…' : t('adm_save')}
                           </button>
                           <button onClick={() => setEditing(null)}
                             style={{ padding: '6px', background: 'transparent', border: '1px solid #26263a', borderRadius: 7, color: '#7a8299', cursor: 'pointer' }}>
@@ -1483,18 +1507,18 @@ export default function AdminDashboard() {
                         <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                           <button onClick={() => setSelectedLead(user)} title="Ver detalhes"
                             style={{ padding: '6px 10px', background: 'rgba(58,134,255,0.08)', border: '1px solid rgba(58,134,255,0.2)', borderRadius: 7, color: '#3A86FF', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <Eye size={12} />Ver
+                            <Eye size={12} />{t('adm_action_view')}
                           </button>
                           <button data-testid="admin-edit-balance-button" onClick={() => startEdit(user)}
                             style={{ padding: '6px 10px', background: 'rgba(255,190,11,0.08)', border: '1px solid rgba(255,190,11,0.2)', borderRadius: 7, color: '#FFBE0B', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <Edit2 size={12} />Editar
+                            <Edit2 size={12} />{t('adm_action_edit')}
                           </button>
                           {/* Botão enviar para agente */}
                           <button
                             onClick={() => setAssignModal({ id: user.id, name: user.full_name, assigned_agent: user.assigned_agent, assigned_agent_name: user.assigned_agent_name })}
                             title={user.assigned_agent_name ? `Agente: ${user.assigned_agent_name}` : 'Enviar para agente'}
                             style={{ padding: '6px 10px', background: user.assigned_agent ? 'rgba(168,85,247,0.12)' : 'rgba(122,130,153,0.08)', border: `1px solid ${user.assigned_agent ? 'rgba(168,85,247,0.3)' : 'rgba(122,130,153,0.2)'}`, borderRadius: 7, color: user.assigned_agent ? '#a855f7' : '#7a8299', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <LogIn size={12} />{user.assigned_agent_name ? user.assigned_agent_name.split(' ')[0] : 'Agente'}
+                            <LogIn size={12} />{user.assigned_agent_name ? user.assigned_agent_name.split(' ')[0] : t('adm_action_agent')}
                           </button>
                           <button
                             data-testid="admin-delete-lead-btn"
@@ -1517,7 +1541,7 @@ export default function AdminDashboard() {
       <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(255,190,11,0.05)', border: '1px solid rgba(255,190,11,0.15)', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
         <Percent size={13} color="#FFBE0B" />
         <p style={{ fontSize: 11, color: '#7a8299', margin: 0 }}>
-          <strong style={{ color: '#FFBE0B' }}>% Diária:</strong> O sistema aplica automaticamente a percentagem ao saldo a cada actualização. Ex.: 1% sobre €10.000 = +€100/dia.
+          <strong style={{ color: '#FFBE0B' }}>% {t('adm_dash_col_daily')}:</strong> {t('adm_dash_daily_info')}
         </p>
       </div>
     </div>

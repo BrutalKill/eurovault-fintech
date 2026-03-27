@@ -1,0 +1,143 @@
+{
+  "summary": "Full platform test for EuroVault presentation quality check. Fixed critical AdminDashboard crash (fmt undefined). Found 13 hardcoded PT strings leaking into EN/ES modes across admin and client pages.",
+  "bug_fixed": {
+    "file": "/app/frontend/src/pages/admin/AdminDashboard.js",
+    "issue": "ReferenceError: fmt is not defined — crashed Admin Dashboard on load",
+    "fix": "Added `const fmt = (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v || 0);` before fmtDate definition",
+    "status": "FIXED AND VERIFIED"
+  },
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "AdminKanban - COLUMNS constant",
+        "issue": "Kanban column headers hardcoded PT: 'Novo', 'Contactado', 'Interessado', 'Depositado'. Not translated to EN/ES.",
+        "file": "/app/frontend/src/pages/admin/AdminKanban.js",
+        "lines": "26-31",
+        "fix": "Replace static labels with `t('adm_status_novo')` etc. or derive from translation map",
+        "priority": "HIGH"
+      },
+      {
+        "component": "AdminAgents - New Agent button",
+        "issue": "Button text 'Criar Agente' hardcoded PT at line 228. Should use t('adm_agents_create_btn') = 'Create Agent' in EN",
+        "file": "/app/frontend/src/pages/admin/AdminAgents.js",
+        "lines": "228",
+        "fix": "Replace: `<UserPlus size={14} />Criar Agente` with `<UserPlus size={14} />{t('adm_agents_create_btn')}`",
+        "priority": "HIGH"
+      },
+      {
+        "component": "AdminAgents - modal title and delete button",
+        "issue": "Hardcoded PT: 'Criar Novo Agente' (modal title, line 47), 'Eliminar' (delete btn, line 209)",
+        "file": "/app/frontend/src/pages/admin/AdminAgents.js",
+        "lines": "47, 209",
+        "fix": "Use t() keys for these strings",
+        "priority": "HIGH"
+      },
+      {
+        "component": "AdminContracts - status labels and action buttons",
+        "issue": "STATUS_LABELS object hardcoded PT: 'Pendente', 'Preenchido', 'Assinado' (lines 15-17). Action buttons 'Copiar Link', 'Copiado!', 'Abrir', 'Assinado: ...' all hardcoded PT (lines 124, 393, 425, 429)",
+        "file": "/app/frontend/src/pages/admin/AdminContracts.js",
+        "lines": "15-17, 124, 393, 425, 429",
+        "fix": "Use t() keys for all these strings",
+        "priority": "HIGH"
+      },
+      {
+        "component": "AdminDashboard - priority tags",
+        "issue": "Priority/lead tags ('Alta Prioridade', 'Precisa Mais Info', 'Quente', 'Frio', 'Aguarda Doc.') hardcoded PT in TAG_COLORS map (lines 234, 1433). Show as PT even in EN/ES mode.",
+        "file": "/app/frontend/src/pages/admin/AdminDashboard.js",
+        "lines": "234, 1433",
+        "fix": "Use t() keys for tag labels or map them to translation keys",
+        "priority": "MEDIUM"
+      },
+      {
+        "component": "AdminLogin - audit footer",
+        "issue": "'Sessão encriptada e registada por auditoria.' hardcoded PT at line 214. Shown in EN/ES mode.",
+        "file": "/app/frontend/src/pages/admin/AdminLogin.js",
+        "lines": "214",
+        "fix": "Add translation key e.g. t('adm_login_audit') and add to EN/ES translations",
+        "priority": "MEDIUM"
+      },
+      {
+        "component": "AdminWithdrawals - empty state",
+        "issue": "'Sem pedidos {statusFilter}...' hardcoded PT at line 157. Shown when no withdrawals match filter.",
+        "file": "/app/frontend/src/pages/admin/AdminWithdrawals.js",
+        "lines": "157",
+        "fix": "Use t() key for empty state message",
+        "priority": "MEDIUM"
+      },
+      {
+        "component": "Register - welcome modal",
+        "issue": "Entire welcome modal hardcoded PT: 'BEM-VINDO À EUROVAULT', 'Olá, {name}! 👋', 'A sua conta foi criada com sucesso.', 'O seu gestor irá contactá-lo em breve...', 'Aceder à Minha Conta' (lines 120-133). Shown in EN mode after registration.",
+        "file": "/app/frontend/src/pages/Register.js",
+        "lines": "120-133",
+        "fix": "Use t() keys for all modal strings",
+        "priority": "HIGH"
+      },
+      {
+        "component": "Login - success toast",
+        "issue": "toast.success('Sessão iniciada com sucesso!') hardcoded PT at line 74. Shown in EN/ES mode after login.",
+        "file": "/app/frontend/src/pages/Login.js",
+        "lines": "74",
+        "fix": "Use t('login_success') or similar key",
+        "priority": "MEDIUM"
+      },
+      {
+        "component": "Register - country dropdown",
+        "issue": "Country names in dropdown hardcoded PT ('Espanha', 'França', 'Alemanha', etc.) regardless of language setting.",
+        "file": "/app/frontend/src/pages/Register.js",
+        "fix": "Use translated country names via t() or conditionally map based on current language",
+        "priority": "MEDIUM"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Legal Pages header",
+        "issues": ["Header shows 'DATA ANALYTICS PLATFORM' which may conflict with investment platform identity — intentional for regulatory reasons?"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_eurovault_full.py",
+    "/app/test_reports/pytest/eurovault_full_results.xml"
+  ],
+  "action_items": [
+    "AdminKanban.js: Translate COLUMNS labels using t() (lines 26-31)",
+    "AdminAgents.js: Replace hardcoded 'Criar Agente', 'Criar Novo Agente', 'Eliminar' with t() keys (lines 47, 209, 228)",
+    "AdminContracts.js: Translate STATUS_LABELS + action buttons 'Copiar Link', 'Abrir', 'Assinado' using t() keys",
+    "AdminDashboard.js: Translate priority tags ('Alta Prioridade', 'Quente', etc.) using t() keys (lines 234, 1433)",
+    "AdminLogin.js: Replace hardcoded 'Sessão encriptada e registada por auditoria.' with t() key (line 214)",
+    "AdminWithdrawals.js: Replace hardcoded 'Sem pedidos' empty state with t() key (line 157)",
+    "Register.js: Translate entire welcome modal to use t() keys (lines 120-133)",
+    "Login.js: Replace hardcoded 'Sessão iniciada com sucesso!' toast with t() key (line 74)",
+    "Register.js: Translate country dropdown options based on current language"
+  ],
+  "critical_code_review_comments": [
+    "CRITICAL BUG FIXED: AdminDashboard.js was missing `const fmt` function definition, causing a ReferenceError that crashed the entire admin dashboard on load.",
+    "Pattern: Multiple admin pages (Kanban, Agents, Contracts, Withdrawals) have hardcoded Portuguese strings instead of using the t() translation function. The LangContext.js has correct translation keys for EN/ES but they are not being used in these components.",
+    "Register welcome modal and Login success toast are entirely in Portuguese even in EN/ES mode — high visibility for a presentation."
+  ],
+  "updated_files": [
+    "/app/frontend/src/pages/admin/AdminDashboard.js"
+  ],
+  "success_rate": {
+    "backend": "100% (26/26 tests passed)",
+    "frontend": "75% (core flows work, but ~10 hardcoded PT string leaks in EN/ES mode)"
+  },
+  "test_credentials": {
+    "admin": "brokereurope / Europeinvest at /adm/login",
+    "client_test": "test_ev_030ba149@test.com / TestPass123! (created by backend tests)",
+    "contract_token": "33795e3503334a0b9b6c (for /contract/:token test)"
+  },
+  "seed_data_creation": "Created test users via backend tests: test_ev_030ba149@test.com, test_reg_* variants (TEST_ prefixed)",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Main fix needed: translate hardcoded PT strings across AdminKanban, AdminAgents, AdminContracts, AdminWithdrawals, AdminLogin, Register, Login. The fmt bug in AdminDashboard was fixed in this iteration. Backend is fully functional (26/26 tests pass). Admin dashboard EN/ES/PT translations work. Legal pages work in all 3 languages. Client registration/login/dashboard work. Contract public page works.",
+  "rca_of_issues": {
+    "fmt_undefined_crash": "The AdminDashboard.js file was missing the `fmt` currency formatter function which is defined in all other admin pages (AdminKanban, AdminWithdrawals, etc.). The function was referenced at lines 749, 1463, 1473 but never defined. Fix: Added `const fmt = (v) => new Intl.NumberFormat('pt-PT', ...).format(v || 0)` before fmtDate.",
+    "hardcoded_pt_strings": "Multiple admin and client pages hardcode Portuguese strings instead of using the t() translation function from LangContext. The translation keys exist in LangContext.js for EN/ES but the components don't call t(). Each file needs to replace hardcoded strings with t('key') calls and add the corresponding EN/ES translation keys where missing."
+  }
+}

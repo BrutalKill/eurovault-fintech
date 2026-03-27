@@ -28,7 +28,7 @@ export default function AdminLogin() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || t('adm_login_error'));
       localStorage.setItem('adminToken', data.token);
-      toast.success('Acesso concedido!');
+      toast.success(t('adm_login_success'));
       navigate('/adm');
     } catch (err) {
       setError(err.message);
