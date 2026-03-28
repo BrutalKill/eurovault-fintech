@@ -16,13 +16,39 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
   const [leverage, setLeverage]   = useState('1:10');
   const [loading, setLoading]     = useState(false);
   const [lastOrder, setLastOrder] = useState(null);
-  const [balanceResult, setBalanceResult] = useState(null); // {before, after, gain}
+  const [balanceResult, setBalanceResult] = useState(null);
+  // ── Posição aberta neste ativo ──
+  const [openPosition, setOpenPosition] = useState(null); // null = a carregar, number = valor
+  const [loadingPos, setLoadingPos]     = useState(false);
 
   const safeBalance = Math.max(0, parseFloat(user?.balance) || 0);
   const reqAmount   = parseFloat(amount) || 0;
-  const insufficient = side === 'comprar' && reqAmount > safeBalance && reqAmount > 0;
+  const insufficient    = side === 'comprar' && reqAmount > safeBalance && reqAmount > 0;
+  const noPosition      = side === 'vender' && openPosition !== null && openPosition <= 0;
+  const exceedsPosition = side === 'vender' && openPosition !== null && openPosition > 0 && reqAmount > openPosition;
+  const cannotSell      = noPosition || exceedsPosition;
 
-  useEffect(() => { setSide(initialSide); setLastOrder(null); setBalanceResult(null); }, [initialSide]);
+  // Buscar posição aberta ao mudar de ativo ou de lado para "vender"
+  useEffect(() => {
+    setSide(initialSide);
+    setLastOrder(null);
+    setBalanceResult(null);
+    setOpenPosition(null);
+  }, [initialSide, asset?.label]);
+
+  useEffect(() => {
+    if (side !== 'vender' || !asset?.label) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setLoadingPos(true);
+    fetch(`${BACKEND_URL}/api/orders/position?asset_label=${encodeURIComponent(asset.label)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setOpenPosition(d.open_position); })
+      .catch(() => {})
+      .finally(() => setLoadingPos(false));
+  }, [side, asset?.label]);
 
   const col        = CAT_COLORS[activeCat] || CAT_COLORS['Forex'];
   const assetName  = (asset.name || '').split(' / ')[0];
@@ -41,6 +67,11 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
     }
     if (insufficient) {
       toast.error('Saldo insuficiente', { description: `Disponível: ${fmt(safeBalance)}` });
+      return;
+    }
+    if (cannotSell) {
+      if (noPosition) toast.error(`Sem posição em ${asset.label}`, { description: 'Compre este ativo primeiro.' });
+      else toast.error('Excede a posição aberta', { description: `Máximo: ${fmt(openPosition)}` });
       return;
     }
     setLoading(true);
@@ -183,7 +214,7 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
               </button>
             ))}
           </div>
-          {/* Alerta saldo insuficiente */}
+          {/* Alerta saldo insuficiente (compra) */}
           {insufficient && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 7, padding: '7px 10px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8 }}>
               <AlertTriangle size={12} color="#ef4444" />
@@ -192,7 +223,34 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
               </span>
             </div>
           )}
-          {/* Saldo disponível */}
+          {/* Info posição aberta (venda) */}
+          {side === 'vender' && (
+            <div style={{ marginTop: 7, padding: '8px 11px', background: noPosition ? 'rgba(239,68,68,0.08)' : exceedsPosition ? 'rgba(255,190,11,0.08)' : 'rgba(34,197,139,0.07)', border: `1px solid ${noPosition ? 'rgba(239,68,68,0.3)' : exceedsPosition ? 'rgba(255,190,11,0.3)' : 'rgba(34,197,139,0.25)'}`, borderRadius: 8 }}>
+              {loadingPos ? (
+                <span style={{ fontSize: 11, color: '#4a5068' }}>A verificar posição…</span>
+              ) : noPosition ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <AlertTriangle size={12} color="#ef4444" />
+                  <span style={{ fontSize: 11, color: '#ef4444', fontWeight: 700 }}>
+                    Sem posição aberta em {asset.label} — compre primeiro
+                  </span>
+                </div>
+              ) : exceedsPosition ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <AlertTriangle size={12} color="#FFBE0B" />
+                  <span style={{ fontSize: 11, color: '#FFBE0B', fontWeight: 700 }}>
+                    Máximo disponível para venda: {fmt(openPosition)}
+                  </span>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#22c58b' }}>
+                  <span style={{ fontWeight: 600 }}>Posição aberta disponível</span>
+                  <span className="numeric" style={{ fontWeight: 800 }}>{fmt(openPosition)}</span>
+                </div>
+              )}
+            </div>
+          )}
+          {/* Saldo disponível (compra) */}
           {!insufficient && safeBalance > 0 && side === 'comprar' && (
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 10, color: '#4a5068' }}>
               <span>Saldo disponível</span>
@@ -254,24 +312,33 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
         )}
 
         {/* Botão principal */}
-        <button data-testid="trade-submit-order-btn" onClick={handleOrder} disabled={loading || insufficient}
+        <button data-testid="trade-submit-order-btn" onClick={handleOrder}
+          disabled={loading || insufficient || cannotSell}
           style={{
             width: '100%', padding: '14px 10px',
             border: 'none', borderRadius: 12,
-            cursor: loading || insufficient ? 'not-allowed' : 'pointer',
-            background: insufficient ? '#1e1e30' : loading ? '#1e1e30' : side === 'comprar' ? 'linear-gradient(135deg,#16a34a,#22c58b)' : 'linear-gradient(135deg,#b91c1c,#ef4444)',
+            cursor: loading || insufficient || cannotSell ? 'not-allowed' : 'pointer',
+            background: insufficient || cannotSell ? '#1e1e30' : loading ? '#1e1e30'
+              : side === 'comprar' ? 'linear-gradient(135deg,#16a34a,#22c58b)'
+              : 'linear-gradient(135deg,#b91c1c,#ef4444)',
             color: '#fff', fontFamily: 'var(--font-heading)',
             fontSize: 14, fontWeight: 900,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
             letterSpacing: '0.04em',
-            boxShadow: loading || insufficient ? 'none' : side === 'comprar' ? '0 4px 20px rgba(34,197,139,0.4)' : '0 4px 20px rgba(239,68,68,0.4)',
-            opacity: loading || insufficient ? 0.5 : 1,
+            boxShadow: loading || insufficient || cannotSell ? 'none'
+              : side === 'comprar' ? '0 4px 20px rgba(34,197,139,0.4)'
+              : '0 4px 20px rgba(239,68,68,0.4)',
+            opacity: loading || insufficient || cannotSell ? 0.5 : 1,
             transition: 'all .2s',
           }}>
           {loading
             ? <><Activity size={15} style={{ animation: 'spin 1s linear infinite' }} /> {t('trade_processing')}</>
             : insufficient
               ? <><AlertTriangle size={15} />Saldo Insuficiente</>
+              : noPosition
+              ? <><AlertTriangle size={15} />Sem posição em {asset.label}</>
+              : exceedsPosition
+              ? <><AlertTriangle size={15} />Excede posição aberta ({fmt(openPosition)})</>
               : side === 'comprar'
                 ? <><ChevronUp size={16} />{btnLabel}</>
                 : <><ChevronDown size={16} />{btnLabel}</>

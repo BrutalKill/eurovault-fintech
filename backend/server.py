@@ -1186,66 +1186,116 @@ async def create_order(req: OrderRequest, current_user = Depends(get_current_use
     user_id = current_user["sub"]
     amount  = max(0.0, float(req.amount or 0))
 
-    # ── Buscar saldo actual ────────────────────────────────────────────────
+    if amount < 1:
+        raise HTTPException(status_code=400, detail="Montante inválido.")
+
     user = await db.users.find_one({"_id": ObjectId(user_id)})
     if not user:
         raise HTTPException(status_code=404, detail="Utilizador não encontrado")
 
     balance = max(0.0, float(user.get("balance", 0)))
     profit  = max(0.0, float(user.get("profit",  0)))
-
     new_balance = balance
     new_profit  = profit
 
-    if amount > 0:
-        if req.side == "comprar":
-            # ── COMPRAR → deduzir do saldo (dinheiro "investido") ──────────
-            if amount > balance:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Saldo insuficiente. Disponível: {balance:.2f}€. Necessário: {amount:.2f}€."
+    if req.side == "comprar":
+        # ── COMPRAR → deduzir do saldo ────────────────────────────────────
+        if amount > balance:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Saldo insuficiente. Disponível: {balance:.2f}€. Necessário: {amount:.2f}€."
+            )
+        new_balance = round(balance - amount, 2)
+
+    elif req.side == "vender":
+        # ── VENDER → verificar posição aberta para este ativo ──────────────
+        total_bought = 0.0
+        total_sold   = 0.0
+
+        async for order in db.orders.find({
+            "user_id":     user_id,
+            "asset_label": req.asset_label,
+            "status":      "executada",
+        }):
+            side_val = order.get("side", "")
+            amt_val  = float(order.get("amount", 0))
+            if side_val == "comprar":
+                total_bought += amt_val
+            elif side_val == "vender":
+                total_sold   += amt_val
+
+        open_position = round(total_bought - total_sold, 2)
+
+        # Bloquear venda se não há posição aberta
+        if open_position <= 0:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Sem posição aberta em {req.asset_label}. "
+                    f"Precisa de comprar primeiro antes de poder vender."
                 )
-            new_balance = round(balance - amount, 2)
+            )
 
-        elif req.side == "vender":
-            # ── VENDER → devolver o montante + lucro simulado (±0.5-3%) ────
-            import random
-            pct = random.uniform(0.005, 0.03)   # lucro simulado de 0.5% a 3%
-            gain = round(amount * pct, 2)
-            new_balance = round(balance + amount + gain, 2)
-            new_profit  = round(profit + gain, 2)
+        # Bloquear venda acima do valor investido
+        if round(amount, 2) > open_position:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Não pode vender {amount:.2f}€. "
+                    f"A sua posição aberta em {req.asset_label} é de {open_position:.2f}€."
+                )
+            )
 
-        # Actualizar saldo do utilizador
-        await db.users.update_one(
-            {"_id": ObjectId(user_id)},
-            {"$set": {
-                "balance":          new_balance,
-                "profit":           new_profit,
-                "updated_at":       datetime.utcnow(),
-                "profit_last_updated": datetime.utcnow(),
-            }}
-        )
+        # ── Calcular lucro realista baseado na posição real ────────────────
+        import random as _rnd
+        lev_str = str(req.leverage or "1:1")
+        try:
+            lev_mult = int(lev_str.split(":")[-1])
+        except (ValueError, IndexError):
+            lev_mult = 1
+        lev_mult = max(1, min(lev_mult, 20))  # cap alavancagem para cálculo de lucro
+
+        # Lucro simulado: 0.1% a 1.5% base, amplificado pela alavancagem (cap 3x)
+        base_pct = _rnd.uniform(0.001, 0.015)
+        gain     = round(amount * base_pct * min(lev_mult, 3), 2)
+
+        new_balance = round(balance + amount + gain, 2)
+        new_profit  = round(profit  + gain, 2)
+
+    else:
+        raise HTTPException(status_code=400, detail="Lado inválido. Use 'comprar' ou 'vender'.")
+
+    # Actualizar saldo do utilizador
+    await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {
+            "balance":              new_balance,
+            "profit":               new_profit,
+            "updated_at":           datetime.utcnow(),
+            "profit_last_updated":  datetime.utcnow(),
+        }}
+    )
 
     order = {
-        "user_id":     user_id,
-        "asset_label": req.asset_label,
-        "asset_name":  req.asset_name,
-        "category":    req.category,
-        "side":        req.side,
-        "amount":      amount,
-        "leverage":    req.leverage,
-        "price":       req.price,
+        "user_id":        user_id,
+        "asset_label":    req.asset_label,
+        "asset_name":     req.asset_name,
+        "category":       req.category,
+        "side":           req.side,
+        "amount":         amount,
+        "leverage":       req.leverage,
+        "price":          req.price,
         "balance_before": balance,
         "balance_after":  new_balance,
-        "status":      "executada",
-        "created_at":  datetime.utcnow(),
+        "status":         "executada",
+        "created_at":     datetime.utcnow(),
     }
     result = await db.orders.insert_one(order)
 
-    # Notificar o cliente via WebSocket (actualização de saldo em tempo real)
+    # Notificar via WebSocket
     try:
         await manager.broadcast({
-            "type": "balance_updated",
+            "type":    "balance_updated",
             "user_id": user_id,
             "balance": new_balance,
             "profit":  new_profit,
@@ -1260,6 +1310,36 @@ async def create_order(req: OrderRequest, current_user = Depends(get_current_use
         "balance_after":  new_balance,
         "side":           req.side,
         "amount":         amount,
+    }
+
+
+# ── Consultar posição aberta de um ativo ──────────────────────────────────────
+@app.get("/api/orders/position")
+async def get_open_position(asset_label: str, current_user = Depends(get_current_user)):
+    """Retorna o montante investido e ainda não vendido no ativo. Uso: /api/orders/position?asset_label=EUR/USD"""
+    user_id      = current_user["sub"]
+    total_bought = 0.0
+    total_sold   = 0.0
+
+    async for order in db.orders.find({
+        "user_id":     user_id,
+        "asset_label": asset_label,
+        "status":      "executada",
+    }):
+        side_val = order.get("side", "")
+        amt_val  = float(order.get("amount", 0))
+        if side_val == "comprar":
+            total_bought += amt_val
+        elif side_val == "vender":
+            total_sold   += amt_val
+
+    open_position = max(0.0, round(total_bought - total_sold, 2))
+    return {
+        "asset_label":   asset_label,
+        "open_position": open_position,
+        "total_bought":  round(total_bought, 2),
+        "total_sold":    round(total_sold, 2),
+        "has_position":  open_position > 0,
     }
 
 @app.get("/api/orders")
