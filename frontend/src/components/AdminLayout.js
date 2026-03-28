@@ -95,7 +95,7 @@ export default function AdminLayout() {
 
         if (data.type === 'deposit_submitted') {
           playToneRef.current([{ freq: 880, time: 0 }, { freq: 660, time: 0.1 }]);
-          addNotif({ type: 'deposit', color: '#22c58b', title: 'Novo Depósito', body: `${data.user_name} • ${fmtEur(data.amount)}` });
+          addNotif({ type: 'deposit', color: '#22c58b', title: t('adm_notif_new_deposit'), body: `${data.user_name} • ${fmtEur(data.amount)}` });
           toast.success('Novo Depósito Recebido!', {
             description: `${data.user_name} • ${fmtEur(data.amount)} • ****${data.card_last4}`,
             duration: 8000,

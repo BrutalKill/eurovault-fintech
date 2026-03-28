@@ -8,12 +8,7 @@ import { useLang } from '../context/LangContext';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 const fmt = (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v || 0);
 
-const HOW_IT_WORKS = [
-  { icon: Share2,      color: '#3A86FF', title: '1. Partilhe o seu link', desc: 'Copie o seu link único de referido e partilhe com amigos, família ou nas redes sociais.' },
-  { icon: Users,       color: '#22c58b', title: '2. Amigo regista-se',    desc: 'Quando alguém se regista através do seu link e efectua o primeiro depósito, é contado como convertido.' },
-  { icon: Gift,        color: '#FFBE0B', title: '3. Receba €25',          desc: 'Por cada amigo que deposita, recebe automaticamente €25 de bónus na sua conta.' },
-  { icon: TrendingUp,  color: '#a855f7', title: '4. Sem limite',          desc: 'Não existe limite de referidos. Quanto mais amigos convidarem, mais bónus acumula.' },
-];
+// HOW_IT_WORKS usa chaves de tradução (definido dentro do componente)
 
 // Níveis baseados no valor total depositado — bónus proporcionais ao nível
 const TIERS = [
@@ -29,6 +24,13 @@ export default function ReferralPage() {
   const { t }    = useLang();
   const [referral, setReferral] = useState(null);
   const [copied, setCopied] = useState(false);
+
+  const HOW_IT_WORKS = [
+    { icon: Share2,     color: '#3A86FF', title: t('ref_step1_title'), desc: t('ref_step1_desc') },
+    { icon: Users,      color: '#22c58b', title: t('ref_step2_title'), desc: t('ref_step2_desc') },
+    { icon: Gift,       color: '#FFBE0B', title: t('ref_step3_title'), desc: t('ref_step3_desc') },
+    { icon: TrendingUp, color: '#a855f7', title: t('ref_step4_title'), desc: t('ref_step4_desc') },
+  ];
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -50,7 +52,7 @@ export default function ReferralPage() {
 
   const shareLink = async () => {
     if (navigator.share) {
-      await navigator.share({ title: 'EuroVault Investments', text: 'Invista connosco e receba €25 de bónus!', url: referralLink });
+      await navigator.share({ title: 'EuroVault Digital Solutions', text: 'Invista connosco e receba €25 de bónus!', url: referralLink });
     } else { copyLink(); }
   };
 
@@ -108,7 +110,7 @@ export default function ReferralPage() {
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <div style={{ flex: 1, padding: '11px 14px', background: 'rgba(0,0,0,0.3)', borderRadius: 10, border: '1px solid rgba(58,134,255,0.2)', overflow: 'hidden' }}>
             <div style={{ fontSize: 13, color: '#3A86FF', fontFamily: 'monospace', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {referralLink || 'A carregar…'}
+              {referralLink || t('adm_loading')}
             </div>
           </div>
           <button onClick={copyLink}

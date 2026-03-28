@@ -60,7 +60,7 @@ export default function Login() {
           resolve(data);
         }
       };
-      xhr.onerror = () => reject(new Error('Erro de ligação. Verifique a sua internet.'));
+      xhr.onerror = () => reject(new Error(t('err_connection')));
       xhr.ontimeout = () => reject(new Error('Pedido expirou. Tente novamente.'));
       xhr.send(JSON.stringify(form));
     });

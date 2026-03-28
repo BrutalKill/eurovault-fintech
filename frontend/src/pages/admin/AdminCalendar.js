@@ -6,8 +6,8 @@ import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
-const MONTH_NAMES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-const DAY_NAMES   = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const MONTH_KEYS = ['month_jan','month_feb','month_mar','month_apr','month_may','month_jun','month_jul','month_aug','month_sep','month_oct','month_nov','month_dec'];
+const DAY_KEYS   = ['day_sun','day_mon','day_tue','day_wed','day_thu','day_fri','day_sat'];
 
 const STATUS_COLORS = {
   'Novo':          '#3A86FF',
@@ -76,10 +76,10 @@ export default function AdminCalendar() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#f3f5ff', margin: 0 }}>
-            t('cal_title')
+            {t('cal_title')}
           </h1>
           <p style={{ fontSize: 13, color: '#7a8299', margin: '4px 0 0' }}>
-            {events.length} contacto{events.length !== 1 ? 's' : ''} agendado{events.length !== 1 ? 's' : ''} em {MONTH_NAMES[month - 1]} {year}
+            {events.length} {t('cal_subtitle')} — {t(MONTH_KEYS[month - 1])} {year}
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -87,14 +87,14 @@ export default function AdminCalendar() {
             <ChevronLeft size={16} />
           </button>
           <span style={{ fontFamily: 'var(--font-heading)', fontSize: 16, fontWeight: 700, color: '#f3f5ff', minWidth: 160, textAlign: 'center' }}>
-            {MONTH_NAMES[month - 1]} {year}
+            {t(MONTH_KEYS[month - 1])} {year}
           </span>
           <button onClick={nextMonth} style={{ width: 36, height: 36, background: '#111118', border: '1px solid #26263a', borderRadius: 9, cursor: 'pointer', color: '#f3f5ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <ChevronRight size={16} />
           </button>
           <button onClick={() => { setMonth(now.getMonth()+1); setYear(now.getFullYear()); setSelected(today); }}
             style={{ padding: '7px 14px', background: 'rgba(58,134,255,0.12)', border: '1px solid rgba(58,134,255,0.3)', borderRadius: 9, color: '#3A86FF', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-            Hoje
+            {t('cal_today')}
           </button>
         </div>
       </div>
@@ -105,8 +105,8 @@ export default function AdminCalendar() {
         <div style={{ background: '#111118', border: '1px solid #26263a', borderRadius: 16, overflow: 'hidden' }}>
           {/* Cabeçalho dos dias da semana */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', background: '#0d0d1a' }}>
-            {DAY_NAMES.map(d => (
-              <div key={d} style={{ padding: '10px 0', textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#4a5068', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{d}</div>
+            {DAY_KEYS.map(d => (
+              <div key={d} style={{ padding: '10px 0', textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#4a5068', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t(d)}</div>
             ))}
           </div>
 
@@ -117,7 +117,7 @@ export default function AdminCalendar() {
               <div key={`empty-${i}`} style={{ minHeight: 80, borderRight: '1px solid #1a1a2a', borderBottom: '1px solid #1a1a2a', background: 'rgba(0,0,0,0.2)' }} />
             ))}
 
-            {/* Dias do mês */}
+            {/* Calendar days */}
             {[...Array(days)].map((_, i) => {
               const day = i + 1;
               const dayEvents = eventsByDay[day] || [];
@@ -176,7 +176,7 @@ export default function AdminCalendar() {
             <>
               <div style={{ fontSize: 14, fontWeight: 700, color: '#f3f5ff', padding: '14px 18px', background: '#111118', border: '1px solid #26263a', borderRadius: 12 }}>
                 <Calendar size={14} style={{ marginRight: 8 }} color="#3A86FF" />
-                {selected} de {MONTH_NAMES[month - 1]}
+                {selected} de {t(MONTH_KEYS[month - 1])}
                 <span style={{ fontSize: 12, color: '#7a8299', fontWeight: 400, marginLeft: 8 }}>
                   {selectedEvents.length} contacto{selectedEvents.length !== 1 ? 's' : ''}
                 </span>

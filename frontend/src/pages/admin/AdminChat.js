@@ -90,7 +90,7 @@ export default function AdminChat() {
         toast.error('Erro ao enviar resposta');
       }
     } catch (e) {
-      toast.error('Erro de ligação');
+      toast.error(t('err_connection'));
     }
     setSending(false);
   };

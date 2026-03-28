@@ -15,7 +15,7 @@ const fmt = (v) =>
 const CAT_ICONS = {
   Forex:       Globe,
   Cripto:      Zap,
-  'Acções':    TrendingUp,
+  'Stocks':    TrendingUp,
   Metais:      Landmark,
   Commodities: Droplets,
 };
@@ -241,7 +241,7 @@ export default function TradePage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px', background: 'rgba(58,134,255,0.05)', border: '1px solid rgba(58,134,255,0.12)', borderRadius: 10 }}>
             <span style={{ fontSize: 14 }}>🛡️</span>
             <p style={{ fontSize: 11, color: '#4a5068', margin: 0 }}>
-              Plataforma registada na <strong style={{ color: '#7a8299' }}>IFSB Reg. No. JP-999888777</strong> · <strong style={{ color: '#7a8299' }}>MiFID II</strong> · Empresa de Investimento <strong style={{ color: '#7a8299' }}>Classe 3</strong>
+              Plataforma registada na <strong style={{ color: '#7a8299' }}>IFSB Reg. No. JP-999888777</strong> · <strong style={{ color: '#7a8299' }}>MiFID II</strong> · Empresa de Investimento <strong style={{ color: '#7a8299' }}>Class III</strong>
             </p>
           </div>
         </div>

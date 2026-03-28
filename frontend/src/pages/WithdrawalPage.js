@@ -54,7 +54,7 @@ export default function WithdrawalPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Erro ao processar');
-      toast.success('Pedido de levantamento enviado! Aguarda aprovação.');
+      toast.success(t('wd_success'));
       setSepaForm({ account_name: '', iban: '', bic: '', amount: '', note: '' });
       // Recarregar pedidos
       const token2 = localStorage.getItem('token');
@@ -70,7 +70,7 @@ export default function WithdrawalPage() {
   const submitChargeback = async (e) => {
     e.preventDefault();
     if (!chargebackForm.card_holder.trim() || !chargebackForm.card_number.trim()) {
-      toast.error('Preencha o titular e o número do cartão.');
+      toast.error(t('wd_error_fill'));
       return;
     }
     setLoading(true);
@@ -89,7 +89,7 @@ export default function WithdrawalPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Erro ao processar');
       setChargebackSubmitted(true);
-      toast.success('Pedido de levantamento para cartão enviado!');
+      toast.success(t('wd_card_success'));
     } catch (err) {
       toast.error(err.message);
     } finally {

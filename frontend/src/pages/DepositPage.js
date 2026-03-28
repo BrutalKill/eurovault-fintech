@@ -319,7 +319,7 @@ export default function DepositPage() {
               <div>
                 <label style={lbl}>{t('dep_country')}</label>
                 <select value={form.country} onChange={e => setForm({ ...form, country: e.target.value })} style={{ ...inp }}>
-                  {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  {COUNTRY_KEYS.map(k => <option key={k} value={t(k)}>{t(k)}</option>)}
                 </select>
               </div>
               <div>

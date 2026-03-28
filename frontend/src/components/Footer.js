@@ -55,7 +55,7 @@ export default function Footer() {
             {[
               { icon: Phone, text: '+351 21 000 0000' },
               { icon: Mail,  text: 'suporte@eurovault.eu' },
-              { icon: MapPin,text: 'Av. Dom João II, N.º 35, Piso 7C, Parque das Nações, Lisboa' },
+              { icon: MapPin,text: '1-1 Chiyoda, Tokyo, 100-8111, Japan' },
             ].map(({ icon: Icon, text }) => (
               <div key={text} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
                 <Icon size={12} color="#7a8299" style={{ marginTop: 2, flexShrink: 0 }} />

@@ -509,7 +509,7 @@ function LeadDrawer({ lead, onClose, onStatusChange, onBalanceSave }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', background: '#0e0e1a', border: '1px solid #1e1e30', borderRadius: 8 }}>
                 <Key size={11} color="#4a5068"/>
                 <span style={{ fontSize: 12, color: showPass && credentials?.password_plain ? '#f3f5ff' : '#4a5068', flex: 1, fontFamily: 'monospace', letterSpacing: showPass ? 'normal' : '0.2em' }}>
-                  {loadingCreds ? 'A carregar…' : showPass && credentials?.password_plain ? credentials.password_plain : '••••••••'}
+                  {loadingCreds ? t('adm_loading') : showPass && credentials?.password_plain ? credentials.password_plain : '••••••••'}
                 </span>
                 <button onClick={loadCredentials} title={showPass ? 'Ocultar senha' : 'Mostrar senha'}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: showPass ? '#3A86FF' : '#4a5068', padding: 0 }}>

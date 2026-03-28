@@ -83,7 +83,7 @@ export default function ProfilePage() {
 
   const handleSaveGoal = async () => {
     const amt = parseFloat(goalAmount);
-    if (!amt || amt <= 0) { toast.error('Valor inválido para a meta'); return; }
+    if (!amt || amt <= 0) { toast.error(t('err_goal_invalid')); return; }
     setSavingGoal(true);
     try {
       const token = localStorage.getItem('token');
@@ -203,7 +203,7 @@ export default function ProfilePage() {
             <div>
               <label style={labelStyle}>{t('profile_country')}</label>
               <select value={form.country} onChange={e => setForm({ ...form, country: e.target.value })} style={inputStyle}>
-                {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+                {COUNTRY_KEYS.map(k => <option key={k} value={t(k)}>{t(k)}</option>)}
               </select>
             </div>
             <button data-testid="profile-save-button" type="submit" disabled={loading}

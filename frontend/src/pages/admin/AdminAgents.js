@@ -130,7 +130,7 @@ export default function AdminAgents() {
         method: 'PUT', headers: { 'Content-Type': 'application/json', ...h },
         body: JSON.stringify({ agent_id: agentId || null }),
       });
-      toast.success(agentId ? 'Lead atribuído!' : 'Atribuição removida');
+      toast.success(agentId ? t('agents_lead_assigned') : t('agents_unassigned'));
       fetchAllLeads();
       if (selectedAgent) viewAgentLeads(selectedAgent);
     } catch (_) {}

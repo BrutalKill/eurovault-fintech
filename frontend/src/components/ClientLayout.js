@@ -61,11 +61,11 @@ export default function ClientLayout() {
         {/* Logo */}
         <div style={{ padding: '20px', borderBottom: '1px solid hsl(240,16%,18%)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img src="/logo-eurovault.png" alt="EuroVault Investments"
+            <img src="/logo-eurovault.png" alt="EuroVault Digital Solutions"
               style={{ width: 54, height: 54, objectFit: 'contain' }} />
             <div>
               <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 14, color: '#f3f5ff' }}>EuroVault</div>
-              <div style={{ fontSize: 11, color: 'hsl(46,100%,52%)' }}>Investments</div>
+              <div style={{ fontSize: 11, color: 'hsl(46,100%,52%)' }}>Digital Solutions</div>
             </div>
           </div>
         </div>

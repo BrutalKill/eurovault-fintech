@@ -62,11 +62,11 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
   const handleOrder = async () => {
     const amt = parseFloat(amount);
     if (!amt || isNaN(amt) || amt < 10) {
-      toast.error('Montante inválido', { description: 'Mínimo €10,00.' });
+      toast.error(t('trade_invalid_amount'), { description: 'Mínimo €10,00.' });
       return;
     }
     if (insufficient) {
-      toast.error('Saldo insuficiente', { description: `Disponível: ${fmt(safeBalance)}` });
+      toast.error(t('adm_dash_col_balance') + ' insuficiente', { description: `Disponível: ${fmt(safeBalance)}` });
       return;
     }
     if (cannotSell) {
@@ -250,10 +250,10 @@ export default function TradeOrder({ asset, activeCat, initialSide = 'comprar' }
               )}
             </div>
           )}
-          {/* Saldo disponível (compra) */}
+          {/* {lang === 'en' ? 'Available balance' : lang === 'es' ? 'Saldo disponible' : 'Saldo disponível'} (compra) */}
           {!insufficient && safeBalance > 0 && side === 'comprar' && (
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 10, color: '#4a5068' }}>
-              <span>Saldo disponível</span>
+              <span>{lang === 'en' ? 'Available balance' : lang === 'es' ? 'Saldo disponible' : 'Saldo disponível'}</span>
               <span className="numeric" style={{ color: '#22c58b', fontWeight: 700 }}>{fmt(safeBalance)}</span>
             </div>
           )}

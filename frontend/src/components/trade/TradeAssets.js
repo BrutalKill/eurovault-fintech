@@ -3,7 +3,7 @@ import { Search, Star, Globe, Zap, TrendingUp, Landmark, Droplets, BarChart2 } f
 import { ASSETS, CAT_COLORS } from './tradeData';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
-const CAT_ICONS = { Forex: Globe, Cripto: Zap, 'Acções': TrendingUp, Metais: Landmark, Commodities: Droplets };
+const CAT_ICONS = { Forex: Globe, Cripto: Zap, Stocks: TrendingUp, Metals: Landmark, Commodities: Droplets };
 
 export default function TradeAssets({ activeCat, selectedAsset, onCatChange, onAssetSelect }) {
   const [search, setSearch] = useState('');

@@ -41,7 +41,7 @@ export default function NewsPage() {
     <div>
       <div style={{ marginBottom: 20 }}>
         <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 22, fontWeight: 800, color: '#f3f5ff', margin: 0 }}>
-          {lang === 'pt' ? 'Notícias' : lang === 'es' ? 'Noticias' : 'News'}
+          {t('nav_news')}
         </h1>
         <p style={{ fontSize: 13, color: '#7a8299', margin: '4px 0 0' }}>
           {lang === 'pt' ? 'Últimas notícias dos mercados financeiros em tempo real'

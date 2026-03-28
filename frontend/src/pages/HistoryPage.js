@@ -33,7 +33,7 @@ export default function HistoryPage() {
         setOrders(data);
       }
     } catch (e) {
-      toast.error('Erro ao carregar histórico');
+      toast.error(t('hist_error'));
     } finally {
       setLoading(false);
     }

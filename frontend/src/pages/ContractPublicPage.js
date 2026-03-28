@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { CheckCircle, AlertCircle, FileText, Pen, User, Mail, Phone, CreditCard, Euro, Calendar, MapPin, ChevronRight, ChevronLeft, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { useLang } from '../context/LangContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -71,7 +72,7 @@ function SignatureCanvas({ onSave, onClear }) {
           onTouchStart={start} onTouchMove={move} onTouchEnd={stop}
         />
         <div style={{ position:'absolute', bottom:8, left:'50%', transform:'translateX(-50%)', fontSize:11, color:'#9ca3c0', pointerEvents:'none', userSelect:'none' }}>
-          Assine aqui
+          {t('contract_sign_here')}
         </div>
         <button onClick={clear}
           style={{ position:'absolute', top:8, right:8, background:'rgba(239,68,68,0.1)', border:'1px solid rgba(239,68,68,0.25)', borderRadius:6, padding:'4px 7px', cursor:'pointer', color:'#ef4444', fontSize:11, display:'flex', alignItems:'center', gap:3 }}>
@@ -84,6 +85,7 @@ function SignatureCanvas({ onSave, onClear }) {
 
 export default function ContractPublicPage() {
   const { token } = useParams();
+  const { t } = useLang();
   const [contractInfo, setContractInfo] = useState(null);
   const [loading, setLoading]     = useState(true);
   const [notFound, setNotFound]   = useState(false);
@@ -129,9 +131,9 @@ export default function ContractPublicPage() {
   };
 
   const submit = async () => {
-    if (!form.aceite_termos) { toast.error('Deve aceitar os termos'); return; }
-    if (!signatureName.trim() && signMethod === 'type') { toast.error('Digite o seu nome como assinatura'); return; }
-    if (!signatureImage && signMethod === 'draw') { toast.error('Deve assinar no campo de assinatura'); return; }
+    if (!form.aceite_termos) { toast.error(t('contract_terms_required')); return; }
+    if (!signatureName.trim() && signMethod === 'type') { toast.error(t('contract_sign_name_required')); return; }
+    if (!signatureImage && signMethod === 'draw') { toast.error(t('contract_sign_draw_required')); return; }
     setSubmitting(true);
     try {
       const res = await fetch(`${BACKEND_URL}/api/contract/${token}/submit`, {
@@ -163,8 +165,8 @@ export default function ContractPublicPage() {
         <div style={{ width:72, height:72, background:'rgba(239,68,68,0.1)', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 18px' }}>
           <AlertCircle size={36} color="#ef4444"/>
         </div>
-        <h2 style={{ fontFamily:'var(--font-heading)', fontSize:22, fontWeight:800, color:'#1a1a2e', margin:'0 0 8px' }}>Contrato não encontrado</h2>
-        <p style={{ color:'#5a6280', fontSize:14, lineHeight:1.6 }}>Este link é inválido ou já expirou. Por favor contacte a empresa para obter um novo link.</p>
+        <h2 style={{ fontFamily:'var(--font-heading)', fontSize:22, fontWeight:800, color:'#1a1a2e', margin:'0 0 8px' }}>{t('contract_not_found_title')}</h2>
+        <p style={{ color:'#5a6280', fontSize:14, lineHeight:1.6 }}>{t('contract_not_found_body')}</p>
       </div>
     </div>
   );
@@ -175,8 +177,8 @@ export default function ContractPublicPage() {
         <div style={{ width:72, height:72, background:'rgba(34,197,139,0.12)', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 18px' }}>
           <CheckCircle size={36} color="#22c58b"/>
         </div>
-        <h2 style={{ fontFamily:'var(--font-heading)', fontSize:22, fontWeight:800, color:'#1a1a2e', margin:'0 0 8px' }}>Contrato já assinado</h2>
-        <p style={{ color:'#5a6280', fontSize:14 }}>Este contrato já foi assinado. Contacte a empresa caso precise de uma cópia.</p>
+        <h2 style={{ fontFamily:'var(--font-heading)', fontSize:22, fontWeight:800, color:'#1a1a2e', margin:'0 0 8px' }}>{t('contract_signed_title')}</h2>
+        <p style={{ color:'#5a6280', fontSize:14 }}>{t('contract_signed_body')}</p>
       </div>
     </div>
   );
@@ -187,7 +189,7 @@ export default function ContractPublicPage() {
         <div style={{ width:80, height:80, background:'linear-gradient(135deg,rgba(34,197,139,0.15),rgba(58,134,255,0.12))', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 22px', border:'2px solid rgba(34,197,139,0.3)' }}>
           <CheckCircle size={40} color="#22c58b"/>
         </div>
-        <h2 style={{ fontFamily:'var(--font-heading)', fontSize:26, fontWeight:900, color:'#1a1a2e', margin:'0 0 10px' }}>Contrato Assinado!</h2>
+        <h2 style={{ fontFamily:'var(--font-heading)', fontSize:26, fontWeight:900, color:'#1a1a2e', margin:'0 0 10px' }}>{t('contract_done_title')}</h2>
         <p style={{ color:'#5a6280', fontSize:14, lineHeight:1.7, margin:'0 0 6px' }}>
           O seu contrato foi assinado com sucesso e registado no sistema.
         </p>
@@ -221,7 +223,7 @@ export default function ContractPublicPage() {
 
         {/* Steps indicator */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:0, marginBottom:28 }}>
-          {[{n:1,l:'Dados'},{n:2,l:'Revisão'},{n:3,l:'Assinatura'}].map(({ n, l }, i) => (
+          {[{n:1,l:t('contract_step_data')},{n:2,l:t('contract_step_review')},{n:3,l:t('contract_step_sign')}].map(({ n, l }, i) => (
             <React.Fragment key={n}>
               <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
                 <div style={{ width:34, height:34, borderRadius:'50%', background: step >= n ? 'linear-gradient(135deg,#2563eb,#3A86FF)' : '#e8eeff', display:'flex', alignItems:'center', justifyContent:'center', color: step >= n ? '#fff':'#9ca3c0', fontSize:13, fontWeight:800, boxShadow: step >= n ? '0 4px 12px rgba(58,134,255,0.35)':'none', transition:'all .3s' }}>
@@ -284,10 +286,10 @@ export default function ContractPublicPage() {
               </div>
 
               <button onClick={() => {
-                if (!form.nome_completo || !form.email || !form.telefone || !form.documento || !form.valor_investimento) { toast.error('Preencha todos os campos obrigatórios (*)'); return; }
+                if (!form.nome_completo || !form.email || !form.telefone || !form.documento || !form.valor_investimento) { toast.error(t('contract_form_required')); return; }
                 setStep(2);
               }} style={{ width:'100%', padding:'14px', background:'linear-gradient(135deg,#2563eb,#3A86FF)', border:'none', borderRadius:12, color:'#fff', fontSize:15, fontWeight:800, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8, boxShadow:'0 4px 20px rgba(58,134,255,0.35)' }}>
-                Continuar para Revisão <ChevronRight size={16}/>
+                {t('contract_btn_continue')} <ChevronRight size={16}/>
               </button>
             </div>
           )}
@@ -297,7 +299,7 @@ export default function ContractPublicPage() {
             <div style={{ padding:'28px 28px 24px' }}>
               <div style={{ display:'flex', alignItems:'center', gap:9, marginBottom:18, paddingBottom:14, borderBottom:'1px solid #f0f0f8' }}>
                 <FileText size={18} color="#3A86FF"/>
-                <div style={{ fontSize:16, fontWeight:800, color:'#1a1a2e' }}>Revisão do Contrato</div>
+                <div style={{ fontSize:16, fontWeight:800, color:'#1a1a2e' }}>{t('contract_review_title')}</div>
               </div>
 
               <div style={{ background:'#f8f9ff', border:'1px solid #e8eeff', borderRadius:12, padding:'20px 22px', marginBottom:20, maxHeight:400, overflowY:'auto' }}>
@@ -308,10 +310,10 @@ export default function ContractPublicPage() {
 
               <div style={{ display:'flex', gap:10 }}>
                 <button onClick={() => setStep(1)} style={{ flex:1, padding:'12px', background:'transparent', border:'1.5px solid #e0e0f0', borderRadius:11, color:'#5a6280', fontSize:14, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}>
-                  <ChevronLeft size={15}/>Editar Dados
+                  <ChevronLeft size={15}/>{t('contract_btn_edit')}
                 </button>
                 <button onClick={() => setStep(3)} style={{ flex:2, padding:'12px', background:'linear-gradient(135deg,#2563eb,#3A86FF)', border:'none', borderRadius:11, color:'#fff', fontSize:14, fontWeight:800, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:7, boxShadow:'0 4px 16px rgba(58,134,255,0.35)' }}>
-                  Confirmar e Assinar <ChevronRight size={15}/>
+                  {t('contract_btn_confirm')} <ChevronRight size={15}/>
                 </button>
               </div>
             </div>
@@ -322,12 +324,12 @@ export default function ContractPublicPage() {
             <div style={{ padding:'28px 28px 24px' }}>
               <div style={{ display:'flex', alignItems:'center', gap:9, marginBottom:20, paddingBottom:14, borderBottom:'1px solid #f0f0f8' }}>
                 <Pen size={18} color="#3A86FF"/>
-                <div style={{ fontSize:16, fontWeight:800, color:'#1a1a2e' }}>Assinatura Digital</div>
+                <div style={{ fontSize:16, fontWeight:800, color:'#1a1a2e' }}>{t('contract_sign_title')}</div>
               </div>
 
               {/* Method selector */}
               <div style={{ display:'flex', gap:8, marginBottom:20, background:'#f0f4ff', borderRadius:12, padding:4 }}>
-                {[{id:'type',l:'Digitar nome'},{id:'draw',l:'Desenhar assinatura'}].map(({ id, l }) => (
+                {[{id:'type',l:t('contract_sign_type')},{id:'draw',l:t('contract_sign_draw')}].map(({ id, l }) => (
                   <button key={id} onClick={() => setSignMethod(id)}
                     style={{ flex:1, padding:'9px', borderRadius:9, border:'none', cursor:'pointer', fontSize:13, fontWeight:700, background: signMethod===id ? '#fff':'transparent', color: signMethod===id ? '#3A86FF':'#9ca3c0', boxShadow: signMethod===id ? '0 2px 8px rgba(0,0,0,0.08)':'none', transition:'all .2s' }}>
                     {l}
@@ -337,20 +339,20 @@ export default function ContractPublicPage() {
 
               {signMethod === 'type' ? (
                 <div style={{ marginBottom:18 }}>
-                  <label style={lbl}>Escreva o seu nome completo para assinar</label>
+                  <label style={lbl}>{t('contract_sign_type_label')}</label>
                   <input value={signatureName} onChange={e => setSignatureName(e.target.value)} placeholder="O seu nome completo"
                     style={{ ...inp, fontSize:18, fontFamily:'Georgia, serif', textAlign:'center', letterSpacing:'0.02em' }}
                     onFocus={e => e.target.style.borderColor='#3A86FF'} onBlur={e => e.target.style.borderColor='#e0e0f0'}/>
                   {signatureName && (
                     <div style={{ marginTop:10, padding:'12px 16px', background:'#f8f9ff', border:'1px solid #e8eeff', borderRadius:10, textAlign:'center' }}>
-                      <p style={{ margin:'0 0 4px', fontSize:10, color:'#9ca3c0', textTransform:'uppercase', letterSpacing:'0.08em' }}>Prévia da assinatura</p>
+                      <p style={{ margin:'0 0 4px', fontSize:10, color:'#9ca3c0', textTransform:'uppercase', letterSpacing:'0.08em' }}>{t('contract_sign_preview')}</p>
                       <p style={{ margin:0, fontSize:22, color:'#1a1a2e', fontFamily:'Georgia, cursive', fontStyle:'italic' }}>{signatureName}</p>
                     </div>
                   )}
                 </div>
               ) : (
                 <div style={{ marginBottom:18 }}>
-                  <label style={{ ...lbl, marginBottom:10 }}>Desenhe a sua assinatura abaixo</label>
+                  <label style={{ ...lbl, marginBottom:10 }}>{t('contract_sign_draw_label')}</label>
                   <SignatureCanvas onSave={setSignatureImage} onClear={() => setSignatureImage('')}/>
                   {!signatureImage && (
                     <p style={{ fontSize:11, color:'#9ca3c0', margin:'8px 0 0', textAlign:'center' }}>Use o rato ou o dedo para assinar</p>
@@ -375,7 +377,7 @@ export default function ContractPublicPage() {
                 </button>
                 <button onClick={submit} disabled={submitting}
                   style={{ flex:2, padding:'12px', background: submitting ? 'rgba(34,197,139,0.5)':'linear-gradient(135deg,#15803d,#22c58b)', border:'none', borderRadius:11, color:'#fff', fontSize:14, fontWeight:800, cursor: submitting ? 'not-allowed':'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:7, boxShadow: submitting ? 'none':'0 4px 16px rgba(34,197,139,0.35)' }}>
-                  <CheckCircle size={15}/>{submitting ? 'A processar…' : 'Assinar e Confirmar Contrato'}
+                  <CheckCircle size={15}/>{submitting ? t('contract_btn_sign_loading') : t('contract_btn_sign')}
                 </button>
               </div>
             </div>
@@ -385,7 +387,7 @@ export default function ContractPublicPage() {
         {/* Footer */}
         <div style={{ textAlign:'center', marginTop:20, padding:'12px 0' }}>
           <p style={{ fontSize:11, color:'#9ca3c0', margin:0 }}>
-            Documento seguro · Referência: {token?.substring(0,12).toUpperCase()} · {contractInfo?.company_name}
+            {t('contract_secure_note')} · Referência: {token?.substring(0,12).toUpperCase()} · {contractInfo?.company_name}
           </p>
         </div>
       </div>

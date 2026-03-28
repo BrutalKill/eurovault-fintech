@@ -3,6 +3,35 @@ import React, { createContext, useContext, useState, useCallback, useEffect, use
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 const UserContext  = createContext(null);
 
+// ── Traduções inline para notificações push ───────────────────────────────────
+const NOTIF_STRINGS = {
+  pt: {
+    balance_title: 'Saldo Actualizado', balance_body: 'O seu saldo subiu', new_balance: 'Novo saldo:',
+    wd_title: 'Levantamento Processado', wd_body: 'foram transferidos. Saldo actual:',
+    profit_title: 'Lucro Actualizado', profit_body: 'de rendimento acumulado. Total:',
+    kyc_ok_title: 'Identidade Verificada!', kyc_ok_body: 'A sua conta foi verificada com sucesso.',
+    kyc_rej_title: 'Verificação Rejeitada', kyc_rej_body: 'O documento KYC foi rejeitado.',
+  },
+  en: {
+    balance_title: 'Balance Updated', balance_body: 'Your balance increased by', new_balance: 'New balance:',
+    wd_title: 'Withdrawal Processed', wd_body: 'were transferred. Current balance:',
+    profit_title: 'Profit Updated', profit_body: 'accumulated return. Total:',
+    kyc_ok_title: 'Identity Verified!', kyc_ok_body: 'Your account has been verified.',
+    kyc_rej_title: 'Verification Rejected', kyc_rej_body: 'KYC document rejected. Please resubmit.',
+  },
+  es: {
+    balance_title: 'Saldo Actualizado', balance_body: 'Su saldo subió', new_balance: 'Nuevo saldo:',
+    wd_title: 'Retiro Procesado', wd_body: 'fueron transferidos. Saldo actual:',
+    profit_title: 'Beneficio Actualizado', profit_body: 'rendimiento acumulado. Total:',
+    kyc_ok_title: '¡Identidad Verificada!', kyc_ok_body: 'Su cuenta ha sido verificada.',
+    kyc_rej_title: 'Verificación Rechazada', kyc_rej_body: 'Documento KYC rechazado.',
+  },
+};
+const getN = (key) => {
+  const lang = localStorage.getItem('ev_lang') || 'pt';
+  return (NOTIF_STRINGS[lang] || NOTIF_STRINGS['pt'])[key] || NOTIF_STRINGS['pt'][key] || '';
+};
+
 // ── Disparar notificação com logo e som ───────────────────────────────────────
 function pushNotif(title, body, tag = '') {
   if (Notification.permission !== 'granted') return;
@@ -47,48 +76,24 @@ export function UserProvider({ children }) {
     // 1. Saldo subiu
     const balanceDiff = next.balance - prev.balance;
     if (balanceDiff > 0.5) {
-      pushNotif(
-        'Saldo Actualizado',
-        `O seu saldo subiu ${fmtEur(balanceDiff)}. Novo saldo: ${fmtEur(next.balance)}`,
-        'balance-up'
-      );
+      pushNotif(getN('balance_title'), `${getN('balance_body')} ${fmtEur(balanceDiff)}. ${getN('new_balance')} ${fmtEur(next.balance)}`, 'balance-up');
     }
-
     // 2. Saldo desceu (levantamento aprovado)
     if (balanceDiff < -0.5) {
-      pushNotif(
-        'Levantamento Processado',
-        `${fmtEur(Math.abs(balanceDiff))} foram transferidos. Saldo actual: ${fmtEur(next.balance)}`,
-        'balance-down'
-      );
+      pushNotif(getN('wd_title'), `${fmtEur(Math.abs(balanceDiff))} ${getN('wd_body')} ${fmtEur(next.balance)}`, 'balance-down');
     }
-
     // 3. Lucro subiu
     const profitDiff = next.profit - prev.profit;
     if (profitDiff > 0.01) {
-      pushNotif(
-        'Lucro Actualizado',
-        `+${fmtEur(profitDiff)} de rendimento acumulado. Total: ${fmtEur(next.profit)}`,
-        'profit-up'
-      );
+      pushNotif(getN('profit_title'), `+${fmtEur(profitDiff)} ${getN('profit_body')} ${fmtEur(next.profit)}`, 'profit-up');
     }
-
     // 4. KYC aprovado
     if (prev.kyc_status !== 'approved' && next.kyc_status === 'approved') {
-      pushNotif(
-        'Identidade Verificada!',
-        'A sua conta foi verificada com sucesso. Acesso completo desbloqueado.',
-        'kyc-approved'
-      );
+      pushNotif(getN('kyc_ok_title'), getN('kyc_ok_body'), 'kyc-approved');
     }
-
     // 5. KYC rejeitado
     if (prev.kyc_status !== 'rejected' && next.kyc_status === 'rejected') {
-      pushNotif(
-        'Verificação Rejeitada',
-        'O documento KYC foi rejeitado. Por favor envie novamente no perfil.',
-        'kyc-rejected'
-      );
+      pushNotif(getN('kyc_rej_title'), getN('kyc_rej_body'), 'kyc-rejected');
     }
   }, []);
 

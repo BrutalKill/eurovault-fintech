@@ -98,11 +98,11 @@ export default function NotFoundPage() {
             <TrendingUp size={30} color="#3A86FF" />
           </div>
           <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 'clamp(24px, 4vw, 36px)', fontWeight: 800, color: '#f3f5ff', margin: '0 0 12px', letterSpacing: '-0.02em' }}>
-            Página não encontrada
+            {t('notfound_title')}
           </h1>
           <p style={{ fontSize: 15, color: 'hsl(215,16%,60%)', lineHeight: 1.6, margin: 0 }}>
-            A página que procura não existe ou foi movida.<br />
-            Navegue para a área principal da plataforma.
+            {t('notfound_subtitle')}<br />
+            {t('notfound_subtitle2')}
           </p>
         </div>
 
@@ -117,12 +117,12 @@ export default function NotFoundPage() {
             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 24px', background: 'hsl(214,100%,60%)', border: 'none', borderRadius: 12, color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 16px rgba(58,134,255,0.35)', transition: 'opacity 0.2s' }}
             onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
             onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
-            <Home size={15} />{token ? 'Ir para o Dashboard' : 'Ir para o Login'}
+            <Home size={15} />{token ? t('notfound_dashboard') : t('notfound_login')}
           </button>
         </div>
 
         <p style={{ fontSize: 12, color: 'hsl(215,16%,40%)', margin: 0 }}>
-          Código de erro: 404 · EuroVault Investments
+          {t('notfound_error_code')} 404 · EuroVault Digital Solutions
         </p>
       </div>
     </div>

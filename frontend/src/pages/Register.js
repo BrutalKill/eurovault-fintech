@@ -35,7 +35,7 @@ const DIAL_CODES = [
   { code: '+351', flag: '🇵🇹', name: 'Outro'             },
 ];
 
-const COUNTRIES = ['Portugal','Espanha','França','Alemanha','Itália','Países Baixos','Bélgica','Suíça','Suécia','Noruega','Dinamarca','Polónia','Hungria','República Checa','Roménia','Brasil','Reino Unido','Outro'];
+const COUNTRY_KEYS = ['country_portugal','country_espanha','country_franca','country_alemanha','country_italia','country_paises_baixos','country_belgica','country_suica','country_suecia','country_noruega','country_dinamarca','country_polonia','country_hungria','country_republica_checa','country_romenia','country_brasil','country_reino_unido','country_irlanda','country_austria','country_grecia','country_finlandia','country_outro'];
 
 export default function Register() {
   const navigate = useNavigate();
@@ -67,7 +67,7 @@ export default function Register() {
           resolve(data);
         }
       };
-      xhr.onerror = () => reject(new Error('Erro de ligação. Verifique a sua internet.'));
+      xhr.onerror = () => reject(new Error(t('err_connection')));
       xhr.ontimeout = () => reject(new Error('Pedido expirou. Tente novamente.'));
       xhr.send(JSON.stringify({ ...form, phone: fullPhone }));
     });
@@ -174,7 +174,7 @@ export default function Register() {
             <label style={lbl}>{t('profile_country')}</label>
             <select value={form.country} onChange={e => handleCountryChange(e.target.value)}
               style={{ ...inp, appearance: 'none', WebkitAppearance: 'none' }}>
-              {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+              {COUNTRY_KEYS.map(k => <option key={k} value={t(k)}>{t(k)}</option>)}
             </select>
           </div>
 

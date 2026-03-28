@@ -75,8 +75,8 @@ export default function NotificationBell() {
     const now = new Date();
     const diff = Math.floor((now - d) / 60000);
     if (diff < 1) return 'Agora';
-    if (diff < 60) return `${diff}m atrás`;
-    if (diff < 1440) return `${Math.floor(diff/60)}h atrás`;
+    if (diff < 60) return `${diff}m ago`;
+    if (diff < 1440) return `${Math.floor(diff/60)}h ago`;
     return d.toLocaleDateString('pt-PT');
   };
 

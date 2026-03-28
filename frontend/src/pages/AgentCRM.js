@@ -20,8 +20,8 @@ const fmtDate = (iso) => {
   const now = new Date();
   const diff = Math.floor((now - d) / 60000);
   if (diff < 2) return 'Agora';
-  if (diff < 60) return `Há ${diff}min`;
-  if (diff < 1440) return `Há ${Math.floor(diff / 60)}h`;
+  if (diff < 60) return lang === 'en' ? `${diff}m ago` : lang === 'es' ? `Hace ${diff}m` : `Há ${diff}min`;
+  if (diff < 1440) return lang === 'en' ? `${Math.floor(diff/60)}h ago` : lang === 'es' ? `Hace ${Math.floor(diff/60)}h` : `Há ${Math.floor(diff/60)}h`;
   if (diff < 2880) return 'Ontem';
   return d.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: '2-digit' });
 };
@@ -599,7 +599,7 @@ function AgentProfileDropdown({ agent, token, onLogout, onPhotoUpdate }) {
 ══════════════════════════════════════════════════════════════ */
 export default function AgentCRM() {
   const navigate = useNavigate();
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [agent, setAgent] = useState(null);
   const [leads, setLeads] = useState([]);
   const [search, setSearch] = useState('');
