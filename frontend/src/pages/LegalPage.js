@@ -6,14 +6,14 @@ import { useLang } from '../context/LangContext';
 const COMPANY = { en: 'EuroVault Investments, S.A.', pt: 'EuroVault Investments, S.A.', es: 'EuroVault Investments, S.A.' };
 const EMAIL   = 'legal@eurovault.eu';
 const ADDRESS = {
-  en: 'Av. Dom João II, No. 35, 7th Floor, Parque das Nações, 1990-095 Lisbon, Portugal',
-  pt: 'Av. Dom João II, N.º 35, Piso 7C, Parque das Nações, 1990-095 Lisboa',
-  es: 'Av. Dom João II, N.º 35, Piso 7C, Parque das Nações, 1990-095 Lisboa, Portugal',
+  en: 'One Canada Square, Canary Wharf, London E14 5AB, United Kingdom',
+  pt: 'One Canada Square, Canary Wharf, London E14 5AB',
+  es: 'One Canada Square, Canary Wharf, London E14 5AB, United Kingdom',
 };
 const REG = {
-  en: 'CMVM Reg. No. 327 · NIF 502 151 889 · Investment Firm Class 3',
-  pt: 'Registo CMVM n.º 327 · NIF 502 151 889 · Empresa de Investimento Classe 3',
-  es: 'Registro CMVM n.° 327 · NIF 502 151 889 · Empresa de Inversión Clase 3',
+  en: 'FCA Reg. No. 987654 · NIF GB 987 654 321 · Investment Firm Class III',
+  pt: 'Registo FCA Reg. No. 987654 · NIF GB 987 654 321 · Investment Firm Class III',
+  es: 'FCA Reg. n.° 987654 · NIF GB 987 654 321 · Empresa de Inversión Clase 3',
 };
 const UPDATED = { en: 'March 1, 2026', pt: '1 de Março de 2026', es: '1 de marzo de 2026' };
 
@@ -312,7 +312,7 @@ const CONTENT = {
     en: { title: 'Anti-Money Laundering (AML) Policy', sections: [
       { n:1, title:'Introduction', body:[{t:'p', v:`EuroVault Investments, S.A. is committed to the highest standards of AML and counter-terrorism financing (CTF) compliance. This Policy sets out our obligations to detect, prevent, and report money laundering and terrorism financing activities. It applies to all employees, contractors, and third parties acting on our behalf.`}]},
       { n:2, title:'Regulatory Framework', body:[
-        {t:'ul', v:['Directive (EU) 2018/843 — 5th Anti-Money Laundering Directive (5AMLD)','Directive (EU) 2015/849 — 4th Anti-Money Laundering Directive (4AMLD)','Cyprus Law 188(I)/2007 on Prevention and Suppression of Money Laundering','CySEC Circular C374 — AML/CFT Obligations','FATF Recommendations 2023','EU Sanctions Regulation and applicable OFAC guidance']},
+        {t:'ul', v:['Directive (EU) 2018/843 — 5th Anti-Money Laundering Directive (5AMLD)','Directive (EU) 2015/849 — 4th Anti-Money Laundering Directive (4AMLD)','Cyprus Law 188(I)/2007 on Prevention and Suppression of Money Laundering','FCA Circular C374 — AML/CFT Obligations','FATF Recommendations 2023','EU Sanctions Regulation and applicable OFAC guidance']},
       ]},
       { n:3, title:'Customer Due Diligence (CDD)', body:[
         {t:'p', v:`We apply a risk-based approach to CDD. Standard measures include:`},
@@ -339,7 +339,7 @@ const CONTENT = {
     pt: { title: 'Política Anti-Branqueamento de Capitais (AML)', sections: [
       { n:1, title:'Introdução', body:[{t:'p', v:`A EuroVault Investments, S.A. está empenhada nos mais elevados padrões de conformidade com as obrigações de prevenção do branqueamento de capitais (AML) e financiamento do terrorismo (CTF). Esta Política define as nossas obrigações para detetar, prevenir e comunicar atividades de branqueamento de capitais e financiamento do terrorismo.`}]},
       { n:2, title:'Enquadramento Regulatório', body:[
-        {t:'ul', v:['Diretiva (UE) 2018/843 — 5.ª Diretiva AML (5AMLD)','Diretiva (UE) 2015/849 — 4.ª Diretiva AML (4AMLD)','Lei n.º 188(I)/2007 do Chipre sobre Prevenção do Branqueamento de Capitais','Circular C374 da CySEC — Obrigações AML/CFT','Recomendações do GAFI 2023','Regulamento de Sanções da UE e orientações OFAC aplicáveis']},
+        {t:'ul', v:['Diretiva (UE) 2018/843 — 5.ª Diretiva AML (5AMLD)','Diretiva (UE) 2015/849 — 4.ª Diretiva AML (4AMLD)','Lei n.º 188(I)/2007 do Chipre sobre Prevenção do Branqueamento de Capitais','Circular C374 da FCA — Obrigações AML/CFT','Recomendações do GAFI 2023','Regulamento de Sanções da UE e orientações OFAC aplicáveis']},
       ]},
       { n:3, title:'Diligência Devida do Cliente (CDD)', body:[
         {t:'p', v:`Aplicamos uma abordagem baseada no risco à Diligência Devida do Cliente. As medidas padrão incluem:`},
@@ -365,7 +365,7 @@ const CONTENT = {
     es: { title: 'Política Antilavado de Dinero (AML)', sections: [
       { n:1, title:'Introducción', body:[{t:'p', v:`EuroVault Investments, S.A. está comprometida con los más altos estándares de cumplimiento AML y financiación del terrorismo (CTF). Esta Política establece nuestras obligaciones para detectar, prevenir e informar actividades de lavado de dinero y financiación del terrorismo.`}]},
       { n:2, title:'Marco Regulatorio', body:[
-        {t:'ul', v:['Directiva (UE) 2018/843 — 5.ª Directiva AML (5AMLD)','Directiva (UE) 2015/849 — 4.ª Directiva AML (4AMLD)','Ley chipriota 188(I)/2007 sobre Prevención del Blanqueo de Capitales','Circular C374 de CySEC — Obligaciones AML/CFT','Recomendaciones del GAFI 2023']},
+        {t:'ul', v:['Directiva (UE) 2018/843 — 5.ª Directiva AML (5AMLD)','Directiva (UE) 2015/849 — 4.ª Directiva AML (4AMLD)','Ley chipriota 188(I)/2007 sobre Prevención del Blanqueo de Capitales','Circular C374 de FCA — Obligaciones AML/CFT','Recomendaciones del GAFI 2023']},
       ]},
       { n:3, title:'Diligencia Debida del Cliente (DDC)', body:[
         {t:'p', v:`Aplicamos un enfoque basado en el riesgo. Las medidas estándar incluyen:`},

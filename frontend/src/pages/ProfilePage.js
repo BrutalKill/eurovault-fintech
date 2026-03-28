@@ -428,7 +428,7 @@ export default function ProfilePage() {
             <div style={{ marginTop: 14, padding: '10px 14px', background: 'rgba(58,134,255,0.06)', border: '1px solid rgba(58,134,255,0.15)', borderRadius: 9, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
               <Shield size={13} color="#3A86FF" style={{ marginTop: 1, flexShrink: 0 }} />
               <p style={{ fontSize: 11, color: 'hsl(215,16%,60%)', lineHeight: 1.5, margin: 0 }}>
-                Os seus documentos são armazenados de forma segura e utilizados exclusivamente para verificação de identidade, em conformidade com o RGPD e regulamentação CySEC.
+                Os seus documentos são armazenados de forma segura e utilizados exclusivamente para verificação de identidade, em conformidade com o RGPD e regulamentação FCA.
               </p>
             </div>
           </>

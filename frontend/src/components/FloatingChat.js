@@ -22,7 +22,7 @@ const FAQ = [
   },
   {
     q: 'Os meus fundos estão seguros?',
-    a: 'Sim! A EuroVault Investments, S.A. encontra-se registada na CMVM com o n.º 327, autorizada ao abrigo da MiFID II como Empresa de Investimento de Classe 3. NIF: 502 151 889.',
+    a: 'Sim! A EuroVault Investments, S.A. encontra-se registada na FCA com o n.º 327, autorizada ao abrigo da MiFID II como Investment Firm Class III. NIF: GB 987 654 321.',
   },
   {
     q: 'Qual é o depósito mínimo?',

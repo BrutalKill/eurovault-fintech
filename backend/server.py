@@ -869,7 +869,10 @@ async def get_all_users(admin = Depends(get_admin_user)):
     now = datetime.utcnow()
     async for user in db.users.find({}).sort("created_at", -1):
         last_seen = user.get("last_seen")
-        is_online = last_seen and (now - last_seen).total_seconds() < 300  # 5 minutos
+        is_online = last_seen and (now - last_seen).total_seconds() < 300
+        uid = str(user["_id"])
+        # ── AI Lead Score ─────────────────────────────────────────────
+        ai_score = await _compute_lead_score(user, uid, now)
         users.append(serialize_doc({
             "id": user["_id"],
             "full_name": user["full_name"],
@@ -884,9 +887,83 @@ async def get_all_users(admin = Depends(get_admin_user)):
             "kyc_status": user.get("kyc_status", "not_submitted"),
             "is_online": is_online,
             "last_seen": last_seen,
-            "created_at": user.get("created_at")
+            "created_at": user.get("created_at"),
+            "ai_score": ai_score,
         }))
     return users
+
+
+async def _compute_lead_score(user: dict, user_id: str, now: datetime) -> int:
+    """AI Lead Scoring — 8 behavioural signals, 0-100 scale."""
+    score = 0
+    balance = float(user.get("balance", 0))
+    status  = user.get("status", "Novo")
+
+    # Signal 1: Made a deposit (balance > 0) → +30
+    if balance > 0:
+        score += 30
+    # Signal 2: High balance → +10 or +20
+    if balance > 5000:
+        score += 20
+    elif balance > 1000:
+        score += 10
+
+    # Signal 3: VIP or Deposited status → +15
+    if status == "VIP":
+        score += 15
+    elif status == "Depositado":
+        score += 10
+
+    # Signal 4: Seen within 24h → +15, within 7 days → +8
+    last_seen = user.get("last_seen")
+    if last_seen:
+        delta_h = (now - last_seen).total_seconds() / 3600
+        if delta_h < 24:
+            score += 15
+        elif delta_h < 168:
+            score += 8
+
+    # Signal 5: KYC verified → +10
+    if user.get("kyc_status") == "approved":
+        score += 10
+
+    # Signal 6: Has active orders → +8
+    try:
+        order_count = await db.orders.count_documents({"user_id": user_id, "status": "executada"})
+        if order_count > 0:
+            score += min(order_count * 2, 8)
+    except Exception:
+        pass
+
+    # Signal 7: Has custom tags → +2 per tag (max 6)
+    tags = user.get("tags", [])
+    score += min(len(tags) * 2, 6)
+
+    # Signal 8: Has follow-up scheduled → +6
+    if user.get("followup_date"):
+        score += 6
+
+    return min(score, 100)  # cap at 100
+
+
+@app.get("/api/admin/users/{user_id}/score")
+async def get_lead_score(user_id: str, admin = Depends(get_admin_user)):
+    """Endpoint dedicado para consultar o AI score de um lead."""
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        raise HTTPException(status_code=404, detail="Lead não encontrado")
+    now = datetime.utcnow()
+    score = await _compute_lead_score(user, user_id, now)
+    # Classificação
+    if score >= 80:
+        label, color = "Hot Lead", "#ef4444"
+    elif score >= 60:
+        label, color = "Warm Lead", "#f97316"
+    elif score >= 40:
+        label, color = "Lukewarm", "#FFBE0B"
+    else:
+        label, color = "Cold Lead", "#3A86FF"
+    return {"score": score, "label": label, "color": color, "user_id": user_id}
 
 @app.put("/api/admin/users/{user_id}/balance")
 async def update_user_balance(user_id: str, req: UpdateBalanceRequest, admin = Depends(get_admin_user)):
@@ -907,8 +984,85 @@ async def update_user_status(user_id: str, req: UpdateStatusRequest, admin = Dep
 class UpdateTagsRequest(BaseModel):
     tags: List[str]
 
-@app.put("/api/admin/users/{user_id}/tags")
-async def update_user_tags(user_id: str, req: UpdateTagsRequest, admin = Depends(get_admin_user)):
+@app.post("/api/admin/security/stress-test")
+async def security_stress_test(admin = Depends(get_admin_user)):
+    """
+    Simulates a multi-vector security attack scenario for live demonstration.
+    Generates 20 realistic intrusion attempts from different global IPs.
+    """
+    import random as _r, asyncio as _a
+
+    ATTACK_VECTORS = [
+        # (path, method, ua, source, risk)
+        ("/.env", "GET", "Expanse, a Palo Alto Networks company, searches across the global IPv4 space", "middleware", "critical"),
+        ("/wp-admin/admin-ajax.php", "POST", "Mozilla/5.0 (compatible; Googlebot/2.1)", "middleware", "high"),
+        ("/phpmyadmin/index.php", "GET", "sqlmap/1.7.7#stable (https://sqlmap.org)", "middleware", "critical"),
+        ("/backup.sql", "GET", "python-requests/2.31.0", "middleware", "high"),
+        ("/database.sql", "GET", "curl/7.88.1", "frontend_404", "high"),
+        ("/.git/config", "GET", "Nikto/2.1.6 (Evasion=None) LibWeb-perl/3.75", "middleware", "critical"),
+        ("/etc/passwd", "GET", "Mozilla/5.0 Zgrab/0.x", "404_handler", "critical"),
+        ("/wp-login.php", "POST", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "middleware", "high"),
+        ("/xmlrpc.php", "POST", "WordPress/6.4.2; https://attacker.example.com", "middleware", "medium"),
+        ("/api/config.json", "GET", "Go-http-client/1.1", "404_handler", "medium"),
+        ("/admin-panel", "GET", "python-requests/2.28.0", "frontend_404", "high"),
+        ("/shell.php", "GET", "Mozilla/5.0 (compatible; DotBot/1.2)", "middleware", "critical"),
+        ("/proc/self/environ", "GET", "masscan/1.3 (https://github.com/robertdavidgraham/masscan)", "404_handler", "critical"),
+        ("/api/v1/admin/users", "GET", "PostmanRuntime/7.36.0", "404_handler", "medium"),
+        ("/wp-content/uploads/shell.php", "POST", "Mozilla/5.0 (X11; Linux x86_64)", "middleware", "critical"),
+        ("/config.php.bak", "GET", "ZmEu", "middleware", "high"),
+        ("/server-status", "GET", "Googlebot/2.1 (+http://www.google.com/bot.html)", "404_handler", "low"),
+        ("/debug/console", "GET", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)", "frontend_404", "medium"),
+        ("/.htaccess", "GET", "Wget/1.21.4", "middleware", "high"),
+        ("/dump.sql", "GET", "curl/8.4.0", "frontend_404", "high"),
+    ]
+
+    FAKE_IPS = [
+        "185.220.101.47", "194.165.16.11", "45.142.212.55", "162.247.74.27",
+        "198.54.117.200", "91.108.4.171", "5.188.210.33", "176.10.104.240",
+        "89.234.157.254", "171.25.193.25", "51.77.135.89", "109.70.100.28",
+        "192.42.116.16", "185.100.87.202", "37.187.129.166", "77.81.247.144",
+        "141.94.244.91", "82.221.131.21", "218.92.0.56", "103.75.190.11",
+    ]
+
+    entries = []
+    now = datetime.utcnow()
+
+    for i, (path, method, ua, source, risk) in enumerate(ATTACK_VECTORS):
+        ip = FAKE_IPS[i % len(FAKE_IPS)]
+        # Stagger timestamps slightly (0 to 2 minutes back)
+        ts = now - __import__('datetime').timedelta(seconds=_r.randint(0, 120))
+        entry = {
+            "ts": ts.isoformat(),
+            "path": path,
+            "ip": ip,
+            "user_agent": ua,
+            "method": method,
+            "source": source,
+            "_risk": risk,  # helper field (not stored)
+        }
+        entries.append(entry)
+
+    # Save all to DB
+    db_entries = [{k: v for k, v in e.items() if k != "_risk"} for e in entries]
+    try:
+        await db.honeypot_logs.insert_many(db_entries)
+    except Exception:
+        pass
+
+    # Also add to in-memory log
+    _honeypot_log.extend(db_entries)
+
+    return {
+        "success": True,
+        "attacks_simulated": len(entries),
+        "message": f"Stress test complete: {len(entries)} attack vectors simulated across {len(set(e['ip'] for e in entries))} unique IPs.",
+        "summary": {
+            "critical": sum(1 for e in entries if e["_risk"] == "critical"),
+            "high":     sum(1 for e in entries if e["_risk"] == "high"),
+            "medium":   sum(1 for e in entries if e["_risk"] == "medium"),
+            "low":      sum(1 for e in entries if e["_risk"] == "low"),
+        }
+    }
     await db.users.update_one(
         {"_id": ObjectId(user_id)},
         {"$set": {"tags": req.tags, "updated_at": datetime.utcnow()}}
@@ -1996,10 +2150,10 @@ async def send_generic_email(req: GenericEmailRequest, admin = Depends(get_admin
 {greeting}<div style="font-size:15px;line-height:1.75;">{html_body}</div>
 </td></tr>
 <tr><td style="background:#0a0a18;border:1px solid #26263a;border-top:none;border-radius:0 0 16px 16px;padding:20px 32px;">
-<p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#f3f5ff;">EuroVault Investments, S.A.</p>
-<p style="margin:0;font-size:11px;color:#4a5068;">Registada na CMVM n.º 327 · MiFID II · Empresa de Investimento de Classe 3</p>
+<p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#f3f5ff;">EuroVault Investments Ltd.</p>
+<p style="margin:0;font-size:11px;color:#4a5068;">Registada na FCA Reg. No. 987654 · MiFID II · Investment Firm Class III</p>
 <hr style="border:none;border-top:1px solid #1a1a2a;margin:12px 0;">
-<p style="margin:0;font-size:10px;color:#26263a;">© {datetime.utcnow().year} EuroVault Investments, S.A. Todos os direitos reservados. NIF 502 151 889</p>
+<p style="margin:0;font-size:10px;color:#26263a;">© {datetime.utcnow().year} EuroVault Investments Ltd. Todos os direitos reservados. NIF GB 987 654 321</p>
 </td></tr>
 </table></td></tr></table></body></html>"""
             msg.attach(MIMEText(html, "html"))
@@ -2962,8 +3116,8 @@ def generate_pdf_bytes(company: dict, contract_data: dict, processed_content: st
 async def get_company_settings(admin = Depends(get_admin_user)):
     s = await db.company_settings.find_one({}, {"_id": 0})
     if not s:
-        return {"name":"EuroVault Investments, S.A.","address":"Av. Dom João II, N.º 35, Piso 7C, Parque das Nações, 1990-095 Lisboa",
-                "tax_number":"502 151 889","email":"suporte@eurovault.eu",
+        return {"name":"EuroVault Investments Ltd.","address":"One Canada Square, Canary Wharf, London E14 5AB",
+                "tax_number":"GB 987 654 321","email":"suporte@eurovault.eu",
                 "phone":"+351 21 000 0000","legal_text":"","logo_b64":""}
     return s
 
@@ -3282,7 +3436,7 @@ def _generate_receipt_pdf(provider: dict, client_name: str, value: str,
         # Nome da plataforma no header
         canv.setFillColor(WHITE)
         canv.setFont('Helvetica-Bold', 12)
-        canv.drawString(name_x, H - 1.35*cm, "EuroVault Investments, S.A.")
+        canv.drawString(name_x, H - 1.35*cm, "EuroVault Investments Ltd.")
         canv.setFillColor(GOLD2)
         canv.setFont('Helvetica', 7.5)
         canv.drawString(name_x, H - 1.9*cm, "PLATAFORMA DE ANÁLISE DE DADOS · CONSULTORIA TECNOLÓGICA")

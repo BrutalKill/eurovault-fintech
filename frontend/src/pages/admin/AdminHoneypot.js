@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Shield, AlertTriangle, RefreshCw, Globe, Clock, Terminal, Wifi } from 'lucide-react';
+import { Shield, AlertTriangle, RefreshCw, Globe, Clock, Terminal, Wifi, Zap, Activity } from 'lucide-react';
 import { useLang } from '../../context/LangContext';
+import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -53,6 +54,28 @@ export default function AdminHoneypot() {
     setLoading(false);
   }, []);
 
+  const [stressTesting, setStressTesting] = useState(false);
+  const [stressResult, setStressResult] = useState(null);
+
+  const runStressTest = async () => {
+    setStressTesting(true);
+    setStressResult(null);
+    const token = localStorage.getItem('adminToken');
+    try {
+      const r = await fetch(`${BACKEND_URL}/api/admin/security/stress-test`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await r.json();
+      if (r.ok) {
+        setStressResult(data);
+        toast.success(`Stress Test Complete — ${data.attacks_simulated} attack vectors simulated`);
+        // Refresh logs após 1 segundo
+        setTimeout(() => fetchLogs(), 1000);
+      }
+    } catch (e) { toast.error('Stress test failed'); }
+    setStressTesting(false);
+  };
+
   // Carregar na montagem + polling a cada 10s
   useEffect(() => {
     fetchLogs();
@@ -81,12 +104,41 @@ export default function AdminHoneypot() {
             )}
           </p>
         </div>
-        <button data-testid="honeypot-refresh-btn" onClick={() => { setLoading(true); fetchLogs(); }}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'rgba(58,134,255,0.1)', border: '1px solid rgba(58,134,255,0.25)', borderRadius: 9, color: '#3A86FF', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-          <RefreshCw size={13} style={loading ? { animation: 'spin .8s linear infinite' } : {}} />
-          {t('hpot_refresh')}
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {/* ── Stress Test Button ── */}
+          <button
+            data-testid="run-stress-test-btn"
+            onClick={runStressTest}
+            disabled={stressTesting}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: stressTesting ? 'rgba(239,68,68,0.1)' : 'linear-gradient(135deg,#7c1d1d,#ef4444)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: 9, color: '#fff', fontSize: 12, fontWeight: 800, cursor: stressTesting ? 'not-allowed' : 'pointer', boxShadow: stressTesting ? 'none' : '0 4px 14px rgba(239,68,68,0.35)' }}>
+            {stressTesting
+              ? <><Activity size={13} style={{ animation: 'spin .6s linear infinite' }} color="#ef4444" />Running…</>
+              : <><Zap size={13} />Run Security Stress Test</>}
+          </button>
+          <button data-testid="honeypot-refresh-btn" onClick={() => { setLoading(true); fetchLogs(); }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'rgba(58,134,255,0.1)', border: '1px solid rgba(58,134,255,0.25)', borderRadius: 9, color: '#3A86FF', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+            <RefreshCw size={13} style={loading ? { animation: 'spin .8s linear infinite' } : {}} />
+            {t('hpot_refresh')}
+          </button>
+        </div>
       </div>
+
+      {/* Stress Test Result Banner */}
+      {stressResult && (
+        <div style={{ display: 'flex', gap: 14, padding: '14px 18px', background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <Zap size={15} color="#ef4444" />
+            <span style={{ fontSize: 13, fontWeight: 800, color: '#ef4444' }}>Stress Test Complete</span>
+          </div>
+          <span style={{ fontSize: 12, color: '#7a8299' }}>{stressResult.attacks_simulated} attack vectors from {stressResult.attacks_simulated} unique IPs</span>
+          {Object.entries(stressResult.summary || {}).map(([k, v]) => (
+            <span key={k} style={{ fontSize: 11, padding: '2px 9px', borderRadius: 7, background: k === 'critical' ? 'rgba(168,85,247,0.15)' : k === 'high' ? 'rgba(239,68,68,0.12)' : k === 'medium' ? 'rgba(255,190,11,0.12)' : 'rgba(58,134,255,0.1)', color: k === 'critical' ? '#a855f7' : k === 'high' ? '#ef4444' : k === 'medium' ? '#FFBE0B' : '#3A86FF', fontWeight: 700, textTransform: 'capitalize' }}>
+              {k}: {v}
+            </span>
+          ))}
+          <button onClick={() => setStressResult(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#4a5068' }}>×</button>
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 20 }}>
         {[

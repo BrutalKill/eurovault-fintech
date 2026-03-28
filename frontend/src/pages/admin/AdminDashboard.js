@@ -1373,7 +1373,7 @@ export default function AdminDashboard() {
                     onChange={toggleSelectAll}
                     style={{ cursor: 'pointer', accentColor: '#3A86FF' }} />
                 </th>
-                {['#', `${t('adm_dash_col_name')} / E-mail`, t('adm_dash_col_country'), t('adm_dash_col_balance'), t('adm_dash_col_profit'), t('adm_dash_col_daily'), t('adm_dash_col_actions')].map(h => (
+                {['#', `${t('adm_dash_col_name')} / E-mail`, t('adm_dash_col_country'), t('adm_dash_col_balance'), t('adm_dash_col_profit'), 'AI Score', t('adm_dash_col_daily'), t('adm_dash_col_actions')].map(h => (
                   <th key={h} style={{ padding: '11px 14px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: '#4a5068', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
@@ -1398,7 +1398,6 @@ export default function AdminDashboard() {
                       <input type="checkbox" checked={isSelected} onChange={() => toggleSelect(user.id)}
                         style={{ cursor: 'pointer', accentColor: '#3A86FF' }} />
                     </td>
-
                     <td style={{ padding: '12px 14px' }}>
                       <span style={{ fontSize: 11, color: '#4a5068', fontWeight: 700 }}>{idx + 1}</span>
                     </td>
@@ -1489,6 +1488,22 @@ export default function AdminDashboard() {
                           {hasRate && <span style={{ fontSize: 9, color: '#22c58b', background: 'rgba(34,197,139,0.1)', border: '1px solid rgba(34,197,139,0.2)', borderRadius: 4, padding: '1px 5px', fontWeight: 700 }}>ON</span>}
                         </div>
                       )}
+                    </td>
+
+                    {/* AI Score */}
+                    <td style={{ padding: '12px 10px', textAlign: 'center' }}>
+                      {(() => {
+                        const score = user.ai_score || 0;
+                        const color = score >= 80 ? '#ef4444' : score >= 60 ? '#f97316' : score >= 40 ? '#FFBE0B' : '#3A86FF';
+                        const label = score >= 80 ? '🔥' : score >= 60 ? '⚡' : score >= 40 ? '🌡' : '🧊';
+                        return (
+                          <div title={`AI Score: ${score}/100`}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', background: `${color}15`, border: `1px solid ${color}35`, borderRadius: 8 }}>
+                            <span style={{ fontSize: 10 }}>{label}</span>
+                            <span className="numeric" style={{ fontSize: 12, fontWeight: 800, color }}>{score}</span>
+                          </div>
+                        );
+                      })()}
                     </td>
 
                     <td style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>
