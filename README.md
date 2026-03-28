@@ -27,57 +27,36 @@ The architecture leverages **AI orchestration** to automate lead scoring, detect
 
 > *"The best proof of engineering skill is what you build when conditions are against you."*
 
-This project was submitted as a technical portfolio demonstration for the global fintech and AI industries.
+This project was submitted as a technical portfolio demonstration for the global fintech and AI industries, targeting immediate relocation to **Japan** 🇯🇵.
 
 ---
 
 ## Core Features
 
 ### Real-Time Trading Engine
-Full trading interface integrated via **TradingView API** for live financial charts, real-time price feeds, and market news. The engine enforces position-aware logic — users cannot sell assets they haven't purchased, preventing invalid operations at the API level.
+Full trading interface integrated via **TradingView API** for live financial charts, real-time price feeds, and financial news. The engine enforces position-aware logic — users cannot sell assets they haven't purchased, preventing invalid operations at the API level.
 
 - Live Forex, Crypto, Stocks, Metals, and Commodities
-- Position validation on every order (buy/sell)
+- Position validation on every order (buy/sell) — enforced server-side
 - Leverage simulation with realistic P&L calculation
-- WebSocket balance updates in real time
+- WebSocket balance updates pushed to the client in real time
 
 ---
 
 ### Security Layer — Active Honeypot
-A custom-built **intrusion detection system** that monitors 15+ sensitive decoy routes (such as `/.env`, `/wp-admin`, `/phpmyadmin`) and logs every malicious access attempt in real time.
+A custom-built **intrusion detection system** that monitors 15+ sensitive decoy routes (`/.env`, `/wp-admin`, `/phpmyadmin`, `/.git/config`, etc.) and logs every malicious access attempt with full context.
 
-- **Risk classification:** Critical / High / Medium / Low
-- **Automated mitigation:** IP PERMANENTLY BANNED · IP RATE LIMITED · REQUEST BLOCKED
-- **Frontend 404 reporter:** suspicious URLs detected in React and automatically reported to the backend
-- **Stress-test engine:** simulates 20 real-world attack vectors (SQL Injection, LFI, Path Traversal, Brute Force, RCE) with live toast notifications per attack
-- **Real-time dashboard** with pulsing alert on new Critical events
-
----
-
-### Compliance Automation — SHA-256 Certified Contracts
-End-to-end **legal document generation** with cryptographic certification. Every contract signed through the platform is tamper-proof.
-
-- Dynamic contract templates with client data injection
-- Professional PDF generation (company logo, watermark, signature)
-- **SHA-256 hash** computed from: `token | name | email | amount | timestamp | signer IP`
-- Signer IP + UTC timestamp permanently recorded per document
-- Unique public signing URL sent to each client (`/contract/:token`)
-- Admin panel downloads PDFs with full certification block
-
----
-
-### Multilingual Support
-Complete localisation for **English** and **Spanish**, with auto-detection of the browser language on first visit. The entire platform — client portal, admin CRM, agent CRM, legal pages — is fully translated.
-
-- 500+ translation keys covering all UI surfaces
-- Language persists across logout and server restarts
-- Financial and legal terminology localised with domain precision
-- Real flags via flagcdn.com for intuitive language switching
+- **Risk classification:** Critical · High · Medium · Low
+- **Automated mitigation:** `IP PERMANENTLY BANNED` · `IP RATE LIMITED` · `REQUEST BLOCKED` · `LOGGED`
+- **Attack-type identification:** SQL Injection, LFI, Path Traversal, RCE, WordPress Brute Force, Git Repo Leak
+- **Frontend 404 reporter:** suspicious URLs detected in React and silently reported to the backend
+- **Stress-test engine:** simulates 20 real-world attack vectors with live sequential toast notifications per attack
+- **Real-time dashboard** with pulsing red card when a new Critical event is detected
 
 ---
 
 ### AI Lead Scoring Engine
-An 8-signal behavioral scoring model that assigns each lead a **priority score from 0 to 100** in real time.
+An 8-signal behavioral model that assigns each lead a **priority score from 0 to 100**, updated in real time. The algorithm runs server-side, queries historical data per lead, and is visible directly in the admin dashboard.
 
 ```
 Score = deposit_made (30) + high_balance (20) + seen_24h (15)
@@ -94,19 +73,57 @@ Score = deposit_made (30) + high_balance (20) + seen_24h (15)
 
 ---
 
+### Compliance Automation — SHA-256 Certified Contracts
+End-to-end **legal document generation** with cryptographic certification. Every contract is tamper-proof by design.
+
+- Dynamic contract templates with client data injection
+- Professional PDF generation (company logo, watermark, digital signature)
+- **SHA-256 hash** computed from: `token | name | email | amount | timestamp | signer_ip`
+- Signer IP + UTC timestamp permanently recorded per document
+- Unique public signing URL per client (`/contract/:token`)
+- Admin panel downloads PDFs with full certification block embedded
+
+---
+
+### Multi-Level CRM
+Three independent access layers, each with its own authentication and dashboard:
+
+1. **Admin CRM** — full lead management, balance manipulation, agent creation, contract generation, analytics
+2. **Agent CRM** — isolated view of assigned leads, comments, tags, status updates, drag-and-drop Kanban
+3. **Client Portal** — premium dashboard, live trading, deposit/withdrawal, KYC upload, referral program
+
+Key admin capabilities:
+- **Kanban Pipeline** — drag leads across: New → Contacted → Interested → Deposited → VIP
+- **Custom Tags** — color-coded labels (VIP, High Priority, Awaiting Docs, etc.)
+- **Follow-up Calendar** — scheduled contact management with lead timeline
+- **Bulk Actions** — change status, export CSV, delete multiple leads
+- **AI Score column** — visible on every lead row in the dashboard
+
+---
+
+### Multilingual Support
+Complete localisation for **English** and **Spanish**, with automatic browser language detection on first visit. Language persists across logout and server restarts.
+
+- 500+ translation keys covering all UI surfaces
+- Admin CRM, Agent CRM, Client Portal, Legal Pages — all fully translated
+- Financial and legal terminology localised with domain precision (e.g. *Retiro*, *Tablero de Control*, *Gráficos en tiempo real*)
+- Real flag images via flagcdn.com for intuitive language switching
+
+---
+
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| **Frontend** | React 18, Tailwind CSS, Shadcn/UI |
+| **Frontend** | React 18, Tailwind CSS, Shadcn/UI, Recharts |
 | **Backend** | FastAPI (Python 3.11), async Motor driver |
 | **Database** | MongoDB Atlas |
 | **Auth** | JWT (python-jose) + bcrypt |
-| **PDF** | ReportLab 4.4, Pillow |
+| **PDF Generation** | ReportLab 4.4, Pillow |
 | **Charts** | TradingView Widget API |
 | **Real-time** | WebSocket + polling fallback |
 | **Security** | Custom Honeypot Middleware + Rate Limiting |
-| **Infra** | Docker Compose, Kubernetes-ready |
+| **Infra** | Docker Compose, Kubernetes-ready, stateless backend |
 
 ---
 
@@ -119,13 +136,13 @@ Score = deposit_made (30) + high_balance (20) + seen_24h (15)
 └────────────────────┬────────────────────────────────────────┘
                      │ HTTPS / REST / WebSocket
 ┌────────────────────▼────────────────────────────────────────┐
-│              FASTAPI BACKEND                                 │
+│              FASTAPI BACKEND (Python 3.11)                   │
 │  ┌────────┬─────────┬────────┬──────────────────────────┐   │
 │  │  auth  │  admin  │ agent  │  contracts · security    │   │
 │  └────────┴─────────┴────────┴──────────────────────────┘   │
-│  AI Scoring · Honeypot · Rate Limiting · SHA-256 Cert        │
+│  AI Scoring · Honeypot Middleware · Rate Limiting · JWT      │
 └────────────────────┬────────────────────────────────────────┘
-                     │
+                     │ Motor (async)
 ┌────────────────────▼────────────────────────────────────────┐
 │              MONGODB                                         │
 │  users · agents · orders · contracts · honeypot_logs        │
@@ -134,17 +151,41 @@ Score = deposit_made (30) + high_balance (20) + seen_24h (15)
 
 ---
 
+## Repository Structure
+
+```
+eurovault-fintech/
+├── frontend/          React 18 SPA (dashboard, trading, CRM)
+├── backend/           FastAPI API (scoring, auth, contracts)
+│   ├── server.py      Main app (~3700 lines)
+│   ├── deps.py        Shared: DB, Auth, WebSocket manager
+│   └── routers/       agent_router.py
+├── security/
+│   ├── honeypot_engine.py       Standalone 20-vector attack simulator
+│   └── intrusion_log_schema.json
+├── contracts/
+│   ├── pdf_generator.py         ReportLab PDF with SHA-256
+│   └── sha256_certifier.py      Integrity verification module
+├── docs/
+│   └── API.md                   Full endpoint reference
+├── docker-compose.yml
+├── .env.example
+└── README.md
+```
+
+---
+
 ## Quick Start
 
-### Docker (Recommended)
+### With Docker (Recommended)
 ```bash
 git clone https://github.com/BrutalKill/eurovault-fintech.git
 cd eurovault-fintech
-cp .env.example .env        # Edit with your values
+cp .env.example .env        # Fill in your values
 docker-compose up --build
 ```
 
-### Manual
+### Without Docker
 ```bash
 # Backend
 cd backend
@@ -160,53 +201,71 @@ yarn install && yarn start
 
 | Role | URL | Credentials |
 |------|-----|-------------|
-| Admin | `/adm/login` | Set in `.env` |
+| Admin | `/adm/login` | Set via `ADMIN_USERNAME` / `ADMIN_PASSWORD` in `.env` |
 | Agent | `/crm/login` | Created via Admin panel |
 | Client | `/register` | Self-registration |
 
 ---
 
-## Repository Structure
+## Security & Environment
 
-```
-eurovault-fintech/
-├── frontend/          React 18 SPA (dashboard, trading, CRM)
-├── backend/           FastAPI API (scoring, auth, contracts)
-├── security/          Honeypot engine + stress-test scripts
-├── contracts/         PDF generator + SHA-256 certifier
-├── docs/              API reference, security notes
-├── docker-compose.yml One-command deployment
-├── .env.example       Environment variables template
-└── README.md
-```
-
----
-
-## Security
-
-All environment variables are loaded from `.env` — **no credentials are hardcoded**. The `.env` file is excluded from version control via `.gitignore`.
+All credentials are loaded from `.env` — **no secrets are hardcoded**. The `.env` file is excluded from version control.
 
 ```bash
-# Generate a secure SECRET_KEY:
+# .env.example — copy this and fill in your values
+MONGO_URL=mongodb://localhost:27017
+DB_NAME=eurovault
+SECRET_KEY=your-secret-key-here
+ADMIN_USERNAME=your-admin-user
+ADMIN_PASSWORD=your-admin-password
+REACT_APP_BACKEND_URL=http://localhost:8001
+```
+
+Generate a secure key:
+```bash
 python3 -c "import secrets; print(secrets.token_hex(32))"
 ```
 
-See [`docs/API.md`](docs/API.md) for full endpoint documentation.
+---
+
+## Key API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/auth/register` | Client registration |
+| `POST` | `/api/auth/login` | Authentication → JWT |
+| `POST` | `/api/orders` | Trading order (position-validated) |
+| `GET`  | `/api/orders/position` | Open position for asset |
+| `GET`  | `/api/admin/users` | All leads with AI scores |
+| `GET`  | `/api/admin/users/{id}/score` | Individual AI score (0–100) |
+| `POST` | `/api/admin/contracts/generate` | Generate signed contract link |
+| `POST` | `/api/admin/security/stress-test` | Run 20-vector attack simulation |
+| `GET`  | `/api/admin/honeypot-logs` | Real-time intrusion log |
+| `POST` | `/api/honeypot/report` | Frontend reports suspicious URL |
+
+Full reference: [`docs/API.md`](docs/API.md)
 
 ---
 
-## About
+## About the Developer
+
+Built solo in **Lviv, Ukraine 🇺🇦** on 100% mobile hardware.
+
+No fixed office. No data center. A laptop, a hotspot, and a conviction that world-class engineering is a mindset — not a location.
+
+EuroVault is the proof.
+
+> *Ready for immediate relocation to Japan 🇯🇵 and the global fintech market.*
+
+---
 
 **EuroVault Digital Solutions**
-IFSB Reg. No. JP-999888777 · International Financial Standards
-Headquarters: 1-1 Chiyoda, Tokyo, 100-8111, Japan
-
-Built by a solo developer in Lviv, Ukraine 🇺🇦 — proving that geography is not a limitation for world-class engineering.
+IFSB Reg. No. JP-999888777 · International Financial Standards · 1-1 Chiyoda, Tokyo, 100-8111, Japan
 
 ---
 
 <div align="center">
 
-*EuroVault is a technical portfolio project demonstrating full-stack AI-augmented fintech architecture.*
+*EuroVault — built under pressure, designed for scale.*
 
 </div>
