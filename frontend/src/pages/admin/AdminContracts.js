@@ -2,8 +2,7 @@ import { useLang } from '../../context/LangContext';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   FileText, Plus, Trash2, Download, Eye, Copy, CheckCircle,
-  Clock, Edit2, X, Save, Building2, Settings, Link, RefreshCw,
-  Users, ChevronRight, AlertCircle
+  Edit2, X, Save, Building2, Link, RefreshCw, AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 

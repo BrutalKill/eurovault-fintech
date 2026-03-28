@@ -184,6 +184,13 @@ h1, h2, h3, h4, h5, h6 {
   to   { transform: rotate(360deg); }
 }
 
+@keyframes pulse-critical {
+  0%   { box-shadow: 0 0 0 0 rgba(168,85,247,0.6); border-color: rgba(168,85,247,0.7); }
+  50%  { box-shadow: 0 0 0 12px rgba(168,85,247,0); border-color: rgba(168,85,247,0.3); }
+  100% { box-shadow: 0 0 0 0 rgba(168,85,247,0); border-color: rgba(168,85,247,0.7); }
+}
+
+
 @keyframes bounce {
   0%, 60%, 100% { transform: translateY(0); }
   30%           { transform: translateY(-6px); }

@@ -1,12 +1,43 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Shield, AlertTriangle, RefreshCw, Globe, Clock, Terminal, Wifi, Zap, Activity } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Shield, AlertTriangle, RefreshCw, Globe, Clock, Terminal, Wifi, Zap, Activity, Ban, ShieldCheck, ShieldAlert, Eye } from 'lucide-react';
 import { useLang } from '../../context/LangContext';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
+// ── Classificação de ataque por tipo ─────────────────────────────────────────
+const ATTACK_LABELS = {
+  '.env':          { name: 'Environment File Exposure', type: 'info-disclosure' },
+  'phpmyadmin':    { name: 'phpMyAdmin Probe',          type: 'recon'           },
+  '/admin':        { name: 'Admin Panel Scan',          type: 'brute-force'     },
+  'wp-admin':      { name: 'WordPress Admin Probe',     type: 'cms-attack'      },
+  'wp-login':      { name: 'WordPress Login Attack',    type: 'brute-force'     },
+  'backup.sql':    { name: 'Database Backup Exposure',  type: 'data-exfil'      },
+  'database.sql':  { name: 'Database File Access',      type: 'data-exfil'      },
+  'dump.sql':      { name: 'SQL Dump Exposure',         type: 'data-exfil'      },
+  'shell':         { name: 'Remote Shell Upload',       type: 'rce'             },
+  'xmlrpc':        { name: 'XML-RPC Exploit',           type: 'cms-attack'      },
+  '.git':          { name: 'Git Repository Exposure',   type: 'source-code'     },
+  'passwd':        { name: 'System File Access',        type: 'lfi'             },
+  'config.php':    { name: 'Config File Exposure',      type: 'info-disclosure' },
+  'sqlmap':        { name: 'SQL Injection Probe',       type: 'sqli'            },
+  'proc/self':     { name: 'Process Info Exposure',     type: 'lfi'             },
+  'eval':          { name: 'Code Injection Attempt',    type: 'rce'             },
+};
+
+function getAttackLabel(path) {
+  if (!path) return 'Unknown Probe';
+  const pl = path.toLowerCase();
+  for (const [k, v] of Object.entries(ATTACK_LABELS)) {
+    if (pl.includes(k)) return v.name;
+  }
+  return 'Suspicious Access';
+}
+
 export default function AdminHoneypot() {
   const { t } = useLang();
+  const prevCriticalRef = useRef(0);
+  const [criticalPulse, setCriticalPulse] = useState(false);
 
   const PATH_RISK_KEYS = {
     '.env': 'critical', 'phpmyadmin': 'critical', '/admin': 'high',
@@ -17,16 +48,27 @@ export default function AdminHoneypot() {
   };
 
   function getRisk(path) {
-    if (!path) return { level: t('hpot_risk_low'), color: '#3A86FF', bg: 'rgba(58,134,255,0.08)' };
+    if (!path) return { level: t('hpot_risk_low'), key: 'low', color: '#3A86FF', bg: 'rgba(58,134,255,0.08)', border: 'rgba(58,134,255,0.2)' };
     const pl = path.toLowerCase();
     for (const [k, v] of Object.entries(PATH_RISK_KEYS)) {
       if (pl.includes(k)) {
-        if (v === 'critical') return { level: t('hpot_risk_critical'), color: '#a855f7', bg: 'rgba(168,85,247,0.12)' };
-        if (v === 'high')     return { level: t('hpot_risk_high'),     color: '#ef4444', bg: 'rgba(239,68,68,0.12)'  };
-        if (v === 'medium')   return { level: t('hpot_risk_medium'),   color: '#FFBE0B', bg: 'rgba(255,190,11,0.12)' };
+        if (v === 'critical') return { level: t('hpot_risk_critical'), key: 'critical', color: '#a855f7', bg: 'rgba(168,85,247,0.12)', border: 'rgba(168,85,247,0.3)' };
+        if (v === 'high')     return { level: t('hpot_risk_high'),     key: 'high',     color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.3)'   };
+        if (v === 'medium')   return { level: t('hpot_risk_medium'),   key: 'medium',   color: '#FFBE0B', bg: 'rgba(255,190,11,0.12)',  border: 'rgba(255,190,11,0.3)'  };
       }
     }
-    return { level: t('hpot_risk_low'), color: '#3A86FF', bg: 'rgba(58,134,255,0.08)' };
+    return { level: t('hpot_risk_low'), key: 'low', color: '#3A86FF', bg: 'rgba(58,134,255,0.08)', border: 'rgba(58,134,255,0.2)' };
+  }
+
+  // ── Mitigação baseada no nível ─────────────────────────────────────────────
+  function getMitigation(path) {
+    const risk = getRisk(path);
+    switch (risk.key) {
+      case 'critical': return { label: 'IP PERMANENTLY BANNED', color: '#a855f7', bg: 'rgba(168,85,247,0.15)', icon: Ban };
+      case 'high':     return { label: 'IP RATE LIMITED',       color: '#ef4444', bg: 'rgba(239,68,68,0.1)',   icon: ShieldAlert };
+      case 'medium':   return { label: 'REQUEST BLOCKED',       color: '#FFBE0B', bg: 'rgba(255,190,11,0.1)', icon: ShieldCheck };
+      default:         return { label: 'LOGGED',                color: '#3A86FF', bg: 'rgba(58,134,255,0.08)',icon: Eye };
+    }
   }
 
   const SOURCE_MAP = {
@@ -34,9 +76,12 @@ export default function AdminHoneypot() {
     'middleware':   { key: 'hpot_src_mw',      color: '#a855f7' },
     '404_handler':  { key: 'hpot_src_handler', color: '#f97316' },
   };
+
   const [logs, setLogs]         = useState([]);
   const [loading, setLoading]   = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [stressTesting, setStressTesting] = useState(false);
+  const [stressResult, setStressResult] = useState(null);
 
   const fetchLogs = useCallback(async () => {
     const token = localStorage.getItem('adminToken');
@@ -47,15 +92,45 @@ export default function AdminHoneypot() {
       });
       if (r.ok) {
         const data = await r.json();
-        setLogs(Array.isArray(data) ? data : []);
+        const newLogs = Array.isArray(data) ? data : [];
+        setLogs(newLogs);
         setLastUpdated(new Date());
       }
     } catch (_) {}
     setLoading(false);
   }, []);
 
-  const [stressTesting, setStressTesting] = useState(false);
-  const [stressResult, setStressResult] = useState(null);
+  // ── Detectar novos ataques críticos e pulsar ──────────────────────────────
+  useEffect(() => {
+    const currentCritical = logs.filter(l => getRisk(l.path).key === 'critical').length;
+    if (currentCritical > prevCriticalRef.current && prevCriticalRef.current > 0) {
+      // Novo ataque crítico detectado — pulsar o card
+      setCriticalPulse(true);
+      setTimeout(() => setCriticalPulse(false), 3000);
+    }
+    prevCriticalRef.current = currentCritical;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [logs]);
+
+  useEffect(() => {
+    fetchLogs();
+    const iv = setInterval(fetchLogs, 10000);
+    return () => clearInterval(iv);
+  }, [fetchLogs]);
+
+  // ── Stress Test com toasts sequenciais ────────────────────────────────────
+  const ATTACK_TOASTS = [
+    { label: 'SQL Injection',         path: '/database.sql'   },
+    { label: 'Environment Exposure',  path: '/.env'           },
+    { label: 'WordPress Brute Force', path: '/wp-admin'       },
+    { label: 'phpMyAdmin Probe',      path: '/phpmyadmin'     },
+    { label: 'Git Repository Leak',   path: '/.git/config'    },
+    { label: 'Shell Upload Attempt',  path: '/shell.php'      },
+    { label: 'Database Dump Access',  path: '/backup.sql'     },
+    { label: 'LFI Attack',            path: '/etc/passwd'     },
+    { label: 'XML-RPC Exploit',       path: '/xmlrpc.php'     },
+    { label: 'WordPress Login Attack',path: '/wp-login.php'   },
+  ];
 
   const runStressTest = async () => {
     setStressTesting(true);
@@ -68,28 +143,60 @@ export default function AdminHoneypot() {
       const data = await r.json();
       if (r.ok) {
         setStressResult(data);
-        toast.success(`Stress Test Complete — ${data.attacks_simulated} attack vectors simulated`);
-        // Refresh logs após 1 segundo
-        setTimeout(() => fetchLogs(), 1000);
+
+        // Mostrar toasts sequenciais para cada ataque simulado
+        const fakeIPs = [
+          '185.220.101.47', '194.165.16.11', '45.142.212.55',
+          '162.247.74.27', '198.54.117.200', '91.108.4.171',
+          '5.188.210.33', '176.10.104.240', '89.234.157.254', '171.25.193.25'
+        ];
+
+        ATTACK_TOASTS.forEach((attack, i) => {
+          setTimeout(() => {
+            const ip = fakeIPs[i % fakeIPs.length];
+            const risk = getRisk(attack.path);
+            const mitigation = getMitigation(attack.path);
+
+            if (risk.key === 'critical') {
+              toast.error(`🚨 ${attack.label} blocked from ${ip}`, {
+                description: `Path: ${attack.path} → ${mitigation.label}`,
+                duration: 4000,
+              });
+            } else if (risk.key === 'high') {
+              toast.warning(`⚠ ${attack.label} blocked from ${ip}`, {
+                description: `Path: ${attack.path} → ${mitigation.label}`,
+                duration: 3500,
+              });
+            } else {
+              toast.info(`ℹ ${attack.label} logged from ${ip}`, {
+                description: `Path: ${attack.path} → ${mitigation.label}`,
+                duration: 3000,
+              });
+            }
+          }, i * 600); // 600ms de intervalo entre toasts
+        });
+
+        // Refresh dos logs após 8s (todos os toasts completados)
+        setTimeout(() => {
+          fetchLogs();
+          toast.success(`Stress Test Complete — ${data.attacks_simulated} attacks simulated`, {
+            description: `Critical: ${data.summary?.critical || 0} · High: ${data.summary?.high || 0} · Medium: ${data.summary?.medium || 0}`,
+            duration: 5000,
+          });
+        }, ATTACK_TOASTS.length * 600 + 1000);
       }
     } catch (e) { toast.error('Stress test failed'); }
-    setStressTesting(false);
+    setTimeout(() => setStressTesting(false), ATTACK_TOASTS.length * 600 + 500);
   };
-
-  // Carregar na montagem + polling a cada 10s
-  useEffect(() => {
-    fetchLogs();
-    const iv = setInterval(fetchLogs, 10000);
-    return () => clearInterval(iv);
-  }, [fetchLogs]);
 
   const byPath = logs.reduce((acc, l) => { acc[l.path] = (acc[l.path] || 0) + 1; return acc; }, {});
   const byIP   = logs.reduce((acc, l) => { acc[l.ip]   = (acc[l.ip]   || 0) + 1; return acc; }, {});
   const topPath = Object.keys(byPath).sort((a, b) => byPath[b] - byPath[a])[0] || '—';
-  const criticalCount = logs.filter(l => getRisk(l.path).level === t('hpot_risk_critical')).length;
+  const criticalCount = logs.filter(l => getRisk(l.path).key === 'critical').length;
 
   return (
     <div>
+      {/* ── Header ── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#f3f5ff', margin: 0 }}>
@@ -97,23 +204,13 @@ export default function AdminHoneypot() {
           </h1>
           <p style={{ fontSize: 13, color: '#7a8299', margin: '4px 0 0' }}>
             {logs.length} {t('hpot_subtitle')}
-            {lastUpdated && (
-              <span style={{ marginLeft: 8, color: '#3a3d5a' }}>
-                · {t('hpot_updated')} {lastUpdated.toLocaleTimeString()}
-              </span>
-            )}
+            {lastUpdated && <span style={{ marginLeft: 8, color: '#3a3d5a' }}>· {t('hpot_updated')} {lastUpdated.toLocaleTimeString()}</span>}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          {/* ── Stress Test Button ── */}
-          <button
-            data-testid="run-stress-test-btn"
-            onClick={runStressTest}
-            disabled={stressTesting}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: stressTesting ? 'rgba(239,68,68,0.1)' : 'linear-gradient(135deg,#7c1d1d,#ef4444)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: 9, color: '#fff', fontSize: 12, fontWeight: 800, cursor: stressTesting ? 'not-allowed' : 'pointer', boxShadow: stressTesting ? 'none' : '0 4px 14px rgba(239,68,68,0.35)' }}>
-            {stressTesting
-              ? <><Activity size={13} style={{ animation: 'spin .6s linear infinite' }} color="#ef4444" />Running…</>
-              : <><Zap size={13} />Run Security Stress Test</>}
+          <button data-testid="run-stress-test-btn" onClick={runStressTest} disabled={stressTesting}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: stressTesting ? 'rgba(239,68,68,0.08)' : 'linear-gradient(135deg,#7c1d1d,#ef4444)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: 9, color: '#fff', fontSize: 12, fontWeight: 800, cursor: stressTesting ? 'not-allowed' : 'pointer', boxShadow: stressTesting ? 'none' : '0 4px 14px rgba(239,68,68,0.35)' }}>
+            {stressTesting ? <><Activity size={13} style={{ animation: 'spin .6s linear infinite' }} color="#ef4444" />Running…</> : <><Zap size={13} />Run Security Stress Test</>}
           </button>
           <button data-testid="honeypot-refresh-btn" onClick={() => { setLoading(true); fetchLogs(); }}
             style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'rgba(58,134,255,0.1)', border: '1px solid rgba(58,134,255,0.25)', borderRadius: 9, color: '#3A86FF', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
@@ -123,42 +220,35 @@ export default function AdminHoneypot() {
         </div>
       </div>
 
-      {/* Stress Test Result Banner */}
-      {stressResult && (
-        <div style={{ display: 'flex', gap: 14, padding: '14px 18px', background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-            <Zap size={15} color="#ef4444" />
-            <span style={{ fontSize: 13, fontWeight: 800, color: '#ef4444' }}>Stress Test Complete</span>
-          </div>
-          <span style={{ fontSize: 12, color: '#7a8299' }}>{stressResult.attacks_simulated} attack vectors from {stressResult.attacks_simulated} unique IPs</span>
-          {Object.entries(stressResult.summary || {}).map(([k, v]) => (
-            <span key={k} style={{ fontSize: 11, padding: '2px 9px', borderRadius: 7, background: k === 'critical' ? 'rgba(168,85,247,0.15)' : k === 'high' ? 'rgba(239,68,68,0.12)' : k === 'medium' ? 'rgba(255,190,11,0.12)' : 'rgba(58,134,255,0.1)', color: k === 'critical' ? '#a855f7' : k === 'high' ? '#ef4444' : k === 'medium' ? '#FFBE0B' : '#3A86FF', fontWeight: 700, textTransform: 'capitalize' }}>
-              {k}: {v}
-            </span>
-          ))}
-          <button onClick={() => setStressResult(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#4a5068' }}>×</button>
-        </div>
-      )}
-
+      {/* ── Stat Cards ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 20 }}>
         {[
-          { icon: Shield,        color: '#ef4444', label: t('hpot_total'),         value: logs.length },
-          { icon: AlertTriangle, color: '#a855f7', label: t('hpot_critical_stat'), value: criticalCount },
-          { icon: Globe,         color: '#FFBE0B', label: t('hpot_ips'),           value: Object.keys(byIP).length },
-          { icon: Terminal,      color: '#22c58b', label: t('hpot_top_route'),     value: topPath.length > 20 ? topPath.slice(0,18)+'…' : topPath },
-        ].map(({ icon: Icon, color, label, value }) => (
-          <div key={label} style={{ background: '#111118', border: `1px solid ${color}20`, borderRadius: 12, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 36, height: 36, background: `${color}15`, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          { icon: Shield,        color: '#ef4444', label: t('hpot_total'),         value: logs.length,                  pulse: false        },
+          { icon: AlertTriangle, color: '#a855f7', label: t('hpot_critical_stat'), value: criticalCount,                pulse: criticalPulse },
+          { icon: Globe,         color: '#FFBE0B', label: t('hpot_ips'),           value: Object.keys(byIP).length,     pulse: false        },
+          { icon: Terminal,      color: '#22c58b', label: t('hpot_top_route'),     value: topPath.length > 20 ? topPath.slice(0,18)+'…' : topPath, pulse: false },
+        ].map(({ icon: Icon, color, label, value, pulse }) => (
+          <div key={label} style={{
+            background: '#111118',
+            border: `1px solid ${pulse ? color + '60' : color + '20'}`,
+            borderRadius: 12, padding: '14px 16px',
+            display: 'flex', alignItems: 'center', gap: 12,
+            boxShadow: pulse ? `0 0 20px ${color}40, 0 0 40px ${color}20` : 'none',
+            animation: pulse ? 'pulse-critical 0.8s ease-in-out infinite' : 'none',
+            transition: 'box-shadow 0.3s, border-color 0.3s',
+          }}>
+            <div style={{ width: 36, height: 36, background: pulse ? `${color}25` : `${color}15`, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.3s' }}>
               <Icon size={16} color={color} />
             </div>
             <div>
               <div style={{ fontSize: 10, color: '#7a8299', marginBottom: 2 }}>{label}</div>
-              <div className="numeric" style={{ fontSize: 16, fontWeight: 800, color, fontFamily: 'var(--font-heading)' }}>{value}</div>
+              <div className="numeric" style={{ fontSize: 16, fontWeight: 800, color: pulse ? color : color, fontFamily: 'var(--font-heading)' }}>{value}</div>
             </div>
           </div>
         ))}
       </div>
 
+      {/* ── Tabela de ataques ── */}
       {loading && logs.length === 0 ? (
         <div style={{ padding: '40px 0', textAlign: 'center', color: '#4a5068' }}>
           <div style={{ width: 32, height: 32, border: '3px solid rgba(58,134,255,0.15)', borderTopColor: '#3A86FF', borderRadius: '50%', animation: 'spin .8s linear infinite', margin: '0 auto 12px' }} />
@@ -173,10 +263,10 @@ export default function AdminHoneypot() {
       ) : (
         <div style={{ background: '#111118', border: '1px solid #26263a', borderRadius: 14, overflow: 'hidden' }}>
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
               <thead>
                 <tr style={{ background: '#0d0d1a' }}>
-                  {[t('hpot_col_datetime'), t('hpot_col_route'), t('hpot_col_level'), t('hpot_col_origin'), t('hpot_col_ip'), t('hpot_col_ua')].map(h => (
+                  {[t('hpot_col_datetime'), t('hpot_col_route'), 'Attack Type', t('hpot_col_level'), t('hpot_col_origin'), t('hpot_col_ip'), 'Mitigation'].map(h => (
                     <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: '#4a5068', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
@@ -184,43 +274,59 @@ export default function AdminHoneypot() {
               <tbody>
                 {logs.map((log, i) => {
                   const risk = getRisk(log.path);
+                  const mitigation = getMitigation(log.path);
+                  const MitigationIcon = mitigation.icon;
                   const srcKey = SOURCE_MAP[log.source];
                   const srcLabel = srcKey ? t(srcKey.key) : 'Backend';
                   const srcColor = srcKey ? srcKey.color : '#7a8299';
+                  const attackLabel = getAttackLabel(log.path);
+                  const isCritical = risk.key === 'critical';
+
                   return (
-                    <tr key={i} style={{ borderTop: '1px solid #1a1a2a', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
+                    <tr key={i} style={{ borderTop: '1px solid #1a1a2a', background: isCritical ? 'rgba(168,85,247,0.04)' : i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)', transition: 'background 0.2s' }}>
+                      {/* Datetime */}
                       <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#7a8299' }}>
                           <Clock size={10} />
                           {log.ts ? new Date(log.ts).toLocaleString() : '—'}
                         </div>
                       </td>
+                      {/* Route */}
                       <td style={{ padding: '10px 14px' }}>
-                        <code style={{ fontSize: 12, color: risk.color, background: risk.bg, padding: '2px 8px', borderRadius: 5, fontFamily: 'monospace', display: 'inline-block', maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                        <code style={{ fontSize: 12, color: risk.color, background: risk.bg, padding: '2px 8px', borderRadius: 5, fontFamily: 'monospace', display: 'inline-block', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
                           title={`${log.method || 'GET'} ${log.path}`}>
                           {log.method || 'GET'} {log.path}
                         </code>
                       </td>
+                      {/* Attack Type */}
                       <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
-                        <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 5, background: risk.bg, color: risk.color, border: `1px solid ${risk.color}30`, fontWeight: 800 }}>
+                        <span style={{ fontSize: 11, color: risk.color, fontWeight: 600 }}>{attackLabel}</span>
+                      </td>
+                      {/* Level */}
+                      <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 5, background: risk.bg, color: risk.color, border: `1px solid ${risk.border}`, fontWeight: 800 }}>
                           {risk.level}
                         </span>
                       </td>
+                      {/* Origin */}
                       <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
-                        <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 5, background: `${srcColor}15`, color: srcColor, fontWeight: 700 }}>
-                          {srcLabel}
-                        </span>
+                        <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 5, background: `${srcColor}15`, color: srcColor, fontWeight: 700 }}>{srcLabel}</span>
                       </td>
+                      {/* IP */}
                       <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                           <Wifi size={10} color="#4a5068" />
                           <span style={{ fontSize: 12, color: '#e8eaf6', fontFamily: 'monospace' }}>{log.ip || '—'}</span>
                         </div>
                       </td>
-                      <td style={{ padding: '10px 14px', maxWidth: 200 }}>
-                        <span style={{ fontSize: 10, color: '#4a5068', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={log.user_agent}>
-                          {log.user_agent || '—'}
-                        </span>
+                      {/* Mitigation */}
+                      <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', background: mitigation.bg, border: `1px solid ${mitigation.color}40`, borderRadius: 7, width: 'fit-content' }}>
+                          <MitigationIcon size={11} color={mitigation.color} />
+                          <span style={{ fontSize: 10, fontWeight: 800, color: mitigation.color, letterSpacing: '0.05em' }}>
+                            {mitigation.label}
+                          </span>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -231,15 +337,14 @@ export default function AdminHoneypot() {
         </div>
       )}
 
+      {/* ── Active Routes ── */}
       <div style={{ marginTop: 20, padding: '14px 18px', background: 'rgba(58,134,255,0.06)', border: '1px solid rgba(58,134,255,0.15)', borderRadius: 12 }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: '#3A86FF', marginBottom: 10 }}>{t('hpot_active_title')}</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-          {['/.env', '/config.json', '/.git/config', '/wp-admin', '/wp-login.php',
-            '/phpmyadmin', '/admin', '/administrator', '/panel', '/backup.sql',
-            '/database.sql', '/dump.sql', '/api/v1/config', '/api/config',
-            `+ ${t('hpot_none_sub')}`].map(r => (
-            <code key={r} style={{ fontSize: 10, padding: '3px 8px', background: r.startsWith('+') ? 'rgba(34,197,139,0.12)' : 'rgba(58,134,255,0.1)', borderRadius: 5, color: r.startsWith('+') ? '#22c58b' : '#7a8299', fontFamily: 'monospace', border: r.startsWith('+') ? '1px solid rgba(34,197,139,0.25)' : 'none' }}>{r}</code>
+          {['/.env', '/config.json', '/.git/config', '/wp-admin', '/wp-login.php', '/phpmyadmin', '/admin', '/backup.sql', '/database.sql', '/shell.php', '/api/config', '/.htaccess', '/dump.sql'].map(r => (
+            <code key={r} style={{ fontSize: 10, padding: '3px 8px', background: 'rgba(58,134,255,0.1)', borderRadius: 5, color: '#7a8299', fontFamily: 'monospace' }}>{r}</code>
           ))}
+          <code style={{ fontSize: 10, padding: '3px 8px', background: 'rgba(34,197,139,0.12)', borderRadius: 5, color: '#22c58b', fontFamily: 'monospace', border: '1px solid rgba(34,197,139,0.25)' }}>+ 404 auto-detection</code>
         </div>
       </div>
     </div>
