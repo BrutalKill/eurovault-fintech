@@ -21,7 +21,10 @@ export default function AdminLogin() {
     setError('');
     setLoading(true);
 
-    // Usar XHR para evitar 'body stream already read' no mobile Chrome
+    // Ler directamente dos inputs do DOM (evita problema de autofill no mobile)
+    const usernameVal = e.target.querySelector('input[data-testid="admin-username-input"]')?.value || form.username;
+    const passwordVal = e.target.querySelector('input[data-testid="admin-password-input"]')?.value || form.password;
+
     const doLogin = () => new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open('POST', `${BACKEND_URL}/api/admin/login`);
@@ -38,7 +41,7 @@ export default function AdminLogin() {
       };
       xhr.onerror   = () => reject(new Error(t('err_connection')));
       xhr.ontimeout = () => reject(new Error('Pedido expirou. Tente novamente.'));
-      xhr.send(JSON.stringify(form));
+      xhr.send(JSON.stringify({ username: usernameVal, password: passwordVal }));
     });
 
     try {
