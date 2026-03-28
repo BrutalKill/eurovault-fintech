@@ -1,223 +1,150 @@
-# 🏦 EuroVault — AI-Driven Fintech Infrastructure
-
 <div align="center">
 
-![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.104-009688?style=for-the-badge&logo=fastapi&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
-![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+# EuroVault — Next-Gen FinTech Infrastructure
 
-**High-performance fintech ecosystem for global investors, built with AI orchestration and enterprise-grade security.**
+**A production-grade fintech ecosystem built with AI orchestration and rapid prototyping.**
 
-[Live Demo](https://vault-invest.preview.emergentagent.com) · [API Docs](#api-reference) · [Security Report](#security)
+[![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=white)](https://reactjs.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=flat-square&logo=mongodb&logoColor=white)](https://mongodb.com)
+[![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-3.0-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white)](https://docker.com)
+
+---
+
+*Engineered in Lviv, Ukraine 🇺🇦 · Running on 100% mobile hardware · Powered by AI Orchestration*
 
 </div>
 
 ---
 
-## 🚀 Key Features
+## The Story Behind EuroVault
 
-| Feature | Description |
-|---------|-------------|
-| **AI Lead Scoring** | Real-time 0–100 prioritization engine based on 8 behavioral signals |
-| **Proactive Defense** | Integrated honeypot + stress-test simulation (20+ attack vectors) |
-| **Legal Automation** | SHA-256 certified digital contracts with IP timestamping |
-| **Multi-language CRM** | Full PT/EN/ES internationalisation across 500+ UI keys |
-| **Position-Aware Trading** | Validates open positions before allowing sell orders |
-| **Multi-level Access** | Admin CRM → Agent CRM → Client Portal (3 independent auth layers) |
+EuroVault was engineered entirely in **Lviv, Ukraine**, running on 100% mobile hardware — no fixed office, no data center, no dependencies on physical infrastructure. Every line of code was written, tested, and deployed from a laptop and a mobile hotspot, demonstrating that **resilience and rapid prototyping are mindsets, not resources**.
+
+The architecture leverages **AI orchestration** to automate lead scoring, detect security anomalies, and generate legally-certified documents — tasks that traditionally require entire teams. The result is a full-stack fintech ecosystem built solo, from scratch, under real-world constraints.
+
+> *"The best proof of engineering skill is what you build when conditions are against you."*
+
+This project was submitted as a technical portfolio demonstration for the global fintech and AI industries.
 
 ---
 
-## 🏗️ Architecture
+## Core Features
+
+### Real-Time Trading Engine
+Full trading interface integrated via **TradingView API** for live financial charts, real-time price feeds, and market news. The engine enforces position-aware logic — users cannot sell assets they haven't purchased, preventing invalid operations at the API level.
+
+- Live Forex, Crypto, Stocks, Metals, and Commodities
+- Position validation on every order (buy/sell)
+- Leverage simulation with realistic P&L calculation
+- WebSocket balance updates in real time
+
+---
+
+### Security Layer — Active Honeypot
+A custom-built **intrusion detection system** that monitors 15+ sensitive decoy routes (such as `/.env`, `/wp-admin`, `/phpmyadmin`) and logs every malicious access attempt in real time.
+
+- **Risk classification:** Critical / High / Medium / Low
+- **Automated mitigation:** IP PERMANENTLY BANNED · IP RATE LIMITED · REQUEST BLOCKED
+- **Frontend 404 reporter:** suspicious URLs detected in React and automatically reported to the backend
+- **Stress-test engine:** simulates 20 real-world attack vectors (SQL Injection, LFI, Path Traversal, Brute Force, RCE) with live toast notifications per attack
+- **Real-time dashboard** with pulsing alert on new Critical events
+
+---
+
+### Compliance Automation — SHA-256 Certified Contracts
+End-to-end **legal document generation** with cryptographic certification. Every contract signed through the platform is tamper-proof.
+
+- Dynamic contract templates with client data injection
+- Professional PDF generation (company logo, watermark, signature)
+- **SHA-256 hash** computed from: `token | name | email | amount | timestamp | signer IP`
+- Signer IP + UTC timestamp permanently recorded per document
+- Unique public signing URL sent to each client (`/contract/:token`)
+- Admin panel downloads PDFs with full certification block
+
+---
+
+### Multilingual Support
+Complete localisation for **English** and **Spanish**, with auto-detection of the browser language on first visit. The entire platform — client portal, admin CRM, agent CRM, legal pages — is fully translated.
+
+- 500+ translation keys covering all UI surfaces
+- Language persists across logout and server restarts
+- Financial and legal terminology localised with domain precision
+- Real flags via flagcdn.com for intuitive language switching
+
+---
+
+### AI Lead Scoring Engine
+An 8-signal behavioral scoring model that assigns each lead a **priority score from 0 to 100** in real time.
+
+```
+Score = deposit_made (30) + high_balance (20) + seen_24h (15)
+      + kyc_verified (10) + active_orders (10) + follow_up (8)
+      + vip_status (7)   + has_tags (6)
+```
+
+| Score | Classification |
+|-------|---------------|
+| 80–100 | 🔥 Hot Lead   |
+| 60–79  | ⚡ Warm Lead  |
+| 40–59  | 🌡 Lukewarm   |
+| 0–39   | 🧊 Cold Lead  |
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | React 18, Tailwind CSS, Shadcn/UI |
+| **Backend** | FastAPI (Python 3.11), async Motor driver |
+| **Database** | MongoDB Atlas |
+| **Auth** | JWT (python-jose) + bcrypt |
+| **PDF** | ReportLab 4.4, Pillow |
+| **Charts** | TradingView Widget API |
+| **Real-time** | WebSocket + polling fallback |
+| **Security** | Custom Honeypot Middleware + Rate Limiting |
+| **Infra** | Docker Compose, Kubernetes-ready |
+
+---
+
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│              CLIENT BROWSER (React 18)                       │
-│   Dashboard · Trade · CRM · Kanban · Contracts · Security    │
+│              REACT 18 FRONTEND                               │
+│  Client Portal · Admin CRM · Agent CRM · Kanban · Security  │
 └────────────────────┬────────────────────────────────────────┘
                      │ HTTPS / REST / WebSocket
 ┌────────────────────▼────────────────────────────────────────┐
-│         FASTAPI BACKEND (Python 3.11)                        │
-│  ┌──────────┬──────────┬──────────┬──────────────────────┐  │
-│  │   auth   │  admin   │  agent   │  contracts/security  │  │
-│  └──────────┴──────────┴──────────┴──────────────────────┘  │
-│  AI Scoring · Honeypot Middleware · Rate Limiting · JWT      │
+│              FASTAPI BACKEND                                 │
+│  ┌────────┬─────────┬────────┬──────────────────────────┐   │
+│  │  auth  │  admin  │ agent  │  contracts · security    │   │
+│  └────────┴─────────┴────────┴──────────────────────────┘   │
+│  AI Scoring · Honeypot · Rate Limiting · SHA-256 Cert        │
 └────────────────────┬────────────────────────────────────────┘
-                     │ Motor (async)
+                     │
 ┌────────────────────▼────────────────────────────────────────┐
-│              MONGODB DATABASE                                │
+│              MONGODB                                         │
 │  users · agents · orders · contracts · honeypot_logs        │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🛠️ Tech Stack
+## Quick Start
 
-### Frontend
-- **React 18** with React Router v6
-- **Tailwind CSS** + Shadcn/UI components
-- **Recharts** for analytics visualisation
-- **TradingView Widget** for live market data
-- **Sonner** for real-time toast notifications
-
-### Backend
-- **FastAPI** (Python 3.11) — async, high-performance
-- **Motor** — async MongoDB driver
-- **JWT** authentication (python-jose + bcrypt)
-- **ReportLab 4.4** + **Pillow** — PDF generation with watermarks
-- **Custom Honeypot Middleware** — intrusion detection
-
-### Security
-- **20+ decoy routes** (wp-admin, .env, phpmyadmin, etc.)
-- **Frontend 404 reporter** — catches browser-level suspicious URLs
-- **Stress-test engine** — simulates SQL injection, LFI, RCE, brute-force
-- **SHA-256 contract certification** with signer IP + timestamp
-- **Rate limiting** per IP with configurable thresholds
-
-### Infrastructure
-- **Docker Compose** — one command to run everything
-- **Kubernetes-ready** — stateless backend, scales horizontally
-- **Environment-based config** — no hardcoded secrets
-
----
-
-## 📁 Project Structure
-
-```
-/
-├── frontend/               # React 18 SPA
-│   ├── src/
-│   │   ├── pages/
-│   │   │   ├── admin/      # AdminDashboard, Kanban, Honeypot, Analytics
-│   │   │   ├── agent/      # AgentCRM, AgentLogin
-│   │   │   └── client/     # Trade, Deposit, Profile, Referral
-│   │   ├── components/
-│   │   │   ├── trade/      # TradingView + Position-aware OrderForm
-│   │   │   └── ui/         # Shadcn/UI components
-│   │   ├── context/
-│   │   │   ├── LangContext.js   # i18n PT/EN/ES (500+ keys)
-│   │   │   └── UserContext.js   # Auth + push notifications
-│   │   └── data/
-│   │       └── assetsData.js   # Forex/Crypto/Stocks/Metals data
-│   └── package.json
-│
-├── backend/                # FastAPI API
-│   ├── server.py           # Main app (3700+ lines)
-│   ├── deps.py             # Shared: DB, Auth, WebSocket
-│   ├── routers/
-│   │   └── agent_router.py
-│   └── requirements.txt
-│
-├── security/               # Honeypot & Security Scripts
-│   ├── honeypot_engine.py  # Standalone honeypot module
-│   ├── stress_test.py      # 20-vector attack simulator
-│   └── intrusion_log_schema.json
-│
-├── contracts/              # Contract Generation
-│   ├── pdf_generator.py    # ReportLab PDF with SHA-256
-│   ├── templates/
-│   │   └── investment_agreement.txt
-│   └── sha256_certifier.py
-│
-├── docs/
-│   ├── API.md              # Full API reference
-│   ├── SECURITY.md         # Security architecture
-│   └── DEPLOYMENT.md       # Docker & Kubernetes guide
-│
-├── docker-compose.yml      # One-command deployment
-├── .env.example            # Environment variables template
-└── README.md
-```
-
----
-
-## 🤖 AI Lead Scoring Engine
-
-Scores each lead from **0 to 100** based on 8 behavioral signals:
-
-```python
-async def compute_lead_score(user: dict) -> int:
-    score = 0
-    if user.get("balance", 0) > 0:      score += 30  # Made a deposit
-    if user.get("balance", 0) > 5000:   score += 20  # High balance
-    if user.get("status") == "VIP":     score += 15  # VIP status
-    if seen_within_24h(user):           score += 15  # Recently active
-    if user.get("kyc_status") == "approved": score += 10  # KYC verified
-    score += min(order_count * 2, 8)              # Active trading
-    score += min(len(user.get("tags", [])) * 2, 6) # Tagged leads
-    if user.get("followup_date"):       score += 6   # Follow-up scheduled
-    return min(score, 100)
-```
-
-**Classifications:** 🔥 Hot (80+) · ⚡ Warm (60-79) · 🌡 Lukewarm (40-59) · 🧊 Cold (<40)
-
----
-
-## 🛡️ Security Architecture
-
-### Honeypot System
-```python
-# 15+ decoy routes monitored in real-time
-HONEYPOT_PATHS = [
-    "/.env", "/wp-admin", "/phpmyadmin", "/backup.sql",
-    "/.git/config", "/etc/passwd", "/shell.php", "/xmlrpc.php"
-    # ... + automatic 404 detection via React frontend
-]
-
-# Risk classification
-RISK_LEVELS = {
-    "critical": ["IP PERMANENTLY BANNED"],  # .env, .git, passwd
-    "high":     ["IP RATE LIMITED"],        # wp-admin, backup.sql
-    "medium":   ["REQUEST BLOCKED"],        # config, xmlrpc
-    "low":      ["LOGGED"],                 # server-status
-}
-```
-
-### SHA-256 Contract Certification
-```python
-def certify_contract(token, name, email, amount, ip, timestamp):
-    data = f"{token}|{name}|{email}|{amount}|{timestamp}|{ip}"
-    return hashlib.sha256(data.encode("utf-8")).hexdigest()
-```
-
----
-
-## 📊 API Reference
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/auth/register` | Client registration |
-| `POST` | `/api/auth/login` | Authentication → JWT |
-| `POST` | `/api/orders` | Trading order (position-validated) |
-| `GET`  | `/api/orders/position` | Open position for asset |
-| `GET`  | `/api/admin/users` | All leads with AI scores |
-| `GET`  | `/api/admin/users/{id}/score` | Individual AI score |
-| `POST` | `/api/admin/contracts/generate` | Generate contract link |
-| `POST` | `/api/admin/security/stress-test` | Run attack simulation |
-| `GET`  | `/api/admin/honeypot-logs` | Real-time intrusion logs |
-| `POST` | `/api/honeypot/report` | Frontend reports suspicious URL |
-| `POST` | `/api/contract/{token}/submit` | Client signs contract |
-
----
-
-## 🚀 Quick Start
-
-### With Docker (Recommended)
+### Docker (Recommended)
 ```bash
-git clone https://github.com/your-username/eurovault.git
-cd eurovault
-cp .env.example .env          # Edit with your values
+git clone https://github.com/BrutalKill/eurovault-fintech.git
+cd eurovault-fintech
+cp .env.example .env        # Edit with your values
 docker-compose up --build
 ```
 
-Access:
-- **Client Portal:** http://localhost:3000
-- **Admin Panel:** http://localhost:3000/adm (user: `brokereurope` / pw: `Europeinvest`)
-- **Agent CRM:** http://localhost:3000/crm
-
-### Without Docker
+### Manual
 ```bash
 # Backend
 cd backend
@@ -229,20 +156,57 @@ cd frontend
 yarn install && yarn start
 ```
 
+### Default Access
+
+| Role | URL | Credentials |
+|------|-----|-------------|
+| Admin | `/adm/login` | Set in `.env` |
+| Agent | `/crm/login` | Created via Admin panel |
+| Client | `/register` | Self-registration |
+
 ---
 
-## 🌏 Company Information
+## Repository Structure
+
+```
+eurovault-fintech/
+├── frontend/          React 18 SPA (dashboard, trading, CRM)
+├── backend/           FastAPI API (scoring, auth, contracts)
+├── security/          Honeypot engine + stress-test scripts
+├── contracts/         PDF generator + SHA-256 certifier
+├── docs/              API reference, security notes
+├── docker-compose.yml One-command deployment
+├── .env.example       Environment variables template
+└── README.md
+```
+
+---
+
+## Security
+
+All environment variables are loaded from `.env` — **no credentials are hardcoded**. The `.env` file is excluded from version control via `.gitignore`.
+
+```bash
+# Generate a secure SECRET_KEY:
+python3 -c "import secrets; print(secrets.token_hex(32))"
+```
+
+See [`docs/API.md`](docs/API.md) for full endpoint documentation.
+
+---
+
+## About
 
 **EuroVault Digital Solutions**
 IFSB Reg. No. JP-999888777 · International Financial Standards
 Headquarters: 1-1 Chiyoda, Tokyo, 100-8111, Japan
 
----
-
-## 📄 License
-
-MIT License — see [LICENSE](LICENSE) for details.
+Built by a solo developer in Lviv, Ukraine 🇺🇦 — proving that geography is not a limitation for world-class engineering.
 
 ---
 
-*EuroVault demonstrates production-grade SaaS architecture: AI-augmented analytics, enterprise security, legal automation, and real-time multi-language CRM — built for the global fintech market.*
+<div align="center">
+
+*EuroVault is a technical portfolio project demonstrating full-stack AI-augmented fintech architecture.*
+
+</div>
