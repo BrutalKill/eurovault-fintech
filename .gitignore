@@ -37,3 +37,7 @@ logs/
 *.pdf
 contracts/sample_*.pdf
 security/stress_test_*.json
+-e 
+# Environment files
+*.env
+*.env.*
