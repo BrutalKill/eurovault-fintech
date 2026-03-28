@@ -132,7 +132,7 @@ export default function Footer() {
 
             {/* Selos regulatórios */}
             <div style={{ marginTop: 20, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {['FCA 987654', 'MiFID II', 'Classe 3', 'RGPD'].map(badge => (
+              {['IFSB JP-999888777', 'IFS Standards', 'Digital Jurisdiction', 'GDPR'].map(badge => (
                 <span key={badge} style={{ fontSize: 9, fontWeight: 800, padding: '3px 7px', borderRadius: 5, background: 'rgba(58,134,255,0.1)', border: '1px solid rgba(58,134,255,0.2)', color: '#3A86FF', letterSpacing: '0.06em' }}>
                   {badge}
                 </span>
@@ -144,16 +144,16 @@ export default function Footer() {
         {/* Informação legal */}
         <div style={{ margin: '28px 0 20px', padding: '14px 18px', background: 'rgba(58,134,255,0.05)', border: '1px solid rgba(58,134,255,0.12)', borderRadius: 10 }}>
           <p style={{ fontSize: 11, color: '#4a5068', lineHeight: 1.7, margin: 0 }}>
-            <strong style={{ color: '#7a8299' }}>Informação Legal:</strong> A EuroVault Investments, S.A. encontra-se registada na FCA com o n.º 327 e autorizada ao exercício de actividades de intermediação financeira ao abrigo da Directiva MiFID II.
-            Capital social de EUR 1.000.000. Registo Comercial n.º 987 654 321 — Companies House, London.
-            NIF: GB 987 654 321. Sede: One Canada Square, Canary Wharf, London E14 5AB.
+            <strong style={{ color: '#7a8299' }}>Legal Information:</strong> EuroVault Digital Solutions is registered with IFSB under Reg. No. JP-999888777,
+            operating under International Financial Standards (IFS) and Global Digital Jurisdiction. Tax ID: JP-999888777.
+            Registered office: 1-1 Chiyoda, Tokyo, 100-8111, Japan. Platform compliant with International Data Protection Standards.
           </p>
         </div>
 
         {/* Barra inferior */}
         <div style={{ borderTop: '1px solid #1a1a2a', paddingTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div style={{ fontSize: 11, color: '#4a5068' }}>
-            &copy; {currentYear} EuroVault Investments. {t('footer_rights')}
+            &copy; {currentYear} EuroVault Digital Solutions. {t('footer_rights')}
           </div>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
             {[
@@ -171,7 +171,7 @@ export default function Footer() {
             ))}
           </div>
           <div style={{ fontSize: 11, color: '#4a5068' }}>
-            EuroVault Investments, S.A. &bull; Registo FCA Reg. No. 987654 &bull; NIF GB 987 654 321
+            EuroVault Digital Solutions &bull; IFSB Reg. No. JP-999888777
           </div>
         </div>
       </div>

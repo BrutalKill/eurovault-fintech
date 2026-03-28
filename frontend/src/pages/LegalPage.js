@@ -3,17 +3,17 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { FileText, Shield, RefreshCw, AlertCircle, ChevronLeft, ExternalLink, ChevronDown } from 'lucide-react';
 import { useLang } from '../context/LangContext';
 
-const COMPANY = { en: 'EuroVault Investments, S.A.', pt: 'EuroVault Investments, S.A.', es: 'EuroVault Investments, S.A.' };
+const COMPANY = { en: 'EuroVault Digital Solutions', pt: 'EuroVault Digital Solutions', es: 'EuroVault Digital Solutions' };
 const EMAIL   = 'legal@eurovault.eu';
 const ADDRESS = {
-  en: 'One Canada Square, Canary Wharf, London E14 5AB, United Kingdom',
-  pt: 'One Canada Square, Canary Wharf, London E14 5AB',
-  es: 'One Canada Square, Canary Wharf, London E14 5AB, United Kingdom',
+  en: '1-1 Chiyoda, Tokyo, 100-8111, Japan',
+  pt: '1-1 Chiyoda, Tokyo, 100-8111, Japão',
+  es: '1-1 Chiyoda, Tokyo, 100-8111, Japón',
 };
 const REG = {
-  en: 'FCA Reg. No. 987654 · NIF GB 987 654 321 · Investment Firm Class III',
-  pt: 'Registo FCA Reg. No. 987654 · NIF GB 987 654 321 · Investment Firm Class III',
-  es: 'FCA Reg. n.° 987654 · NIF GB 987 654 321 · Empresa de Inversión Clase 3',
+  en: 'IFSB Reg. No. JP-999888777 · International Financial Standards · Digital Jurisdiction',
+  pt: 'Registo IFSB n.º JP-999888777 · International Financial Standards · Jurisdição Digital',
+  es: 'Registro IFSB n.° JP-999888777 · International Financial Standards · Jurisdicción Digital',
 };
 const UPDATED = { en: 'March 1, 2026', pt: '1 de Março de 2026', es: '1 de marzo de 2026' };
 
@@ -50,7 +50,7 @@ const CONTENT = {
   terms: {
     en: { title: 'Terms of Service', sections: [
       { n:1, title:'Acceptance of Terms', body:[
-        {t:'p', v:`By accessing or using the EuroVault Platform ("Platform"), a cloud-based data analytics and financial market intelligence SaaS operated by EuroVault Investments, S.A., you agree to be bound by these Terms of Service. If you do not agree, you may not access or use the Platform.`},
+        {t:'p', v:`By accessing or using the EuroVault Platform ("Platform"), a cloud-based data analytics and financial market intelligence SaaS operated by EuroVault Digital Solutions, you agree to be bound by these Terms of Service. If you do not agree, you may not access or use the Platform.`},
         {t:'p', v:`These Terms constitute a legally binding agreement. By creating an account or otherwise accessing the Platform, you represent that you have read, understood, and accept these Terms in their entirety.`},
       ]},
       { n:2, title:'Description of Service', body:[
@@ -66,7 +66,7 @@ const CONTENT = {
         {t:'p', v:`Access requires a valid subscription. Fees are charged in advance monthly or annually in Euros (€), exclusive of applicable taxes. Subscriptions auto-renew unless cancelled at least 48 hours before renewal. We reserve the right to change pricing with 30 days' notice.`},
       ]},
       { n:5, title:'Intellectual Property', body:[
-        {t:'p', v:`The Platform and all its components are the exclusive intellectual property of EuroVault Investments, S.A. and its licensors. You receive a limited, non-exclusive, non-transferable, revocable licence to use the Platform solely for internal analytical purposes.`},
+        {t:'p', v:`The Platform and all its components are the exclusive intellectual property of EuroVault Digital Solutions and its licensors. You receive a limited, non-exclusive, non-transferable, revocable licence to use the Platform solely for internal analytical purposes.`},
         {t:'p', v:`You may not copy, modify, distribute, sell, reverse-engineer, or use the Platform to build a competing product.`},
       ]},
       { n:6, title:'Acceptable Use', body:[
@@ -80,7 +80,7 @@ const CONTENT = {
         {t:'p', v:`TO THE MAXIMUM EXTENT PERMITTED BY LAW, EUROVAULT TECHNOLOGIES LTD. SHALL NOT BE LIABLE FOR INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES. OUR AGGREGATE LIABILITY SHALL NOT EXCEED FEES PAID BY YOU IN THE PRECEDING 12 MONTHS.`},
       ]},
       { n:9, title:'Governing Law', body:[
-        {t:'p', v:`These Terms are governed by the laws of the Republic of Cyprus. Any dispute shall be subject to the exclusive jurisdiction of the courts of Limassol, Cyprus, after a 30-day good-faith negotiation period.`},
+        {t:'p', v:`These Terms are governed by the laws of the Global Digital Jurisdiction. Any dispute shall be subject to the exclusive jurisdiction of the international arbitration under UNCITRAL rules, after a 30-day good-faith negotiation period.`},
       ]},
       { n:10, title:'Modifications', body:[
         {t:'p', v:`We may modify these Terms at any time with 14 days' advance notice for material changes. Continued use constitutes acceptance of the revised Terms. The current version is always available at this URL.`},
@@ -89,7 +89,7 @@ const CONTENT = {
 
     pt: { title: 'Termos de Serviço', sections: [
       { n:1, title:'Aceitação dos Termos', body:[
-        {t:'p', v:`Ao aceder ou utilizar a Plataforma EuroVault ("Plataforma"), um serviço SaaS de análise de dados financeiros operado pela EuroVault Investments, S.A., o utilizador aceita integralmente os presentes Termos de Serviço. Se não concordar com estes termos, deve cessar imediatamente a utilização da Plataforma.`},
+        {t:'p', v:`Ao aceder ou utilizar a Plataforma EuroVault ("Plataforma"), um serviço SaaS de análise de dados financeiros operado pela EuroVault Digital Solutions, o utilizador aceita integralmente os presentes Termos de Serviço. Se não concordar com estes termos, deve cessar imediatamente a utilização da Plataforma.`},
         {t:'p', v:`Estes Termos constituem um acordo juridicamente vinculativo. Ao criar uma conta ou aceder à Plataforma, declara ter lido, compreendido e aceite estes Termos na sua totalidade.`},
       ]},
       { n:2, title:'Descrição do Serviço', body:[
@@ -105,7 +105,7 @@ const CONTENT = {
         {t:'p', v:`O acesso requer uma subscrição válida. As taxas são cobradas antecipadamente mensal ou anualmente em Euros (€), excluindo impostos aplicáveis. As subscrições renovam-se automaticamente, salvo cancelamento com pelo menos 48 horas de antecedência. Reservamo-nos o direito de alterar preços com aviso prévio de 30 dias.`},
       ]},
       { n:5, title:'Propriedade Intelectual', body:[
-        {t:'p', v:`A Plataforma e todos os seus componentes são propriedade intelectual exclusiva da EuroVault Investments, S.A. e dos seus licenciadores. O utilizador recebe uma licença limitada, não exclusiva, intransmissível e revogável para utilizar a Plataforma exclusivamente para fins analíticos internos.`},
+        {t:'p', v:`A Plataforma e todos os seus componentes são propriedade intelectual exclusiva da EuroVault Digital Solutions e dos seus licenciadores. O utilizador recebe uma licença limitada, não exclusiva, intransmissível e revogável para utilizar a Plataforma exclusivamente para fins analíticos internos.`},
         {t:'p', v:`Não pode copiar, modificar, distribuir, vender, efetuar engenharia inversa ou utilizar a Plataforma para desenvolver um produto concorrente.`},
       ]},
       { n:6, title:'Utilização Aceitável', body:[
@@ -128,7 +128,7 @@ const CONTENT = {
 
     es: { title: 'Términos de Servicio', sections: [
       { n:1, title:'Aceptación de los Términos', body:[
-        {t:'p', v:`Al acceder o utilizar la Plataforma EuroVault ("Plataforma"), un servicio SaaS de análisis de datos financieros operado por EuroVault Investments, S.A., usted acepta íntegramente estos Términos de Servicio. Si no está de acuerdo, debe cesar inmediatamente el uso de la Plataforma.`},
+        {t:'p', v:`Al acceder o utilizar la Plataforma EuroVault ("Plataforma"), un servicio SaaS de análisis de datos financieros operado por EuroVault Digital Solutions, usted acepta íntegramente estos Términos de Servicio. Si no está de acuerdo, debe cesar inmediatamente el uso de la Plataforma.`},
         {t:'p', v:`Estos Términos constituyen un acuerdo legalmente vinculante. Al crear una cuenta o acceder a la Plataforma, declara haber leído, comprendido y aceptado estos Términos en su totalidad.`},
       ]},
       { n:2, title:'Descripción del Servicio', body:[
@@ -143,7 +143,7 @@ const CONTENT = {
         {t:'p', v:`El acceso requiere una suscripción válida. Las tarifas se cobran por adelantado mensual o anualmente en Euros (€), excluyendo los impuestos aplicables. Las suscripciones se renuevan automáticamente salvo cancelación con al menos 48 horas de antelación.`},
       ]},
       { n:5, title:'Propiedad Intelectual', body:[
-        {t:'p', v:`La Plataforma y todos sus componentes son propiedad intelectual exclusiva de EuroVault Investments, S.A. y sus licenciantes. Usted recibe una licencia limitada, no exclusiva, intransferible y revocable para usar la Plataforma exclusivamente para fines analíticos internos.`},
+        {t:'p', v:`La Plataforma y todos sus componentes son propiedad intelectual exclusiva de EuroVault Digital Solutions y sus licenciantes. Usted recibe una licencia limitada, no exclusiva, intransferible y revocable para usar la Plataforma exclusivamente para fines analíticos internos.`},
       ]},
       { n:6, title:'Uso Aceptable', body:[
         {t:'p', v:`No debe usar la Plataforma para:`},
@@ -168,7 +168,7 @@ const CONTENT = {
   privacy: {
     en: { title: 'Privacy Policy', sections: [
       { n:1, title:'Introduction and Data Controller', body:[
-        {t:'p', v:`EuroVault Investments, S.A. is the data controller for personal data processed through the EuroVault Platform. We are committed to protecting your privacy in accordance with GDPR (EU) 2016/679. Contact our Data Protection Officer at ${EMAIL}.`},
+        {t:'p', v:`EuroVault Digital Solutions is the data controller for personal data processed through the EuroVault Platform. We are committed to protecting your privacy in accordance with GDPR (EU) 2016/679. Contact our Data Protection Officer at ${EMAIL}.`},
       ]},
       { n:2, title:'Personal Data We Collect', body:[
         {t:'ul', v:['Identity Data: full name, date of birth, government-issued ID number','Contact Data: email address, telephone number, postal address','Account Data: username, encrypted password, subscription status','Financial Data: tokenised payment card details, billing address, transaction history','Technical Data: IP address, browser type, device identifiers, operating system','Usage Data: pages visited, features accessed, session duration, clickstream data']},
@@ -184,7 +184,7 @@ const CONTENT = {
       ]},
       { n:6, title:'Your Rights (GDPR)', body:[
         {t:'ul', v:['Right of Access (Art. 15): receive a copy of your data','Right to Rectification (Art. 16): correct inaccurate data','Right to Erasure (Art. 17): deletion in certain circumstances','Right to Restriction (Art. 18): restrict processing in specific situations','Right to Data Portability (Art. 20): receive data in machine-readable format','Right to Object (Art. 21): object to legitimate interests processing']},
-        {t:'p', v:`Submit requests to ${EMAIL}. We respond within 30 days. You may lodge a complaint with the Cyprus Commissioner for Personal Data Protection.`},
+        {t:'p', v:`Submit requests to ${EMAIL}. We respond within 30 days. You may lodge a complaint with the Global Data Protection Authority.`},
       ]},
       { n:7, title:'Cookies', body:[
         {t:'ul', v:['Strictly Necessary: essential for Platform operation (cannot be disabled)','Performance: anonymous usage statistics','Functional: remember preferences such as language and currency','Analytical: understand user interaction patterns']},
@@ -196,7 +196,7 @@ const CONTENT = {
 
     pt: { title: 'Política de Privacidade', sections: [
       { n:1, title:'Introdução e Responsável pelo Tratamento', body:[
-        {t:'p', v:`A EuroVault Investments, S.A. é o responsável pelo tratamento dos dados pessoais processados através da Plataforma EuroVault. Estamos empenhados em proteger a sua privacidade de acordo com o RGPD (UE) 2016/679. Contacte o nosso Encarregado de Proteção de Dados em ${EMAIL}.`},
+        {t:'p', v:`A EuroVault Digital Solutions é o responsável pelo tratamento dos dados pessoais processados através da Plataforma EuroVault. Estamos empenhados em proteger a sua privacidade de acordo com o RGPD (UE) 2016/679. Contacte o nosso Encarregado de Proteção de Dados em ${EMAIL}.`},
       ]},
       { n:2, title:'Dados Pessoais que Recolhemos', body:[
         {t:'ul', v:['Dados de Identificação: nome completo, data de nascimento, número de identificação emitido pelo governo','Dados de Contacto: endereço de e-mail, número de telefone, morada postal','Dados de Conta: nome de utilizador, palavra-passe encriptada, estado da subscrição','Dados Financeiros: dados do cartão de pagamento tokenizados, morada de faturação, histórico de transações','Dados Técnicos: endereço IP, tipo de browser, identificadores de dispositivo, sistema operativo','Dados de Utilização: páginas visitadas, funcionalidades acedidas, duração da sessão']},
@@ -212,7 +212,7 @@ const CONTENT = {
       ]},
       { n:6, title:'Os Seus Direitos (RGPD)', body:[
         {t:'ul', v:['Direito de Acesso (Art. 15.º): receber uma cópia dos seus dados','Direito de Retificação (Art. 16.º): corrigir dados inexatos','Direito ao Apagamento (Art. 17.º): eliminação em determinadas circunstâncias','Direito à Limitação (Art. 18.º): restringir o tratamento em situações específicas','Direito à Portabilidade (Art. 20.º): receber dados em formato legível por máquina','Direito de Oposição (Art. 21.º): opor-se ao tratamento com base em interesses legítimos']},
-        {t:'p', v:`Envie os seus pedidos para ${EMAIL}. Respondemos no prazo de 30 dias. Pode apresentar reclamação à Comissão Nacional de Proteção de Dados (CNPD).`},
+        {t:'p', v:`Envie os seus pedidos para ${EMAIL}. Respondemos no prazo de 30 dias. Pode apresentar reclamação à Global Data Protection Authority.`},
       ]},
       { n:7, title:'Cookies', body:[
         {t:'ul', v:['Estritamente Necessários: essenciais para o funcionamento da Plataforma (não podem ser desativados)','De Desempenho: estatísticas de utilização anónimas','Funcionais: memorizam preferências como idioma e moeda','Analíticos: compreendem os padrões de interação dos utilizadores']},
@@ -224,7 +224,7 @@ const CONTENT = {
 
     es: { title: 'Política de Privacidad', sections: [
       { n:1, title:'Introducción y Responsable del Tratamiento', body:[
-        {t:'p', v:`EuroVault Investments, S.A. es el responsable del tratamiento de datos personales procesados a través de la Plataforma EuroVault. Estamos comprometidos con la protección de su privacidad de conformidad con el RGPD (UE) 2016/679. Contacte a nuestro Delegado de Protección de Datos en ${EMAIL}.`},
+        {t:'p', v:`EuroVault Digital Solutions es el responsable del tratamiento de datos personales procesados a través de la Plataforma EuroVault. Estamos comprometidos con la protección de su privacidad de conformidad con el RGPD (UE) 2016/679. Contacte a nuestro Delegado de Protección de Datos en ${EMAIL}.`},
       ]},
       { n:2, title:'Datos Personales que Recopilamos', body:[
         {t:'ul', v:['Datos de Identidad: nombre completo, fecha de nacimiento, número de identificación oficial','Datos de Contacto: dirección de correo electrónico, número de teléfono, dirección postal','Datos de Cuenta: nombre de usuario, contraseña cifrada, estado de suscripción','Datos Financieros: datos de tarjeta de pago tokenizados, dirección de facturación','Datos Técnicos: dirección IP, tipo de navegador, identificadores de dispositivo','Datos de Uso: páginas visitadas, funciones accedidas, duración de sesión']},
@@ -240,7 +240,7 @@ const CONTENT = {
       ]},
       { n:6, title:'Sus Derechos (RGPD)', body:[
         {t:'ul', v:['Derecho de Acceso (Art. 15): recibir una copia de sus datos','Derecho de Rectificación (Art. 16): corregir datos inexactos','Derecho de Supresión (Art. 17): eliminación en determinadas circunstancias','Derecho a la Portabilidad (Art. 20): recibir datos en formato legible por máquina','Derecho de Oposición (Art. 21): oponerse al tratamiento basado en intereses legítimos']},
-        {t:'p', v:`Envíe sus solicitudes a ${EMAIL}. Respondemos en 30 días. Puede presentar reclamación ante la Agencia Española de Protección de Datos (AEPD).`},
+        {t:'p', v:`Envíe sus solicitudes a ${EMAIL}. Respondemos en 30 días. Puede presentar reclamación ante la Agencia Española de Protección de Datos (Global Data Protection Authority).`},
       ]},
       { n:7, title:'Cookies', body:[
         {t:'ul', v:['Estrictamente Necesarias: esenciales para el funcionamiento de la Plataforma','De Rendimiento: estadísticas de uso anónimas','Funcionales: recuerdan preferencias como idioma y moneda','Analíticas: comprenden los patrones de interacción de los usuarios']},
@@ -254,7 +254,7 @@ const CONTENT = {
   /* ══════════════════════════════════ REFUND ═══════════════════════════════ */
   refund: {
     en: { title: 'Refund Policy', sections: [
-      { n:1, title:'Overview', body:[{t:'p', v:`This Refund Policy governs refund requests for subscriptions to the EuroVault Platform operated by EuroVault Investments, S.A. We are committed to fair billing practices. By subscribing, you agree to this Policy, which is incorporated by reference into our Terms of Service.`}]},
+      { n:1, title:'Overview', body:[{t:'p', v:`This Refund Policy governs refund requests for subscriptions to the EuroVault Platform operated by EuroVault Digital Solutions We are committed to fair billing practices. By subscribing, you agree to this Policy, which is incorporated by reference into our Terms of Service.`}]},
       { n:2, title:'Subscription Billing', body:[{t:'p', v:`The Platform is offered as a subscription service billed monthly or annually in advance. Given immediate access to all Platform features upon payment, specific conditions apply to refund eligibility.`}]},
       { n:3, title:'Refund Eligibility', body:[
         {t:'p', v:`14-Day Money-Back Guarantee: First-time subscribers may request a full refund within 14 calendar days of initial payment, provided the Platform was accessed for fewer than 3 cumulative hours. This applies once per account.`},
@@ -272,7 +272,7 @@ const CONTENT = {
     ]},
 
     pt: { title: 'Política de Reembolso', sections: [
-      { n:1, title:'Visão Geral', body:[{t:'p', v:`Esta Política de Reembolso rege os pedidos de reembolso de subscrições da Plataforma EuroVault operada pela EuroVault Investments, S.A. Estamos empenhados em práticas de faturação justas. Ao subscrever, aceita esta Política, incorporada por referência nos nossos Termos de Serviço.`}]},
+      { n:1, title:'Visão Geral', body:[{t:'p', v:`Esta Política de Reembolso rege os pedidos de reembolso de subscrições da Plataforma EuroVault operada pela EuroVault Digital Solutions Estamos empenhados em práticas de faturação justas. Ao subscrever, aceita esta Política, incorporada por referência nos nossos Termos de Serviço.`}]},
       { n:2, title:'Faturação de Subscrição', body:[{t:'p', v:`A Plataforma é oferecida como um serviço de subscrição faturado mensalmente ou anualmente com pagamento antecipado. Dado o acesso imediato a todas as funcionalidades da Plataforma após o pagamento, aplicam-se condições específicas à elegibilidade para reembolso.`}]},
       { n:3, title:'Elegibilidade para Reembolso', body:[
         {t:'p', v:`Garantia de Devolução de Dinheiro de 14 Dias: Os novos subscritores podem solicitar um reembolso total no prazo de 14 dias calendário após o pagamento inicial, desde que a Plataforma tenha sido acedida por menos de 3 horas cumulativas. Esta garantia aplica-se uma vez por conta.`},
@@ -290,7 +290,7 @@ const CONTENT = {
     ]},
 
     es: { title: 'Política de Reembolso', sections: [
-      { n:1, title:'Descripción General', body:[{t:'p', v:`Esta Política de Reembolso rige las solicitudes de reembolso de suscripciones a la Plataforma EuroVault operada por EuroVault Investments, S.A. Estamos comprometidos con prácticas de facturación justas.`}]},
+      { n:1, title:'Descripción General', body:[{t:'p', v:`Esta Política de Reembolso rige las solicitudes de reembolso de suscripciones a la Plataforma EuroVault operada por EuroVault Digital Solutions Estamos comprometidos con prácticas de facturación justas.`}]},
       { n:2, title:'Facturación de Suscripción', body:[{t:'p', v:`La Plataforma se ofrece como servicio de suscripción facturado mensual o anualmente por adelantado. Dado el acceso inmediato a todas las funciones tras el pago, se aplican condiciones específicas a la elegibilidad de reembolso.`}]},
       { n:3, title:'Elegibilidad para Reembolso', body:[
         {t:'p', v:`Garantía de Devolución de 14 Días: Los nuevos suscriptores pueden solicitar reembolso total en 14 días calendario desde el pago inicial, siempre que la Plataforma haya sido accedida menos de 3 horas acumuladas. Aplica una vez por cuenta.`},
@@ -310,9 +310,9 @@ const CONTENT = {
   /* ══════════════════════════════════ AML ═══════════════════════════════ */
   aml: {
     en: { title: 'Anti-Money Laundering (AML) Policy', sections: [
-      { n:1, title:'Introduction', body:[{t:'p', v:`EuroVault Investments, S.A. is committed to the highest standards of AML and counter-terrorism financing (CTF) compliance. This Policy sets out our obligations to detect, prevent, and report money laundering and terrorism financing activities. It applies to all employees, contractors, and third parties acting on our behalf.`}]},
+      { n:1, title:'Introduction', body:[{t:'p', v:`EuroVault Digital Solutions is committed to the highest standards of AML and counter-terrorism financing (CTF) compliance. This Policy sets out our obligations to detect, prevent, and report money laundering and terrorism financing activities. It applies to all employees, contractors, and third parties acting on our behalf.`}]},
       { n:2, title:'Regulatory Framework', body:[
-        {t:'ul', v:['Directive (EU) 2018/843 — 5th Anti-Money Laundering Directive (5AMLD)','Directive (EU) 2015/849 — 4th Anti-Money Laundering Directive (4AMLD)','Cyprus Law 188(I)/2007 on Prevention and Suppression of Money Laundering','FCA Circular C374 — AML/CFT Obligations','FATF Recommendations 2023','EU Sanctions Regulation and applicable OFAC guidance']},
+        {t:'ul', v:['International AML Directive 2023 — 5th Anti-Money Laundering Directive (5AMLD)','International AML Directive 2020 — 4th Anti-Money Laundering Directive (4AMLD)','International AML Standards on Prevention and Suppression of Money Laundering','IFSB Circular C374 — AML/CFT Obligations','FATF Recommendations 2023','EU Sanctions Regulation and applicable OFAC guidance']},
       ]},
       { n:3, title:'Customer Due Diligence (CDD)', body:[
         {t:'p', v:`We apply a risk-based approach to CDD. Standard measures include:`},
@@ -327,7 +327,7 @@ const CONTENT = {
         {t:'p', v:`Our systems flag suspicious indicators including:`},
         {t:'ul', v:['Unusually large or frequent payments inconsistent with user profile','Payments from multiple cards registered to different identities','Connection from high-risk IPs or anonymisation services','Activity inconsistent with stated purpose of use']},
       ]},
-      { n:6, title:'Suspicious Activity Reporting', body:[{t:'p', v:`Where we have reasonable suspicion of money laundering or terrorism financing, we are legally obligated to file a Suspicious Activity Report (SAR) with the Cyprus Financial Intelligence Unit (MOKAS) without delay and without tipping off the subject. Internal reports must be submitted to our MLRO at ${EMAIL}.`}]},
+      { n:6, title:'Suspicious Activity Reporting', body:[{t:'p', v:`Where we have reasonable suspicion of money laundering or terrorism financing, we are legally obligated to file a Suspicious Activity Report (SAR) with the Financial Intelligence Unit (FIU) without delay and without tipping off the subject. Internal reports must be submitted to our MLRO at ${EMAIL}.`}]},
       { n:7, title:'Record Keeping', body:[
         {t:'ul', v:['Customer identification documents: minimum 5 years from account closure','Transaction records: minimum 5 years from transaction date','SAR and supporting documentation: minimum 5 years from filing','Compliance training records: minimum 5 years']},
       ]},
@@ -337,9 +337,9 @@ const CONTENT = {
     ]},
 
     pt: { title: 'Política Anti-Branqueamento de Capitais (AML)', sections: [
-      { n:1, title:'Introdução', body:[{t:'p', v:`A EuroVault Investments, S.A. está empenhada nos mais elevados padrões de conformidade com as obrigações de prevenção do branqueamento de capitais (AML) e financiamento do terrorismo (CTF). Esta Política define as nossas obrigações para detetar, prevenir e comunicar atividades de branqueamento de capitais e financiamento do terrorismo.`}]},
+      { n:1, title:'Introdução', body:[{t:'p', v:`A EuroVault Digital Solutions está empenhada nos mais elevados padrões de conformidade com as obrigações de prevenção do branqueamento de capitais (AML) e financiamento do terrorismo (CTF). Esta Política define as nossas obrigações para detetar, prevenir e comunicar atividades de branqueamento de capitais e financiamento do terrorismo.`}]},
       { n:2, title:'Enquadramento Regulatório', body:[
-        {t:'ul', v:['Diretiva (UE) 2018/843 — 5.ª Diretiva AML (5AMLD)','Diretiva (UE) 2015/849 — 4.ª Diretiva AML (4AMLD)','Lei n.º 188(I)/2007 do Chipre sobre Prevenção do Branqueamento de Capitais','Circular C374 da FCA — Obrigações AML/CFT','Recomendações do GAFI 2023','Regulamento de Sanções da UE e orientações OFAC aplicáveis']},
+        {t:'ul', v:['Diretiva (UE) 2018/843 — 5.ª Diretiva AML (5AMLD)','Diretiva (UE) 2015/849 — 4.ª Diretiva AML (4AMLD)','Lei n.º 188(I)/2007 do Chipre sobre Prevenção do Branqueamento de Capitais','Circular C374 da IFSB — Obrigações AML/CFT','Recomendações do GAFI 2023','Regulamento de Sanções da UE e orientações OFAC aplicáveis']},
       ]},
       { n:3, title:'Diligência Devida do Cliente (CDD)', body:[
         {t:'p', v:`Aplicamos uma abordagem baseada no risco à Diligência Devida do Cliente. As medidas padrão incluem:`},
@@ -353,7 +353,7 @@ const CONTENT = {
         {t:'p', v:`Os nossos sistemas identificam indicadores suspeitos, incluindo:`},
         {t:'ul', v:['Pagamentos invulgarmente elevados ou frequentes inconsistentes com o perfil do utilizador','Pagamentos com múltiplos cartões registados em diferentes identidades','Ligações a partir de IPs de risco elevado ou serviços de anonimização','Atividade inconsistente com a finalidade de utilização declarada']},
       ]},
-      { n:6, title:'Comunicação de Atividade Suspeita', body:[{t:'p', v:`Quando tivermos suspeita razoável de branqueamento de capitais ou financiamento do terrorismo, somos legalmente obrigados a apresentar uma Comunicação de Operação Suspeita (COS) ao MOKAS (Unidade de Informação Financeira do Chipre) sem demora e sem alertar o visado. Os relatórios internos devem ser submetidos ao nosso Responsável pelo Controlo do Branqueamento de Capitais (RCBC) em ${EMAIL}.`}]},
+      { n:6, title:'Comunicação de Atividade Suspeita', body:[{t:'p', v:`Quando tivermos suspeita razoável de branqueamento de capitais ou financiamento do terrorismo, somos legalmente obrigados a apresentar uma Comunicação de Operação Suspeita (COS) ao FIU (Unidade de Informação Financeira do Chipre) sem demora e sem alertar o visado. Os relatórios internos devem ser submetidos ao nosso Responsável pelo Controlo do Branqueamento de Capitais (RCBC) em ${EMAIL}.`}]},
       { n:7, title:'Conservação de Registos', body:[
         {t:'ul', v:['Documentos de identificação de clientes: mínimo de 5 anos após encerramento da conta','Registos de transações: mínimo de 5 anos a partir da data da transação','COS e documentação de suporte: mínimo de 5 anos após apresentação','Registos de formação em conformidade: mínimo de 5 anos']},
       ]},
@@ -363,9 +363,9 @@ const CONTENT = {
     ]},
 
     es: { title: 'Política Antilavado de Dinero (AML)', sections: [
-      { n:1, title:'Introducción', body:[{t:'p', v:`EuroVault Investments, S.A. está comprometida con los más altos estándares de cumplimiento AML y financiación del terrorismo (CTF). Esta Política establece nuestras obligaciones para detectar, prevenir e informar actividades de lavado de dinero y financiación del terrorismo.`}]},
+      { n:1, title:'Introducción', body:[{t:'p', v:`EuroVault Digital Solutions está comprometida con los más altos estándares de cumplimiento AML y financiación del terrorismo (CTF). Esta Política establece nuestras obligaciones para detectar, prevenir e informar actividades de lavado de dinero y financiación del terrorismo.`}]},
       { n:2, title:'Marco Regulatorio', body:[
-        {t:'ul', v:['Directiva (UE) 2018/843 — 5.ª Directiva AML (5AMLD)','Directiva (UE) 2015/849 — 4.ª Directiva AML (4AMLD)','Ley chipriota 188(I)/2007 sobre Prevención del Blanqueo de Capitales','Circular C374 de FCA — Obligaciones AML/CFT','Recomendaciones del GAFI 2023']},
+        {t:'ul', v:['Directiva (UE) 2018/843 — 5.ª Directiva AML (5AMLD)','Directiva (UE) 2015/849 — 4.ª Directiva AML (4AMLD)','Ley chipriota 188(I)/2007 sobre Prevención del Blanqueo de Capitales','Circular C374 de IFSB — Obligaciones AML/CFT','Recomendaciones del GAFI 2023']},
       ]},
       { n:3, title:'Diligencia Debida del Cliente (DDC)', body:[
         {t:'p', v:`Aplicamos un enfoque basado en el riesgo. Las medidas estándar incluyen:`},
@@ -377,7 +377,7 @@ const CONTENT = {
       { n:5, title:'Monitoreo de Transacciones', body:[
         {t:'ul', v:['Pagos inusualmente grandes o frecuentes inconsistentes con el perfil del usuario','Pagos con múltiples tarjetas registradas en distintas identidades','Conexiones desde IPs de alto riesgo o servicios de anonimización']},
       ]},
-      { n:6, title:'Reporte de Actividad Sospechosa', body:[{t:'p', v:`Cuando tengamos sospecha razonable de lavado de dinero o financiación del terrorismo, estamos legalmente obligados a presentar un Reporte de Actividad Sospechosa (RAS) ante la Unidad de Inteligencia Financiera de Chipre (MOKAS) sin demora. Los reportes internos deben enviarse a nuestro RCBC en ${EMAIL}.`}]},
+      { n:6, title:'Reporte de Actividad Sospechosa', body:[{t:'p', v:`Cuando tengamos sospecha razonable de lavado de dinero o financiación del terrorismo, estamos legalmente obligados a presentar un Reporte de Actividad Sospechosa (RAS) ante la Unidad de Inteligencia Financiera de Chipre (FIU) sin demora. Los reportes internos deben enviarse a nuestro RCBC en ${EMAIL}.`}]},
       { n:7, title:'Conservación de Registros', body:[
         {t:'ul', v:['Documentos de identificación: mínimo 5 años desde el cierre de cuenta','Registros de transacciones: mínimo 5 años','RAS y documentación de soporte: mínimo 5 años desde la presentación']},
       ]},

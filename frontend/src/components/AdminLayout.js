@@ -306,7 +306,6 @@ export default function AdminLayout() {
             { to: '/adm/calendar',     icon: CalendarDays,    label: t('adm_nav_calendar'),     exact: false },
             { to: '/adm/agents',       icon: UserCog,         label: t('adm_nav_agents'),       exact: false },
             { to: '/adm/contracts',    icon: FileText,        label: t('adm_nav_contracts'),    exact: false },
-            { to: '/adm/receipts',     icon: Receipt,         label: t('adm_nav_receipts'),     exact: false },
           ].map(({ to, icon: Icon, label, exact, badge, badgeColor }) => (
             <NavLink key={to} to={to} end={exact}
               style={({ isActive }) => ({

@@ -218,7 +218,7 @@ export default function DepositPage() {
           { icon: Lock,  label: 'SSL 256-bit',          color: '#22c58b' },
           { icon: Shield,label: 'PCI DSS',               color: '#3A86FF' },
           { icon: Zap,   label: t('dep_badge_instant'),  color: '#FFBE0B' },
-          { icon: Star,  label: 'FCA',                 color: '#a855f7' },
+          { icon: Star,  label: 'IFSB',                 color: '#a855f7' },
         ].map(({ icon: Icon, label, color }) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: `${color}10`, border: `1px solid ${color}25`, borderRadius: 8 }}>
             <Icon size={12} color={color} />

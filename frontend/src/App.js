@@ -84,7 +84,6 @@ export default function App() {
           <Route path="chat" element={<AdminChat />} />
           <Route path="agents" element={<AdminAgents />} />
             <Route path="contracts" element={<AdminContracts />} />
-            <Route path="receipts" element={<AdminReceipts />} />
             <Route path="kanban" element={<AdminKanban />} />
         </Route>
 

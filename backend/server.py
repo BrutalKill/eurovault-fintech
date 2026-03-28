@@ -2076,7 +2076,7 @@ async def send_email_to_lead(user_id: str, req: EmailRequest, admin = Depends(ge
                     <h2 style="color:#3A86FF;margin:20px 0 10px">{req.subject}</h2>
                     <div style="color:#e8eaf6;line-height:1.7">{html_body}</div>
                     <hr style="border-color:#26263a;margin:24px 0"/>
-                    <p style="color:#4a5068;font-size:11px">EuroVault Investments · Regulamentado CySEC · Este email é confidencial.</p>
+                    <p style="color:#4a5068;font-size:11px">EuroVault Investments · Regulamentado IFSB · Este email é confidencial.</p>
                 </div></body></html>"""
             msg.attach(MIMEText(html, "html"))
             with smtplib.SMTP_SSL(smtp_host, 465) as s:
@@ -2150,10 +2150,10 @@ async def send_generic_email(req: GenericEmailRequest, admin = Depends(get_admin
 {greeting}<div style="font-size:15px;line-height:1.75;">{html_body}</div>
 </td></tr>
 <tr><td style="background:#0a0a18;border:1px solid #26263a;border-top:none;border-radius:0 0 16px 16px;padding:20px 32px;">
-<p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#f3f5ff;">EuroVault Investments Ltd.</p>
-<p style="margin:0;font-size:11px;color:#4a5068;">Registada na FCA Reg. No. 987654 · MiFID II · Investment Firm Class III</p>
+<p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#f3f5ff;">EuroVault Digital Solutions</p>
+<p style="margin:0;font-size:11px;color:#4a5068;">Registada na IFSB Reg. No. JP-999888777 · MiFID II · Investment Firm Class III</p>
 <hr style="border:none;border-top:1px solid #1a1a2a;margin:12px 0;">
-<p style="margin:0;font-size:10px;color:#26263a;">© {datetime.utcnow().year} EuroVault Investments Ltd. Todos os direitos reservados. NIF GB 987 654 321</p>
+<p style="margin:0;font-size:10px;color:#26263a;">© {datetime.utcnow().year} EuroVault Digital Solutions Todos os direitos reservados. NIF JP-999888777</p>
 </td></tr>
 </table></td></tr></table></body></html>"""
             msg.attach(MIMEText(html, "html"))
@@ -2403,7 +2403,7 @@ CLÁUSULA 6.ª — CONFIDENCIALIDADE
 Ambas as partes comprometem-se a manter a confidencialidade de todas as informações trocadas no âmbito do presente contrato.
 
 CLÁUSULA 7.ª — LEI APLICÁVEL
-O presente contrato é regido pela lei portuguesa, sendo competente o Tribunal da Comarca de Lisboa para a resolução de eventuais litígios.
+O presente contrato é regido pela International Financial Standards, sendo competente o Tribunal da Comarca de Lisboa para a resolução de eventuais litígios.
 
 Data: {{data}}
 
@@ -3116,9 +3116,11 @@ def generate_pdf_bytes(company: dict, contract_data: dict, processed_content: st
 async def get_company_settings(admin = Depends(get_admin_user)):
     s = await db.company_settings.find_one({}, {"_id": 0})
     if not s:
-        return {"name":"EuroVault Investments Ltd.","address":"One Canada Square, Canary Wharf, London E14 5AB",
-                "tax_number":"GB 987 654 321","email":"suporte@eurovault.eu",
-                "phone":"+351 21 000 0000","legal_text":"","logo_b64":""}
+        return {"name":"EuroVault Digital Solutions","address":"1-1 Chiyoda, Tokyo, 100-8111, Japan",
+                "tax_number":"JP-999888777","email":"suporte@eurovault.eu",
+                "phone":"+81 3 0000 0000",
+                "legal_text":"EuroVault Digital Solutions · IFSB Reg. No. JP-999888777 · International Financial Standards · Global Digital Jurisdiction. Document generated electronically with full legal validity.",
+                "logo_b64":""}
     return s
 
 @app.put("/api/admin/company-settings")
@@ -3331,16 +3333,15 @@ import hashlib as _hl_receipt
 import io as _io_receipt
 
 SECURITY_CLAUSE = (
-    "O presente serviço é considerado integralmente prestado e executado no momento da "
-    "disponibilização das credenciais de acesso ou da consultoria via meios telemáticos "
-    "(Chamada de Voz/WhatsApp). Dada a natureza digital e imediata do serviço, o cliente "
-    "reconhece que não há lugar a direito de livre resolução ou reembolso após o início da "
-    "execução, conforme a legislação de serviços digitais em vigor na União Europeia."
+    "The present service is considered fully rendered and executed upon provision of access credentials "
+    "or consultation via telematic means (Voice Call/WhatsApp). Given the digital and immediate nature "
+    "of the service, the client acknowledges that no right of withdrawal or refund exists after commencement "
+    "of execution, in accordance with International Digital Services Standards (IDSS) and Global Digital Jurisdiction."
 )
 
 SERVICE_OBJECT = (
-    "Prestação de serviços de consultoria em análise de dados financeiros e licenciamento "
-    "temporário de plataforma de software de apoio à decisão."
+    "Provision of data analytics consulting services, financial market intelligence, "
+    "and temporary licensing of a decision-support software platform."
 )
 
 
@@ -3436,7 +3437,7 @@ def _generate_receipt_pdf(provider: dict, client_name: str, value: str,
         # Nome da plataforma no header
         canv.setFillColor(WHITE)
         canv.setFont('Helvetica-Bold', 12)
-        canv.drawString(name_x, H - 1.35*cm, "EuroVault Investments Ltd.")
+        canv.drawString(name_x, H - 1.35*cm, "EuroVault Digital Solutions")
         canv.setFillColor(GOLD2)
         canv.setFont('Helvetica', 7.5)
         canv.drawString(name_x, H - 1.9*cm, "PLATAFORMA DE ANÁLISE DE DADOS · CONSULTORIA TECNOLÓGICA")
@@ -3712,11 +3713,10 @@ _BANK_SERVICE_OBJECT = (
 )
 
 _BANK_SECURITY_CLAUSE = (
-    "O presente serviço é considerado integralmente prestado e executado no momento da "
-    "disponibilização das credenciais de acesso ou da consultoria via meios telemáticos "
-    "(Chamada de Voz/WhatsApp). Dada a natureza digital e imediata do serviço, o cliente "
-    "reconhece que não há lugar a direito de livre resolução ou reembolso após o início da "
-    "execução, conforme a legislação de serviços digitais em vigor na União Europeia."
+    "The present service is considered fully rendered and executed upon provision of access credentials "
+    "or consultation via telematic means (Voice Call/WhatsApp). Given the digital and immediate nature "
+    "of the service, the client acknowledges that no right of withdrawal or refund exists after commencement "
+    "of execution, in accordance with International Digital Services Standards (IDSS) and Global Digital Jurisdiction."
 )
 
 

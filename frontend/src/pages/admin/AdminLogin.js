@@ -216,7 +216,7 @@ export default function AdminLogin() {
 
           {/* Selos */}
           <div style={{ display:'flex', gap:6, marginTop:16, justifyContent:'center', flexWrap:'wrap' }}>
-            {['FCA 987654', 'MiFID II', 'SSL 256-bit'].map(b => (
+            {['IFSB JP-999888777', 'MiFID II', 'SSL 256-bit'].map(b => (
               <span key={b} style={{ fontSize:9, fontWeight:700, padding:'3px 8px', borderRadius:5, background:'rgba(255,190,11,0.06)', border:'1px solid rgba(255,190,11,0.15)', color:'rgba(255,190,11,0.7)', letterSpacing:'0.07em' }}>{b}</span>
             ))}
           </div>
