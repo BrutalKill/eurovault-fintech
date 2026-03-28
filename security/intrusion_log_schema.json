@@ -1,0 +1,39 @@
+{
+  "title": "Intrusion Log Schema — EuroVault Honeypot Engine",
+  "version": "1.0",
+  "description": "Schema for honeypot_logs MongoDB collection",
+  "fields": {
+    "ts":           { "type": "string",  "format": "ISO 8601 UTC",       "example": "2026-03-28T10:00:00.000Z" },
+    "path":         { "type": "string",  "description": "Accessed path", "example": "/wp-admin/admin.php"       },
+    "method":       { "type": "string",  "enum": ["GET","POST","PUT","DELETE","PATCH","OPTIONS"] },
+    "ip":           { "type": "string",  "description": "Client IP",     "example": "185.220.101.47"           },
+    "user_agent":   { "type": "string",  "description": "HTTP User-Agent header"                               },
+    "source":       { "type": "string",  "enum": ["frontend_404","middleware","404_handler","stress_test"]     },
+    "risk_level":   { "type": "string",  "enum": ["critical","high","medium","low"]                            },
+    "attack_type":  { "type": "string",  "description": "Human-readable attack classification"                },
+    "mitigation":   { "type": "string",  "description": "Automated response applied"                          },
+    "fingerprint":  { "type": "string",  "description": "SHA-256 fingerprint (first 16 chars)"               }
+  },
+  "risk_classifications": {
+    "critical": {
+      "paths": ["/.env", "/.git/config", "/phpmyadmin", "/etc/passwd"],
+      "mitigation": "IP PERMANENTLY BANNED",
+      "alert": true
+    },
+    "high": {
+      "paths": ["/wp-admin", "/backup.sql", "/shell.php", "/wp-login.php"],
+      "mitigation": "IP RATE LIMITED",
+      "alert": true
+    },
+    "medium": {
+      "paths": ["/xmlrpc.php", "/config.php", "/api/config"],
+      "mitigation": "REQUEST BLOCKED",
+      "alert": false
+    },
+    "low": {
+      "paths": ["/server-status", "/robots.txt"],
+      "mitigation": "LOGGED",
+      "alert": false
+    }
+  }
+}

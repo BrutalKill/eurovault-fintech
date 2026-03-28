@@ -144,9 +144,9 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "brokereurope_secret_key_2024_very_lon
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 168  # 7 dias para sessão persistente
 
-# Hardcoded admin credentials
-ADMIN_USERNAME = "brokereurope"
-ADMIN_PASSWORD = "Europeinvest"
+# Admin credentials from environment variables (set in .env for local, secrets for production)
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "brokereurope")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "Europeinvest")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
