@@ -4,7 +4,7 @@ import { useLang } from '../context/LangContext';
 const LOCALE_MAP = { pt: 'pt', en: 'en', es: 'es' };
 
 export default function NewsPage() {
-  const { lang } = useLang();
+  const { lang, t } = useLang();
   const containerRef = useRef(null);
   const locale = LOCALE_MAP[lang] || 'en';
 
