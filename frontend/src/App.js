@@ -1,6 +1,15 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from './components/ui/sonner';
+
+// ── Scroll to top on every route change ──────────────────────
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [pathname]);
+  return null;
+}
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ContractPublicPage from './pages/ContractPublicPage';
@@ -46,6 +55,7 @@ const AdminRoute = ({ children }) => {
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Toaster position="bottom-right" richColors theme="dark" />
       <Routes>
         {/* Public */}
