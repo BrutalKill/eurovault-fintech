@@ -5,7 +5,13 @@ import { useUser } from '../context/UserContext';
 import { useLang } from '../context/LangContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
-const COUNTRIES = ['Portugal','Espanha','França','Alemanha','Itália','Países Baixos','Bélgica','Suíssa','Suécia','Noruega','Dinamarca','Polónia','Hungria','República Checa','Ruménia','Brasil','Reino Unido','Outro'];
+const COUNTRY_KEYS = [
+  'country_portugal','country_espanha','country_franca','country_alemanha',
+  'country_italia','country_paises_baixos','country_belgica','country_suica',
+  'country_suecia','country_noruega','country_dinamarca','country_polonia',
+  'country_hungria','country_republica_checa','country_romenia',
+  'country_brasil','country_reino_unido','country_outro',
+];
 
 export default function ProfilePage() {
   const { user, fetchUser } = useUser();
