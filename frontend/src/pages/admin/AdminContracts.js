@@ -20,6 +20,7 @@ const fmtDate = (iso) => iso ? new Date(iso).toLocaleString('pt-PT', { day:'2-di
 
 /* ── Modal Gerar Contrato ── */
 function GenerateModal({ templates, leads, onClose, onSuccess }) {
+  const { t } = useLang();
   const [templateId, setTemplateId] = useState(templates[0]?.id || '');
   const [leadId, setLeadId]         = useState('');
   const [manualName, setManualName] = useState('');
@@ -134,6 +135,7 @@ function GenerateModal({ templates, leads, onClose, onSuccess }) {
 
 /* ── Modal Template Editor ── */
 function TemplateModal({ template, onClose, onSaved }) {
+  const { t } = useLang();
   const [name, setName]     = useState(template?.name || '');
   const [desc, setDesc]     = useState(template?.description || '');
   const [content, setContent] = useState(template?.content || '');
