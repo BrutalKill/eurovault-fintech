@@ -3,6 +3,8 @@
 
 [![Watch the Showcase](https://img.shields.io/badge/Watch-Technical_Video-red?style=for-the-badge&logo=youtube)](https://youtu.be/GwqMHd57Quo?si=ECP6pGWHjjQvklcq)
 [![GitHub License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](https://github.com/BrutalKill/eurovault-fintech/blob/main/LICENSE)
+[![API Docs](https://img.shields.io/badge/API-Swagger_UI-85EA2D?style=for-the-badge&logo=swagger)](https://vault-invest.preview.emergentagent.com/api/docs)
+[![ReDoc](https://img.shields.io/badge/API-ReDoc-orange?style=for-the-badge&logo=readme)](https://vault-invest.preview.emergentagent.com/api/redoc)
 
 ## 📽️ Project Showcase (Video)
 **Watch the system in action, including the Security Hub and Dashboard:**
@@ -45,9 +47,23 @@ We implemented a proactive defense system. Any unauthorized attempt to access se
 
 ---
 
-## 🏗️ System Architecture
 
-```mermaid
+## 📖 API Documentation (Swagger / OpenAPI 3.1)
+
+The REST API is fully documented with **Swagger UI** and **ReDoc**:
+
+| Interface | URL | Description |
+|-----------|-----|-------------|
+| **Swagger UI** | `/api/docs` | Interactive — test endpoints directly in browser |
+| **ReDoc** | `/api/redoc` | Clean reference — great for sharing with clients |
+| **OpenAPI JSON** | `/api/openapi.json` | Machine-readable schema (import to Postman / Insomnia) |
+
+**123 endpoints** across 8 tag groups: `Authentication` · `Client` · `Admin · Leads` · `Admin · Analytics & ML` · `Admin · Security` · `Admin · Contracts` · `Admin · Receipts` · `Agent CRM`
+
+---
+
+
+## 🏗️ System Architecture
 graph TD
     A[User / Attacker] -->|HTTP Request| B[Security Middleware]
     B -->|Check Patterns| C{Honeypot Trap?}

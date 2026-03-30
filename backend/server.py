@@ -33,23 +33,95 @@ from routers.contracts       import router as contracts_router
 from routers.receipts        import router as receipts_router
 from routers.agent_router    import router as agent_router
 
+# ── OpenAPI metadata ──────────────────────────────────────────────────────────
+_TAGS_METADATA = [
+    {
+        "name": "Authentication",
+        "description": "Client and admin login / registration. JWT-based auth (7-day tokens).",
+    },
+    {
+        "name": "Client",
+        "description": "Client dashboard: balance, deposits, withdrawals, orders (buy/sell), "
+                       "KYC upload, chat, news feed, referral program.",
+    },
+    {
+        "name": "Admin · Leads",
+        "description": "CRM lead management: balance/status updates, notes timeline, "
+                       "KYC review, follow-up scheduling, impersonation, email.",
+    },
+    {
+        "name": "Admin · Analytics & ML",
+        "description": "KPI dashboard, **Scikit-Learn lead scoring** (RandomForest), "
+                       "revenue forecasting (linear regression), agent performance matrix, "
+                       "server observability metrics.",
+    },
+    {
+        "name": "Admin · Security",
+        "description": "Active honeypot system: ban/whitelist IP management, "
+                       "intrusion logs, attack stress-test simulator.",
+    },
+    {
+        "name": "Admin · Contracts",
+        "description": "Digital contract lifecycle: template editor, link generation, "
+                       "public e-signature with SHA-256 certification, PDF export.",
+    },
+    {
+        "name": "Admin · Receipts",
+        "description": "PDF receipt generation (branded EuroVault version and neutral "
+                       "bank version). EXIF metadata cleaner for KYC images.",
+    },
+    {
+        "name": "Agent CRM",
+        "description": "Multi-level CRM for sales agents: view assigned leads, "
+                       "update status/tags, add comments, upload profile photo.",
+    },
+]
+
 # ── App ───────────────────────────────────────────────────────────────────────
 app = FastAPI(
-    title="Platform API",
-    docs_url=None,
-    redoc_url=None,
-    openapi_url=None,
+    title="EuroVault Digital Solutions — API",
+    description="""
+## AI-Native FinTech Platform
+
+A production-grade investment platform with:
+
+- **JWT Authentication** — 7-day tokens, instant invalidation on user deletion
+- **ML Lead Scoring** — `RandomForestClassifier` (Scikit-Learn 1.8) with `StratifiedKFold` CV
+- **Active Honeypot** — middleware bans attacker IPs in real-time, logs to MongoDB
+- **Digital Contracts** — SHA-256 certified e-signatures with PDF export (ReportLab)
+- **Multi-level CRM** — Admin + Agent roles with separate scoped access
+
+### Authentication
+All `/api/admin/*` and `/api/me/*` routes require a **Bearer token** in the `Authorization` header.
+
+```
+Authorization: Bearer <token>
+```
+
+Obtain a token via `POST /api/auth/login` (client) or `POST /api/admin/login` (admin).
+""",
+    version="1.0.0",
+    contact={
+        "name":  "Igor Eduardo Alonso Rodrigues",
+        "url":   "https://github.com/BrutalKill",
+    },
+    license_info={"name": "MIT", "url": "https://opensource.org/licenses/MIT"},
+    openapi_tags=_TAGS_METADATA,
+    # Swagger UI at /api/docs  ·  ReDoc at /api/redoc
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json",
 )
 
-# ── Include routers ───────────────────────────────────────────────────────────
-app.include_router(auth_router)
-app.include_router(client_router)
-app.include_router(admin_leads_router)
-app.include_router(admin_analytics_router)
-app.include_router(admin_security_router)
-app.include_router(contracts_router)
-app.include_router(receipts_router)
-app.include_router(agent_router)
+# ── Include routers (with OpenAPI tags) ───────────────────────────────────────
+app.include_router(auth_router,            tags=["Authentication"])
+app.include_router(client_router,          tags=["Client"])
+app.include_router(admin_leads_router,     tags=["Admin · Leads"])
+app.include_router(admin_analytics_router, tags=["Admin · Analytics & ML"])
+app.include_router(admin_security_router,  tags=["Admin · Security"])
+app.include_router(contracts_router,       tags=["Admin · Contracts"])
+app.include_router(receipts_router,        tags=["Admin · Receipts"])
+app.include_router(agent_router,           tags=["Agent CRM"])
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
 app.add_middleware(
@@ -73,6 +145,7 @@ _HONEYPOT_SAFE_PREFIXES = (
     '/api/auth/', '/api/me', '/api/admin/', '/api/agent/', '/api/contract/',
     '/api/withdrawal', '/api/orders', '/api/kyc', '/api/news',
     '/api/chat', '/api/honeypot', '/ws',
+    '/api/docs', '/api/redoc', '/api/openapi.json',  # Swagger UI
 )
 
 
@@ -144,11 +217,14 @@ async def add_security_headers(request: FastAPIRequest, call_next):
     response.headers["Pragma"]                    = "no-cache"
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://assets.emergent.sh https://s.tradingview.com; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
+            "https://assets.emergent.sh https://s.tradingview.com "
+            "https://cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
         "connect-src 'self' wss: https:; "
         "img-src 'self' data: https:; "
         "frame-src https://s.tradingview.com https://www.tradingview.com; "
-        "font-src 'self' https://fonts.gstatic.com; "
+        "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; "
         "form-action 'self'; base-uri 'self'"
     )
     return response
