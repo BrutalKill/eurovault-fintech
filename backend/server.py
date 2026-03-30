@@ -1091,13 +1091,114 @@ async def train_ml_model(admin = Depends(get_admin_user)):
 async def get_ml_info(admin = Depends(get_admin_user)):
     """Informação sobre o modelo ML actual."""
     info = get_model_info()
-    # Contar leads por categoria para mostrar distribuição
-    total   = await db.users.count_documents({})
+    total     = await db.users.count_documents({})
     converted = await db.users.count_documents({"$or": [{"balance": {"$gt": 0}}, {"status": "Depositado"}]})
     return {
         **info,
         "dataset": {"total_leads": total, "converted": converted, "not_converted": total - converted}
     }
+
+
+@app.get("/api/admin/ml/predict-all")
+async def predict_all_leads(admin = Depends(get_admin_user)):
+    """
+    Predição de probabilidade de depósito para todos os leads.
+    Usa o RandomForestClassifier existente.
+    Returns: {user_id: {score, probability, label}}
+    """
+    results = {}
+    async for user in db.users.find({}, {"_id": 1, "balance": 1, "profit": 1,
+                                          "daily_profit_rate": 1, "kyc_status": 1,
+                                          "phone": 1, "tags": 1, "status": 1,
+                                          "last_seen": 1, "created_at": 1, "followup_date": 1}):
+        uid = str(user["_id"])
+        result = ml_score(user)
+        results[uid] = {
+            "score":       result["score"],
+            "label":       result["label"],
+            "color":       result["color"],
+            "probability": round(result["score"] / 100, 2),
+            "deposit_7d":  result["score"] >= 60,  # Predicted to deposit in 7 days
+        }
+    return results
+
+
+@app.get("/api/admin/analytics/revenue-forecast")
+async def revenue_forecast(admin = Depends(get_admin_user)):
+    """
+    Previsão de receita para os próximos 30 dias.
+    Usa regressão linear simples sobre depósitos históricos.
+    """
+    from datetime import timedelta
+    import numpy as _np
+
+    # Recolher dados históricos (últimos 90 dias)
+    cutoff = datetime.utcnow() - timedelta(days=90)
+    daily: dict = {}
+
+    async for u in db.users.find({"created_at": {"$gte": cutoff}}, {"_id": 0, "balance": 1, "created_at": 1}):
+        day = u["created_at"].strftime("%Y-%m-%d") if u.get("created_at") else None
+        if day:
+            daily[day] = daily.get(day, 0) + float(u.get("balance", 0))
+
+    if len(daily) < 3:
+        return {"historical": [], "forecast": [], "trend": "insufficient_data"}
+
+    days    = sorted(daily.keys())
+    values  = [daily[d] for d in days]
+    x       = _np.arange(len(values))
+    coeffs  = _np.polyfit(x, values, 1)  # linear regression
+    slope, intercept = coeffs
+
+    # Historical data
+    historical = [{"date": d, "revenue": round(v, 2)} for d, v in zip(days, values)]
+
+    # Forecast next 30 days
+    last_date = datetime.strptime(days[-1], "%Y-%m-%d")
+    forecast  = []
+    for i in range(1, 31):
+        fx    = len(values) + i - 1
+        fval  = max(0, slope * fx + intercept)
+        fdate = (last_date + timedelta(days=i)).strftime("%Y-%m-%d")
+        forecast.append({"date": fdate, "revenue": round(fval, 2), "forecast": True})
+
+    trend = "growing" if slope > 0 else "declining" if slope < 0 else "stable"
+    return {"historical": historical, "forecast": forecast,
+            "trend": trend, "daily_growth": round(float(slope), 2)}
+
+
+@app.get("/api/admin/analytics/agent-performance")
+async def agent_performance(admin = Depends(get_admin_user)):
+    """
+    Matriz de performance dos agentes.
+    Calcula: leads atribuídos, convertidos, capital gerido, AI score médio.
+    """
+    agents = []
+    async for ag in db.agents.find({}, {"_id": 1, "full_name": 1, "email": 1}):
+        agent_id  = str(ag["_id"])
+        leads     = []
+        async for u in db.users.find({"assigned_agent": agent_id}):
+            leads.append(u)
+
+        converted     = [l for l in leads if float(l.get("balance", 0)) > 0 or l.get("status") == "Depositado"]
+        total_balance = sum(float(l.get("balance", 0)) for l in leads)
+        scores        = [ml_score(l)["score"] for l in leads]
+        avg_score     = round(sum(scores) / len(scores), 1) if scores else 0
+        conv_rate     = round(len(converted) / len(leads) * 100, 1) if leads else 0
+
+        agents.append({
+            "id":              agent_id,
+            "name":            ag.get("full_name", ""),
+            "email":           ag.get("email", ""),
+            "leads_assigned":  len(leads),
+            "leads_converted": len(converted),
+            "conversion_rate": conv_rate,
+            "capital_managed": round(total_balance, 2),
+            "avg_ai_score":    avg_score,
+        })
+
+    agents.sort(key=lambda a: a["leads_converted"], reverse=True)
+    return agents
 
 
 @app.get("/api/health")
