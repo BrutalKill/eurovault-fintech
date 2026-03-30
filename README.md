@@ -73,12 +73,15 @@ graph TD
     C -->|No| E[FastAPI Controller]
     E -->|Analyze Behavior| F[ML Service - Random Forest]
     F -->|Return Score| G[Real-time Dashboard]
+    D -->|Persist Ban & Log| H[(MongoDB Atlas)]
+    E -->|Read / Write Data| H
 
     style A fill:#1a1a1a,stroke:#3A86FF,stroke-width:2px
     style B fill:#0d1a2a,stroke:#3A86FF,stroke-width:2px
     style C fill:#1a1500,stroke:#FFBE0B,stroke-width:2px
     style D fill:#1a0a0a,stroke:#ef4444,stroke-width:2px
     style G fill:#0a1a0d,stroke:#22c58b,stroke-width:2px
+    style H fill:#1a1500,stroke:#FFBE0B,stroke-width:2px
 ```
 
 > **Live request flow:** Every HTTP request passes through the Security Middleware before reaching any controller. Suspicious paths (`.env`, `wp-admin`, `.git/config`, etc.) are trapped, logged to MongoDB, and the attacker's IP is permanently banned.
