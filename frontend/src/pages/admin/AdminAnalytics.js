@@ -277,8 +277,8 @@ export default function AdminAnalytics() {
             <TrendingUp size={15} color="#22c58b" />
           </div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#f3f5ff' }}>Revenue Forecasting</div>
-            <div style={{ fontSize: 11, color: '#7a8299' }}>Regressão linear sobre dados históricos</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#f3f5ff' }}>Revenue Forecasting — ML</div>
+            <div style={{ fontSize: 11, color: '#7a8299' }}>Linear regression on historical deposit data</div>
           </div>
           {mlInfo && (
             <div style={{ marginLeft: 'auto', fontSize: 10, padding: '3px 9px', borderRadius: 5, background: mlInfo.model_loaded ? 'rgba(34,197,139,0.1)' : 'rgba(255,190,11,0.1)', color: mlInfo.model_loaded ? '#22c58b' : '#FFBE0B', border: `1px solid ${mlInfo.model_loaded ? 'rgba(34,197,139,0.3)' : 'rgba(255,190,11,0.3)'}`, fontWeight: 700 }}>
