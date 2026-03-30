@@ -64,29 +64,21 @@ The REST API is fully documented with **Swagger UI** and **ReDoc**:
 
 
 ## 🏗️ System Architecture
+
+```mermaid
 graph TD
     A[User / Attacker] -->|HTTP Request| B[Security Middleware]
     B -->|Check Patterns| C{Honeypot Trap?}
-    C -->|Yes — Suspicious Path| D[Log & Block IP · MongoDB]
-    C -->|No — Legitimate Request| E[FastAPI Controller]
-    E -->|Business Logic| F[Service Layer]
-    F -->|Score Lead| G[ML Service · Random Forest]
-    F -->|Persist Data| H[(MongoDB Atlas)]
-    G -->|Return Score 0–100| I[Admin CRM Dashboard]
-    H -->|Real-time Polling| I
-    I -->|Assign Lead| J[Agent CRM]
-    J -->|Update Status| H
+    C -->|Yes| D[Log & Block IP]
+    C -->|No| E[FastAPI Controller]
+    E -->|Analyze Behavior| F[ML Service - Random Forest]
+    F -->|Return Score| G[Real-time Dashboard]
 
-    style A fill:#1e1e30,color:#f3f5ff,stroke:#3A86FF
-    style B fill:#111118,color:#FFBE0B,stroke:#FFBE0B
-    style C fill:#111118,color:#f3f5ff,stroke:#26263a
-    style D fill:#1a0a0a,color:#ef4444,stroke:#ef4444
-    style E fill:#0d1a2a,color:#3A86FF,stroke:#3A86FF
-    style F fill:#0d1a2a,color:#3A86FF,stroke:#3A86FF
-    style G fill:#0a1a0d,color:#22c58b,stroke:#22c58b
-    style H fill:#1a1500,color:#FFBE0B,stroke:#FFBE0B
-    style I fill:#111118,color:#f3f5ff,stroke:#3A86FF
-    style J fill:#111118,color:#a855f7,stroke:#a855f7
+    style A fill:#1a1a1a,stroke:#3A86FF,stroke-width:2px
+    style B fill:#0d1a2a,stroke:#3A86FF,stroke-width:2px
+    style C fill:#1a1500,stroke:#FFBE0B,stroke-width:2px
+    style D fill:#1a0a0a,stroke:#ef4444,stroke-width:2px
+    style G fill:#0a1a0d,stroke:#22c58b,stroke-width:2px
 ```
 
 > **Live request flow:** Every HTTP request passes through the Security Middleware before reaching any controller. Suspicious paths (`.env`, `wp-admin`, `.git/config`, etc.) are trapped, logged to MongoDB, and the attacker's IP is permanently banned.
