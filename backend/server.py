@@ -2437,9 +2437,9 @@ async def get_honeypot_logs(admin = Depends(get_admin_user)):
                 {"key": settings_key}, {"$set": {"started_at": period_start}}
             )
 
-    # ── Logs (histórico completo) ──────────────────────────────────────────────
+    # ── Logs (histórico completo, sem limite) ────────────────────────────────
     logs = []
-    async for entry in db.honeypot_logs.find({}, {"_id": 0}).sort("ts", -1).limit(200):
+    async for entry in db.honeypot_logs.find({}, {"_id": 0}).sort("ts", -1):
         logs.append(entry)
     seen_ts = {e.get("ts") for e in logs}
     for e in reversed(_honeypot_log):
@@ -2454,7 +2454,7 @@ async def get_honeypot_logs(admin = Depends(get_admin_user)):
     secs_left  = max(0, int((next_reset - now).total_seconds()))
 
     return {
-        "logs":            logs[:100],
+        "logs":            logs,
         "period_start":    period_start_iso,
         "next_reset_secs": secs_left,
         "period_stats": {
