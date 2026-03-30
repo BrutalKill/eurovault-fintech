@@ -1,72 +1,24 @@
 """
-admin_leads.py — Gestão de leads e utilizadores pelo admin:
-Saldo, estado, notas, KYC, emails, follow-ups, auditoria, chat, levantamentos,
-cartões, credenciais, impersonation e gestão de agentes (delega ao agent_router).
+admin_leads.py — Gestão de leads e utilizadores pelo admin.
 """
 from fastapi import APIRouter, Depends, HTTPException, Request as FastAPIRequest
 from fastapi.responses import Response
-from pydantic import BaseModel
-from typing import Optional, List
 from datetime import datetime, timedelta
 from bson import ObjectId
 import base64, os
 
-from deps import (db, serialize_doc, get_admin_user, pwd_context,
-                  log_admin_action, manager, SECRET_KEY, ALGORITHM)
-from ml_scoring import ml_score
+from core.database  import db, serialize_doc
+from core.security  import get_admin_user, pwd_context, log_admin_action, manager
+from core.config    import SECRET_KEY, ALGORITHM
+from models.user         import (UpdateBalanceRequest, UpdateStatusRequest,
+                                  UpdateDailyRateRequest, UpdateTagsRequest,
+                                  AdminPasswordChangeRequest, LeadNotesRequest,
+                                  NoteAddRequest, WithdrawalLimitRequest, FollowUpRequest)
+from models.financial    import WithdrawalReviewRequest
+from models.communication import ChatMessageRequest, EmailRequest, GenericEmailRequest
+from services.ml_scoring  import ml_score
 
 router = APIRouter()
-
-
-# ── Modelos ────────────────────────────────────────────────────────────────────
-class UpdateBalanceRequest(BaseModel):
-    balance: float
-    profit: float
-    def model_post_init(self, __context):
-        if self.profit < 0:   self.profit  = 0.0
-        if self.balance < 0:  self.balance = 0.0
-
-class UpdateStatusRequest(BaseModel):
-    status: str
-
-class UpdateDailyRateRequest(BaseModel):
-    daily_profit_rate: float
-
-class UpdateTagsRequest(BaseModel):
-    tags: List[str]
-
-class AdminPasswordChangeRequest(BaseModel):
-    new_password: str
-
-class LeadNotesRequest(BaseModel):
-    notes: str
-
-class NoteAddRequest(BaseModel):
-    text: str
-
-class WithdrawalLimitRequest(BaseModel):
-    daily_withdrawal_limit: float
-
-class FollowUpRequest(BaseModel):
-    followup_date: Optional[str] = None
-    followup_note: Optional[str] = ""
-
-class WithdrawalReviewRequest(BaseModel):
-    status: str
-    reject_reason: Optional[str] = ""
-
-class EmailRequest(BaseModel):
-    subject: str
-    body: str
-
-class GenericEmailRequest(BaseModel):
-    to: str
-    subject: str
-    body: str
-    recipient_name: Optional[str] = ""
-
-class ChatMessageRequest(BaseModel):
-    message: str
 
 
 CHAT_TEMPLATES_LIST = [

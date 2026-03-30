@@ -9,9 +9,9 @@ from collections import defaultdict
 from bson import ObjectId
 import csv, io
 
-from deps import (db, serialize_doc, get_admin_user,
-                  _req_log, _SERVER_START, _build_timeseries)
-from ml_scoring import ml_score, train_model, get_model_info
+from core.database import db, serialize_doc
+from core.security import get_admin_user, _req_log, _SERVER_START, _build_timeseries
+from services.ml_scoring import ml_score, train_model, get_model_info
 
 router = APIRouter()
 

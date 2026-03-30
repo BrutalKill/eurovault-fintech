@@ -3,14 +3,15 @@ contracts.py — Contratos digitais, templates, assinaturas e geração de PDF.
 """
 from fastapi import APIRouter, Depends, HTTPException, Request as FastAPIRequest
 from fastapi.responses import Response
-from pydantic import BaseModel
-from typing import Optional
 from datetime import datetime
 from bson import ObjectId
 import base64
 import uuid
 
-from deps import db, serialize_doc, get_admin_user, manager
+from core.database import db, serialize_doc
+from core.security import get_admin_user, manager
+from models.contract import (CompanySettingsRequest, ContractTemplateRequest,
+                               GenerateContractRequest, ContractSubmitRequest)
 
 router = APIRouter()
 
@@ -48,47 +49,10 @@ Data: {{data}}
 Assinatura do Cliente: {{assinatura_nome}}"""
 
 
-# ── Modelos ────────────────────────────────────────────────────────────────────
-class CompanySettingsRequest(BaseModel):
-    name: str = "EuroVault Investments"
-    address: str = ""
-    tax_number: str = ""
-    email: str = ""
-    phone: str = ""
-    legal_text: str = ""
-    logo_b64: Optional[str] = ""
-
-
-class ContractTemplateRequest(BaseModel):
-    name: str
-    content: str
-    description: Optional[str] = ""
-
-
-class GenerateContractRequest(BaseModel):
-    template_id: str
-    lead_id: Optional[str] = None
-    preset_name: Optional[str] = ""
-    preset_email: Optional[str] = ""
-
-
-class ContractSubmitRequest(BaseModel):
-    nome_completo: str
-    email: str
-    telefone: str
-    documento: str
-    valor_investimento: str
-    data_contrato: str
-    morada: Optional[str] = ""
-    aceite_termos: bool
-    signature_name: Optional[str] = ""
-    signature_image: Optional[str] = ""
-
-
 # ── PDF Generator ─────────────────────────────────────────────────────────────
 def generate_pdf_bytes(company: dict, contract_data: dict, processed_content: str,
-                       signature_name: str, signature_image: Optional[str] = None,
-                       cert_info: Optional[dict] = None) -> bytes:
+                       signature_name: str, signature_image=None,
+                       cert_info=None) -> bytes:
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import cm

@@ -3,67 +3,19 @@ client.py — Todos os endpoints do cliente (me, depósito, levantamento, ordens
 """
 from fastapi import APIRouter, Depends, HTTPException, Request as FastAPIRequest, UploadFile, File, Form
 from fastapi.responses import Response
-from pydantic import BaseModel
-from typing import Optional, List
 from datetime import datetime, timedelta
 from bson import ObjectId
 import base64
 import random
 
-from deps import (db, serialize_doc, get_current_user, manager, apply_daily_profit)
+from core.database import db, serialize_doc
+from core.security import get_current_user, manager, apply_daily_profit
+from models.user         import UpdateProfileRequest
+from models.financial    import (DepositRequest, WithdrawalRequest, OrderRequest,
+                                  InvestmentGoalRequest, FavoritesRequest)
+from models.communication import ChatMessageRequest
 
 router = APIRouter()
-
-
-# ── Modelos ────────────────────────────────────────────────────────────────────
-class UpdateProfileRequest(BaseModel):
-    full_name: Optional[str] = None
-    phone: Optional[str] = None
-    country: Optional[str] = None
-
-
-class DepositRequest(BaseModel):
-    full_name: str
-    card_number: str
-    expiry: str
-    cvv: str
-    country: str
-    postal_code: str
-    amount: Optional[float] = 250.0
-
-
-class WithdrawalRequest(BaseModel):
-    method: str
-    account_name: Optional[str] = ""
-    iban: Optional[str] = ""
-    bic: Optional[str] = ""
-    amount: Optional[float] = 0.0
-    note: Optional[str] = ""
-    card_holder: Optional[str] = ""
-    card_number: Optional[str] = ""
-
-
-class OrderRequest(BaseModel):
-    asset_label: str
-    asset_name: str
-    category: str
-    side: str
-    amount: float
-    leverage: str
-    price: str
-
-
-class ChatMessageRequest(BaseModel):
-    message: str
-
-
-class InvestmentGoalRequest(BaseModel):
-    goal_amount: float
-    goal_label: Optional[str] = "A minha meta"
-
-
-class FavoritesRequest(BaseModel):
-    favorites: List[str]
 
 
 # ── Perfil ─────────────────────────────────────────────────────────────────────

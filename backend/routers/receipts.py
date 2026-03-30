@@ -3,19 +3,18 @@ receipts.py — Geração de recibos PDF (versão Cliente e versão Banco/Neutro
 """
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from fastapi.responses import Response
-from pydantic import BaseModel
-from typing import Optional
 from datetime import datetime
 import hashlib as _hl
 import io as _io
 
-from deps import db, get_admin_user
+from core.database import db
+from core.security import get_admin_user
+from models.receipt import ReceiptRequest, ReceiptProviderRequest
 
 router = APIRouter()
 
 
 SECURITY_CLAUSE = (
-    "The present service is considered fully rendered and executed upon provision of access credentials "
     "or consultation via telematic means (Voice Call/WhatsApp). Given the digital and immediate nature "
     "of the service, the client acknowledges that no right of withdrawal or refund exists after commencement "
     "of execution, in accordance with International Digital Services Standards (IDSS) and Global Digital Jurisdiction."
@@ -39,21 +38,6 @@ _BANK_SECURITY_CLAUSE = (
 )
 
 _BANCO_ZERO_BRAND = True
-
-
-# ── Modelos ────────────────────────────────────────────────────────────────────
-class ReceiptRequest(BaseModel):
-    client_name: str
-    value: str
-    date: Optional[str] = ""
-    notes: Optional[str] = ""
-
-
-class ReceiptProviderRequest(BaseModel):
-    name: str
-    nif: str
-    address: str
-    signature_name: Optional[str] = ""
 
 
 # ── PDF Cliente (com marca EuroVault) ─────────────────────────────────────────

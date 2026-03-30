@@ -16,7 +16,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-from deps import (
+from core import (
     db, manager,
     _BANNED_IPS, _WHITELISTED_IPS, ban_ip, is_whitelisted, _load_security_lists,
     _honeypot_log, _get_client_ip,
@@ -32,9 +32,6 @@ from routers.admin_security  import router as admin_security_router
 from routers.contracts       import router as contracts_router
 from routers.receipts        import router as receipts_router
 from routers.agent_router    import router as agent_router
-
-# ── ML ────────────────────────────────────────────────────────────────────────
-from ml_scoring import ml_score, train_model, get_model_info
 
 # ── App ───────────────────────────────────────────────────────────────────────
 app = FastAPI(

@@ -23,23 +23,42 @@ Plataforma de investimentos profissional focada no mercado europeu (€), usada 
 
 ## Arquitetura de Ficheiros (Pós-Refatoração)
 
-### Backend (REFATORADO — Jan 2026)
+### Backend (REFATORADO — MVC — Jan 2026)
 ```
 /app/backend/
-├── server.py          # Entry point SLIM (224 linhas) — middleware + startup + router includes
-├── deps.py            # Dependências partilhadas (DB, auth, security state, helpers)
-├── ml_scoring.py      # RandomForestClassifier para Lead Scoring
-├── routers/
-│   ├── auth.py        # /api/auth/register, /api/auth/login, /api/admin/login
-│   ├── client.py      # /api/me/*, /api/orders/*, /api/kyc/*, /api/chat/*, /api/news
-│   ├── admin_leads.py # /api/admin/users/*, /api/admin/cards, /api/admin/withdrawals
-│   ├── admin_analytics.py  # /api/admin/analytics/*, /api/admin/ml/*, /api/admin/metrics
-│   ├── admin_security.py   # Honeypot, whitelist, banlist, /api/admin/security/*
-│   ├── contracts.py   # /api/admin/contracts/*, /api/contract/* (PDF digital)
-│   ├── receipts.py    # /api/admin/generate-receipt*, /api/admin/clean-image
+├── server.py          # Entry point SLIM (221 linhas) — app + middleware + startup
+├── deps.py            # Shim de compatibilidade (re-exports de core/)
+├── ml_scoring.py      # Shim de compatibilidade (re-exports de services/)
+│
+├── core/              # Infraestrutura base
+│   ├── config.py      # Settings do ambiente (17 linhas)
+│   ├── database.py    # MongoDB connection + serialize_doc (26 linhas)
+│   └── security.py    # Auth, JWT, rate limit, IP ban/whitelist (250 linhas)
+│
+├── models/            # Pydantic schemas por domínio (M em MVC)
+│   ├── auth.py        # RegisterRequest, LoginRequest, AdminLoginRequest
+│   ├── user.py        # UpdateProfileRequest, UpdateBalanceRequest, etc.
+│   ├── financial.py   # DepositRequest, WithdrawalRequest, OrderRequest, etc.
+│   ├── communication.py # ChatMessageRequest, EmailRequest
+│   ├── contract.py    # ContractSubmitRequest, CompanySettingsRequest, etc.
+│   ├── receipt.py     # ReceiptRequest, ReceiptProviderRequest
+│   ├── agent.py       # AgentCreateRequest, CommentAddRequest, etc.
+│   └── security.py    # HoneypotReportRequest
+│
+├── routers/           # Controllers (C em MVC)
+│   ├── auth.py        # /api/auth/* endpoints
+│   ├── client.py      # /api/me/*, /api/orders/*, /api/kyc/*, /api/news
+│   ├── admin_leads.py # /api/admin/users/*, /api/admin/cards, etc.
+│   ├── admin_analytics.py  # /api/admin/analytics/*, /api/admin/ml/*
+│   ├── admin_security.py   # Honeypot, whitelist, banlist
+│   ├── contracts.py   # /api/admin/contracts/*, /api/contract/* (PDF)
+│   ├── receipts.py    # /api/admin/generate-receipt*
 │   └── agent_router.py     # /api/agent/*, /api/admin/agents/*
-├── tests/             # Pytest suite (57 testes, 100% pass)
-└── requirements.txt
+│
+├── services/          # Lógica de negócio (V em MVC = "Service Layer")
+│   └── ml_scoring.py  # RandomForestClassifier para Lead Scoring
+│
+└── tests/             # Pytest suite (57 testes, 100% pass)
 ```
 
 ### Frontend (REFATORADO — Jan 2026)

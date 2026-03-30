@@ -3,22 +3,16 @@ admin_security.py — Honeypot endpoints, whitelist/banlist CRUD, stress-test.
 """
 from fastapi import APIRouter, Depends, HTTPException, Request as FastAPIRequest
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
-from typing import Optional
 from datetime import datetime, timedelta
 from bson import ObjectId
 
-from deps import (db, get_admin_user,
-                  _BANNED_IPS, _WHITELISTED_IPS, ban_ip, is_whitelisted,
-                  _honeypot_log, _is_critical_path, _top_route, _get_client_ip)
+from core.database import db
+from core.security import (get_admin_user, _BANNED_IPS, _WHITELISTED_IPS,
+                             ban_ip, is_whitelisted, _honeypot_log,
+                             _is_critical_path, _top_route, _get_client_ip)
+from models.security import HoneypotReportRequest
 
 router = APIRouter()
-
-
-class HoneypotReportRequest(BaseModel):
-    path: str
-    method: Optional[str] = "GET"
-    referrer: Optional[str] = ""
 
 
 # ── Honeypot traps ────────────────────────────────────────────────────────────

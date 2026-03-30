@@ -2,35 +2,16 @@
 auth.py — Autenticação: registo, login (cliente e admin).
 """
 from fastapi import APIRouter, Depends, HTTPException, Request as FastAPIRequest
-from pydantic import BaseModel, EmailStr
-from typing import Optional
 from datetime import datetime
 from bson import ObjectId
 
-from deps import (db, serialize_doc, create_token, pwd_context, check_rate_limit,
-                  manager, whitelist_admin_ip, _get_client_ip,
-                  ADMIN_USERNAME, ADMIN_PASSWORD)
+from core.database  import db
+from core.security  import (create_token, pwd_context, check_rate_limit,
+                              manager, whitelist_admin_ip, _get_client_ip)
+from core.config    import ADMIN_USERNAME, ADMIN_PASSWORD
+from models.auth    import RegisterRequest, LoginRequest, AdminLoginRequest
 
 router = APIRouter()
-
-
-# ── Modelos ────────────────────────────────────────────────────────────────────
-class RegisterRequest(BaseModel):
-    full_name: str
-    email: EmailStr
-    password: str
-    country: Optional[str] = "Portugal"
-    phone: Optional[str] = ""
-
-
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
-
-
-class AdminLoginRequest(BaseModel):
-    username: str
-    password: str
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────

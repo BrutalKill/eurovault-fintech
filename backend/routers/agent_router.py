@@ -2,44 +2,16 @@
 agent_router.py — Todos os endpoints do Agent CRM.
 """
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from pydantic import BaseModel
-from typing import Optional, List
 from datetime import datetime
 from bson import ObjectId
 import base64
 
-from deps import db, get_admin_user, get_current_agent, serialize_doc, pwd_context, create_token
+from core.database import db, serialize_doc
+from core.security import get_admin_user, get_current_agent, pwd_context, create_token
+from models.agent import AgentCreateRequest, AgentLoginRequest, CommentAddRequest, LeadAssignRequest
+from models.user  import UpdateStatusRequest, UpdateTagsRequest
 
 router = APIRouter()
-
-
-# ── Models ────────────────────────────────────────────────────────────────────
-class AgentCreateRequest(BaseModel):
-    full_name: str
-    email: str
-    password: str
-    phone: Optional[str] = ""
-
-
-class AgentLoginRequest(BaseModel):
-    email: str
-    password: str
-
-
-class CommentAddRequest(BaseModel):
-    text: str
-
-
-class LeadAssignRequest(BaseModel):
-    agent_id: Optional[str] = None
-
-
-class UpdateStatusRequest(BaseModel):
-    status: str
-
-
-class UpdateTagsRequest(BaseModel):
-    tags: List[str]
 
 
 # ── Admin: gestão de agentes ──────────────────────────────────────────────────
