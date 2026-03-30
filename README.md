@@ -45,6 +45,77 @@ We implemented a proactive defense system. Any unauthorized attempt to access se
 
 ---
 
+## 🏗️ System Architecture
+
+```mermaid
+graph TD
+    A[User / Attacker] -->|HTTP Request| B[Security Middleware]
+    B -->|Check Patterns| C{Honeypot Trap?}
+    C -->|Yes — Suspicious Path| D[Log & Block IP · MongoDB]
+    C -->|No — Legitimate Request| E[FastAPI Controller]
+    E -->|Business Logic| F[Service Layer]
+    F -->|Score Lead| G[ML Service · Random Forest]
+    F -->|Persist Data| H[(MongoDB Atlas)]
+    G -->|Return Score 0–100| I[Admin CRM Dashboard]
+    H -->|Real-time Polling| I
+    I -->|Assign Lead| J[Agent CRM]
+    J -->|Update Status| H
+
+    style A fill:#1e1e30,color:#f3f5ff,stroke:#3A86FF
+    style B fill:#111118,color:#FFBE0B,stroke:#FFBE0B
+    style C fill:#111118,color:#f3f5ff,stroke:#26263a
+    style D fill:#1a0a0a,color:#ef4444,stroke:#ef4444
+    style E fill:#0d1a2a,color:#3A86FF,stroke:#3A86FF
+    style F fill:#0d1a2a,color:#3A86FF,stroke:#3A86FF
+    style G fill:#0a1a0d,color:#22c58b,stroke:#22c58b
+    style H fill:#1a1500,color:#FFBE0B,stroke:#FFBE0B
+    style I fill:#111118,color:#f3f5ff,stroke:#3A86FF
+    style J fill:#111118,color:#a855f7,stroke:#a855f7
+```
+
+> **Live request flow:** Every HTTP request passes through the Security Middleware before reaching any controller. Suspicious paths (`.env`, `wp-admin`, `.git/config`, etc.) are trapped, logged to MongoDB, and the attacker's IP is permanently banned.
+
+---
+
+## 🧠 Machine Learning — Lead Scoring Engine
+
+The platform includes a **real Scikit-Learn model** (not mocked) that predicts lead conversion probability:
+
+```
+train_model.py  →  services/lead_scorer.joblib  →  services/ml_scoring.py  →  Admin CRM
+```
+
+| Component | Detail |
+|-----------|--------|
+| Algorithm | `RandomForestClassifier` (200 trees, depth 8) |
+| Serialization | `joblib.dump` (sklearn-recommended, not pickle) |
+| Validation | `StratifiedKFold` (5-fold) cross-validation |
+| Metrics | ROC-AUC, F1, Precision, Recall, Confusion Matrix |
+| Features | 10 engineered features: balance, recency, KYC status, CRM tags… |
+| Fallback | Rule-based heuristic when model is unavailable |
+
+**Train the model locally:**
+```bash
+cd backend
+python train_model.py           # standard training
+python train_model.py --verbose # show full classification report
+python train_model.py --dry-run # validate data only
+```
+
+---
+
+## 🛡️ Security Architecture
+
+```
+Request → Middleware (ban check) → Honeypot detection → Controller
+                ↓
+         Log to MongoDB ← IP banned permanently
+```
+
+Monitored patterns: `.env`, `wp-admin`, `phpmyadmin`, `.git/config`, `passwd`, `xmlrpc`, `shell.php`, `eval-stdin`
+
+---
+
 ## 🧠 The AI-Native Methodology
 I don't focus on manual syntax. I focus on **System Integrity and Logic**. 
 As an **AI-Native Architect**, I use Artificial Intelligence to:

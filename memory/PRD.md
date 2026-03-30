@@ -96,7 +96,10 @@ Plataforma de investimentos profissional focada no mercado europeu (€), usada 
 
 ## O que foi Implementado
 
-### Refatoração de Código (Jan 2026) — CONCLUÍDO
+### train_model.py (novo — Jan 2026)
+- Script standalone para treinar o modelo ML e gerar `services/lead_scorer.joblib`
+- Uso: `python train_model.py`, `--verbose`, `--dry-run`, `--min-samples N`
+- Mostra métricas explícitas: ROC-AUC, F1, confusion matrix, feature importances
 - [x] **server.py dividido** em 8 routers: 4386 → 224 linhas (entry point)
 - [x] **deps.py expandido** com security state, helpers partilhados
 - [x] **AdminDashboard.js dividido**: 1564 → 676 linhas + LeadDrawer.js (739 linhas)
