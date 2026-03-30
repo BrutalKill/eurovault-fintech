@@ -15,6 +15,9 @@ import collections
 from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
 
+# ── ML Scoring Engine ────────────────────────────────────────────────────────
+from ml_scoring import ml_score, train_model, get_model_info
+
 # ── Importar routers refactorizados ──────────────────────────────────────────
 import sys, os as _os
 sys.path.insert(0, _os.path.dirname(__file__))
@@ -974,56 +977,9 @@ async def get_all_users(admin = Depends(get_admin_user)):
 
 
 async def _compute_lead_score(user: dict, user_id: str, now: datetime) -> int:
-    """AI Lead Scoring — 8 behavioural signals, 0-100 scale."""
-    score = 0
-    balance = float(user.get("balance", 0))
-    status  = user.get("status", "Novo")
-
-    # Signal 1: Made a deposit (balance > 0) → +30
-    if balance > 0:
-        score += 30
-    # Signal 2: High balance → +10 or +20
-    if balance > 5000:
-        score += 20
-    elif balance > 1000:
-        score += 10
-
-    # Signal 3: VIP or Deposited status → +15
-    if status == "VIP":
-        score += 15
-    elif status == "Depositado":
-        score += 10
-
-    # Signal 4: Seen within 24h → +15, within 7 days → +8
-    last_seen = user.get("last_seen")
-    if last_seen:
-        delta_h = (now - last_seen).total_seconds() / 3600
-        if delta_h < 24:
-            score += 15
-        elif delta_h < 168:
-            score += 8
-
-    # Signal 5: KYC verified → +10
-    if user.get("kyc_status") == "approved":
-        score += 10
-
-    # Signal 6: Has active orders → +8
-    try:
-        order_count = await db.orders.count_documents({"user_id": user_id, "status": "executada"})
-        if order_count > 0:
-            score += min(order_count * 2, 8)
-    except Exception:
-        pass
-
-    # Signal 7: Has custom tags → +2 per tag (max 6)
-    tags = user.get("tags", [])
-    score += min(len(tags) * 2, 6)
-
-    # Signal 8: Has follow-up scheduled → +6
-    if user.get("followup_date"):
-        score += 6
-
-    return min(score, 100)  # cap at 100
+    """AI Lead Score — usa ML quando disponível, regras como fallback."""
+    result = ml_score(user)
+    return result["score"]
 
 
 @app.get("/api/admin/users/{user_id}/score")
@@ -1032,18 +988,69 @@ async def get_lead_score(user_id: str, admin = Depends(get_admin_user)):
     user = await db.users.find_one({"_id": ObjectId(user_id)})
     if not user:
         raise HTTPException(status_code=404, detail="Lead não encontrado")
-    now = datetime.utcnow()
-    score = await _compute_lead_score(user, user_id, now)
-    # Classificação
-    if score >= 80:
-        label, color = "Hot Lead", "#ef4444"
-    elif score >= 60:
-        label, color = "Warm Lead", "#f97316"
-    elif score >= 40:
-        label, color = "Lukewarm", "#FFBE0B"
-    else:
-        label, color = "Cold Lead", "#3A86FF"
-    return {"score": score, "label": label, "color": color, "user_id": user_id}
+    result = ml_score(user)
+    result["user_id"] = user_id
+    return result
+
+
+@app.post("/api/admin/ml/train")
+async def train_ml_model(admin = Depends(get_admin_user)):
+    """
+    Treina o modelo de ML com todos os leads actuais.
+    Executa RandomForestClassifier com cross-validation.
+    """
+    users = []
+    async for u in db.users.find({}, {"_id": 0, "balance": 1, "profit": 1, "daily_profit_rate": 1,
+                                       "kyc_status": 1, "phone": 1, "tags": 1, "status": 1,
+                                       "last_seen": 1, "created_at": 1, "followup_date": 1}):
+        users.append(u)
+
+    if len(users) < 5:
+        raise HTTPException(status_code=400, detail=f"Not enough leads to train ({len(users)}). Need at least 5.")
+
+    meta = train_model(users)
+    if "error" in meta:
+        raise HTTPException(status_code=400, detail=meta["error"])
+    return {"success": True, "training_result": meta}
+
+
+@app.get("/api/admin/ml/info")
+async def get_ml_info(admin = Depends(get_admin_user)):
+    """Informação sobre o modelo ML actual."""
+    info = get_model_info()
+    # Contar leads por categoria para mostrar distribuição
+    total   = await db.users.count_documents({})
+    converted = await db.users.count_documents({"$or": [{"balance": {"$gt": 0}}, {"status": "Depositado"}]})
+    return {
+        **info,
+        "dataset": {"total_leads": total, "converted": converted, "not_converted": total - converted}
+    }
+
+
+@app.get("/api/health")
+async def health_check():
+    """Health check endpoint — useful for monitoring and CI/CD."""
+    try:
+        # Check MongoDB
+        await db.command("ping")
+        db_status = "healthy"
+    except Exception:
+        db_status = "unhealthy"
+
+    ml_info = get_model_info()
+
+    return {
+        "status":    "healthy" if db_status == "healthy" else "degraded",
+        "version":   "1.0.0",
+        "database":  db_status,
+        "ml_model":  "loaded" if ml_info["model_loaded"] else "not_trained",
+        "timestamp": datetime.utcnow().isoformat(),
+        "services": {
+            "api":      "up",
+            "honeypot": "active",
+            "scoring":  "ml" if ml_info["model_loaded"] else "rule_based",
+        }
+    }
 
 @app.put("/api/admin/users/{user_id}/balance")
 async def update_user_balance(user_id: str, req: UpdateBalanceRequest, admin = Depends(get_admin_user)):

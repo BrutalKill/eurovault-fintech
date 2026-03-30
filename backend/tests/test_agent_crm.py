@@ -121,6 +121,8 @@ def agent_headers(agent_token):
 # Test: Admin Agent Management
 # ─────────────────────────────────────────────────────────────────
 
+
+@pytest.mark.integration
 class TestAdminAgentManagement:
     """Admin endpoints for agent creation and management"""
 
@@ -160,6 +162,8 @@ class TestAdminAgentManagement:
 # Test: Agent Login
 # ─────────────────────────────────────────────────────────────────
 
+
+@pytest.mark.integration
 class TestAgentLogin:
     """Agent authentication"""
 
@@ -199,6 +203,8 @@ class TestAgentLogin:
 # Test: Agent Profile /api/agent/me
 # ─────────────────────────────────────────────────────────────────
 
+
+@pytest.mark.integration
 class TestAgentMe:
     """Agent profile endpoint"""
 
@@ -226,6 +232,8 @@ class TestAgentMe:
 # Test: Agent Leads /api/agent/leads
 # ─────────────────────────────────────────────────────────────────
 
+
+@pytest.mark.integration
 class TestAgentLeads:
     """Agent leads endpoint"""
 
@@ -277,6 +285,8 @@ class TestAgentLeads:
 # Test: Agent Profile Photo Upload
 # ─────────────────────────────────────────────────────────────────
 
+
+@pytest.mark.integration
 class TestAgentPhotoUpload:
     """Photo upload endpoint /api/agent/profile/photo"""
 
@@ -349,6 +359,8 @@ class TestAgentPhotoUpload:
 # Test: Comments CRUD
 # ─────────────────────────────────────────────────────────────────
 
+
+@pytest.mark.integration
 class TestAgentComments:
     """Comment endpoints for agent leads"""
 
@@ -395,6 +407,8 @@ class TestAgentComments:
 # Test: Status Update
 # ─────────────────────────────────────────────────────────────────
 
+
+@pytest.mark.integration
 class TestAgentStatusUpdate:
     """Status update endpoint"""
 
@@ -449,6 +463,8 @@ class TestAgentStatusUpdate:
 # Test: Header stats calculation
 # ─────────────────────────────────────────────────────────────────
 
+
+@pytest.mark.integration
 class TestHeaderStats:
     """Verify data needed for header stats (total leads, deposited, total balance)"""
 
