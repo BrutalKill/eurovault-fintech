@@ -23,10 +23,22 @@ This project is a **Proof of Concept (PoC)** showing how **AI Orchestration** ca
 ## 🛡️ Key Modules & Cybersecurity
 The EuroVault isn't just a UI; it's a secure financial infrastructure.
 
+### ⚡ What Makes This System Stand Out
+
+- 🛡️ **Active Cybersecurity:** Real-time Honeypot & IP Blocking — unauthorized paths are trapped, logged, and the attacker's IP permanently banned in milliseconds.
+- 🧠 **Predictive Intelligence:** Real ML (Scikit-Learn) for Lead Scoring — `RandomForestClassifier` trained on live CRM data, not a mock.
+- ⚙️ **Resilient Architecture:** High-performance FastAPI backend with async MongoDB driver, JWT auth, and multi-level role system (Admin + Agent).
+
+---
+
+### 🛡️ Real-Time Attack Detection (Honeypot in Action)
+
+![Security Hub Demo](./docs/security-demo.gif)
+
+> **Visual Proof:** The system monitors unauthorized paths (like `/.env` or `/wp-admin`). As shown above, suspicious requests are instantly trapped, the IP is logged to MongoDB, and access is permanently revoked.
+
 ### 1. Active Security Hub (Honeypot)
-We implemented a proactive defense system. Any unauthorized attempt to access sensitive routes triggers a **Honeypot trap**.
-> **[GIF PLACEHOLDER: INSERT YOUR ATTACK SIMULATION GIF HERE]**
-> *Visual evidence of the system detecting and logging a simulated SQL Injection / Directory Traversal attack.*
+We implemented a proactive defense system. Any unauthorized attempt to access sensitive routes triggers a **Honeypot trap** — the middleware intercepts the request, logs it to MongoDB with full metadata (IP, path, user-agent, timestamp), and permanently bans the attacker's IP.
 
 ### 2. Operational Dashboard & Trading Logs
 - Real-time balance updates.
