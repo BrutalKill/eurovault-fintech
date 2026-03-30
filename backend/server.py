@@ -2411,7 +2411,26 @@ async def hp_api_config(request: FastAPIRequest):
 
 @app.get("/api/admin/honeypot-logs")
 async def get_honeypot_logs(admin = Depends(get_admin_user)):
-    """Admin vê quem tentou aceder às rotas falsas — lê da base de dados."""
+    """Devolve logs + info do período actual (últimas 24h para as stats)."""
+    # ── Período das stats (auto-reset a cada 24h) ─────────────────────────────
+    settings_key = "honeypot_stats_period"
+    period_doc = await db.app_settings.find_one({"key": settings_key})
+
+    now = datetime.utcnow()
+    if not period_doc:
+        # Primeiro arranque — iniciar período agora
+        period_start = now
+        await db.app_settings.insert_one({"key": settings_key, "started_at": period_start})
+    else:
+        period_start = period_doc.get("started_at", now)
+        # Auto-reset se passou mais de 24h
+        if (now - period_start).total_seconds() >= 86400:
+            period_start = now
+            await db.app_settings.update_one(
+                {"key": settings_key}, {"$set": {"started_at": period_start}}
+            )
+
+    # ── Logs (histórico completo) ──────────────────────────────────────────────
     logs = []
     async for entry in db.honeypot_logs.find({}, {"_id": 0}).sort("ts", -1).limit(200):
         logs.append(entry)
@@ -2419,7 +2438,50 @@ async def get_honeypot_logs(admin = Depends(get_admin_user)):
     for e in reversed(_honeypot_log):
         if e.get("ts") not in seen_ts:
             logs.insert(0, e)
-    return logs[:100]
+
+    # ── Stats apenas do período actual ────────────────────────────────────────
+    period_start_iso = period_start.isoformat()
+    period_logs = [l for l in logs if (l.get("ts") or "") >= period_start_iso]
+
+    next_reset = period_start + timedelta(hours=24)
+    secs_left  = max(0, int((next_reset - now).total_seconds()))
+
+    return {
+        "logs":            logs[:100],
+        "period_start":    period_start_iso,
+        "next_reset_secs": secs_left,
+        "period_stats": {
+            "total":      len(period_logs),
+            "critical":   sum(1 for l in period_logs if _is_critical_path(l.get("path",""))),
+            "unique_ips": len({l.get("ip") for l in period_logs if l.get("ip")}),
+            "top_route":  _top_route(period_logs),
+        }
+    }
+
+
+@app.post("/api/admin/security/reset-stats")
+async def reset_honeypot_stats(admin = Depends(get_admin_user)):
+    """Reset manual das estatísticas — inicia novo período de 24h."""
+    now = datetime.utcnow()
+    await db.app_settings.update_one(
+        {"key": "honeypot_stats_period"},
+        {"$set": {"started_at": now, "manually_reset_at": now}},
+        upsert=True,
+    )
+    return {"success": True, "new_period_start": now.isoformat()}
+
+
+def _is_critical_path(path: str) -> bool:
+    critical = ['.env', '.git', 'passwd', 'proc/self', 'phpmyadmin']
+    return any(p in path.lower() for p in critical)
+
+
+def _top_route(logs: list) -> str:
+    counts = {}
+    for l in logs:
+        p = l.get("path", "")
+        counts[p] = counts.get(p, 0) + 1
+    return max(counts, key=counts.get) if counts else "—"
 
 
 @app.get("/api/admin/security/whitelist")

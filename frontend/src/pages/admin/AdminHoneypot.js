@@ -62,6 +62,9 @@ export default function AdminHoneypot() {
   const [loading, setLoading]     = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [stressTesting, setStressTesting] = useState(false);
+  const [periodStats, setPeriodStats] = useState({ total: 0, critical: 0, unique_ips: 0, top_route: '—' });
+  const [nextResetSecs, setNextResetSecs] = useState(0);
+  const [resetting, setResetting] = useState(false);
 
   const fetchAll = useCallback(async () => {
     try {
@@ -70,13 +73,47 @@ export default function AdminHoneypot() {
         fetch(`${BACKEND_URL}/api/admin/security/whitelist`,    { headers: authH() }),
         fetch(`${BACKEND_URL}/api/admin/security/banlist`,      { headers: authH() }),
       ]);
-      if (logsRes.ok) setLogs(await logsRes.json());
+      if (logsRes.ok) {
+        const data = await logsRes.json();
+        // API agora retorna objecto com logs + period_stats
+        if (Array.isArray(data)) {
+          setLogs(data);
+        } else {
+          setLogs(data.logs || []);
+          if (data.period_stats) setPeriodStats(data.period_stats);
+          if (data.next_reset_secs !== undefined) setNextResetSecs(data.next_reset_secs);
+        }
+      }
       if (wlRes.ok)   setWhitelist(await wlRes.json());
       if (blRes.ok)   setBanlist(await blRes.json());
       setLastUpdated(new Date());
     } catch (_) {}
     setLoading(false);
   }, []);
+
+  // Countdown em tempo real
+  useEffect(() => {
+    if (nextResetSecs <= 0) return;
+    const tick = setInterval(() => setNextResetSecs(s => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(tick);
+  }, [nextResetSecs]);
+
+  const formatCountdown = (secs) => {
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = secs % 60;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  };
+
+  const resetStats = async () => {
+    setResetting(true);
+    try {
+      await fetch(`${BACKEND_URL}/api/admin/security/reset-stats`, { method: 'POST', headers: authH() });
+      await fetchAll();
+      toast.success('Stats reset! New 24h period started.');
+    } catch (_) { toast.error('Reset failed'); }
+    setResetting(false);
+  };
 
   useEffect(() => {
     const currentCritical = logs.filter(l => getRisk(l.path).key === 'critical').length;
@@ -140,7 +177,6 @@ export default function AdminHoneypot() {
   };
 
   const byIP = logs.reduce((acc, l) => { acc[l.ip] = (acc[l.ip] || 0) + 1; return acc; }, {});
-  const topPath = Object.keys(logs.reduce((acc, l) => { acc[l.path] = (acc[l.path] || 0) + 1; return acc; }, {})).sort((a, b) => (byIP[b] || 0) - (byIP[a] || 0))[0] || '—';
   const criticalCount = logs.filter(l => getRisk(l.path).key === 'critical').length;
 
   const TABS = [
@@ -157,12 +193,23 @@ export default function AdminHoneypot() {
           <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#f3f5ff', margin: 0 }}>
             {t('hpot_title')}
           </h1>
-          <p style={{ fontSize: 13, color: '#7a8299', margin: '4px 0 0' }}>
+          <p style={{ fontSize: 13, color: '#7a8299', margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: 8 }}>
             {logs.length} {t('hpot_subtitle')}
-            {lastUpdated && <span style={{ marginLeft: 8, color: '#3a3d5a' }}>· {t('hpot_updated')} {lastUpdated.toLocaleTimeString()}</span>}
+            {lastUpdated && <span style={{ color: '#3a3d5a' }}>· {t('hpot_updated')} {lastUpdated.toLocaleTimeString()}</span>}
+            {nextResetSecs > 0 && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '2px 9px', background: 'rgba(255,190,11,0.08)', border: '1px solid rgba(255,190,11,0.2)', borderRadius: 6, color: '#FFBE0B', fontSize: 11, fontWeight: 700, fontFamily: 'monospace' }}>
+                <RefreshCw size={9} />Next reset: {formatCountdown(nextResetSecs)}
+              </span>
+            )}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
+          {/* Reset Stats button */}
+          <button onClick={resetStats} disabled={resetting}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', background: 'rgba(255,190,11,0.08)', border: '1px solid rgba(255,190,11,0.25)', borderRadius: 9, color: '#FFBE0B', fontSize: 12, fontWeight: 700, cursor: resetting ? 'not-allowed' : 'pointer' }}>
+            <RefreshCw size={13} style={resetting ? { animation: 'spin .8s linear infinite' } : {}} />
+            Reset Stats
+          </button>
           <button onClick={runStressTest} disabled={stressTesting}
             style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', background: stressTesting ? 'rgba(239,68,68,0.08)' : 'linear-gradient(135deg,#7c1d1d,#ef4444)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: 9, color: '#fff', fontSize: 12, fontWeight: 800, cursor: stressTesting ? 'not-allowed' : 'pointer', boxShadow: stressTesting ? 'none' : '0 4px 14px rgba(239,68,68,0.35)' }}>
             {stressTesting ? <><Activity size={13} style={{ animation: 'spin .6s linear infinite' }} />Running…</> : <><Zap size={13} />Run Stress Test</>}
@@ -173,24 +220,27 @@ export default function AdminHoneypot() {
         </div>
       </div>
 
-      {/* ── Stat Cards ── */}
+      {/* ── Stat Cards (mostram período actual) ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 18 }}>
         {[
-          { icon: Shield,        color: '#ef4444', label: t('hpot_total'),         value: logs.length,                  pulse: false         },
-          { icon: AlertTriangle, color: '#a855f7', label: t('hpot_critical_stat'), value: criticalCount,                pulse: criticalPulse },
-          { icon: Ban,           color: '#ef4444', label: 'IPs Banned',            value: banlist.length,               pulse: false         },
-          { icon: UserCheck,     color: '#22c58b', label: 'IPs Whitelisted',       value: whitelist.length,             pulse: false         },
+          { icon: Shield,        color: '#ef4444', label: t('hpot_total'),         value: periodStats.total,       pulse: false         },
+          { icon: AlertTriangle, color: '#a855f7', label: t('hpot_critical_stat'), value: periodStats.critical,    pulse: criticalPulse },
+          { icon: Globe,         color: '#FFBE0B', label: t('hpot_ips'),           value: periodStats.unique_ips,  pulse: false         },
+          { icon: Terminal,      color: '#22c58b', label: t('hpot_top_route'),     value: (periodStats.top_route || '—').length > 18 ? periodStats.top_route.slice(0,16)+'…' : (periodStats.top_route || '—'), pulse: false },
         ].map(({ icon: Icon, color, label, value, pulse }) => (
           <div key={label} style={{ background: '#111118', border: `1px solid ${pulse ? color + '60' : color + '20'}`, borderRadius: 12, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, animation: pulse ? 'pulse-critical 0.8s ease-in-out infinite' : 'none', boxShadow: pulse ? `0 0 20px ${color}40` : 'none', transition: 'all .3s' }}>
             <div style={{ width: 34, height: 34, background: `${color}15`, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Icon size={15} color={color} />
             </div>
-            <div>
+            <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 9, color: '#7a8299', marginBottom: 2, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
-              <div className="numeric" style={{ fontSize: 16, fontWeight: 800, color, fontFamily: 'var(--font-heading)' }}>{value}</div>
+              <div className="numeric" style={{ fontSize: 15, fontWeight: 800, color, fontFamily: 'var(--font-heading)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</div>
             </div>
           </div>
         ))}
+      </div>
+      <div style={{ fontSize: 11, color: '#3a3d5a', marginBottom: 14, textAlign: 'right' }}>
+        Stats period · resets every 24h automatically · <button onClick={resetStats} style={{ background: 'none', border: 'none', color: '#FFBE0B', cursor: 'pointer', fontSize: 11, fontWeight: 700 }}>Reset now</button>
       </div>
 
       {/* ── Tabs ── */}
