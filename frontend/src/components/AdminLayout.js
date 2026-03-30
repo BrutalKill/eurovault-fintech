@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { Users, CreditCard, MessageSquare, BarChart2, ArrowDownToLine,
          LogOut, Bell, BellOff, X, UserPlus, CreditCard as CardIcon, AlertTriangle, Shield,
-         CalendarDays, UserCog, FileText, Receipt, Kanban } from 'lucide-react';
+         CalendarDays, UserCog, FileText, Receipt, Kanban, Activity } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLang } from '../context/LangContext';
 import LangSwitcher from './LangSwitcher';
@@ -306,6 +306,7 @@ export default function AdminLayout() {
             { to: '/adm/calendar',     icon: CalendarDays,    label: t('adm_nav_calendar'),     exact: false },
             { to: '/adm/agents',       icon: UserCog,         label: t('adm_nav_agents'),       exact: false },
             { to: '/adm/contracts',    icon: FileText,        label: t('adm_nav_contracts'),    exact: false },
+            { to: '/adm/observability',icon: Activity,        label: 'Observability',           exact: false },
           ].map(({ to, icon: Icon, label, exact, badge, badgeColor }) => (
             <NavLink key={to} to={to} end={exact}
               style={({ isActive }) => ({

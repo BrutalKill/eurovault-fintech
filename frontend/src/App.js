@@ -33,6 +33,7 @@ import AdminAgents from './pages/admin/AdminAgents';
 import AdminContracts from './pages/admin/AdminContracts';
 import AdminReceipts from './pages/admin/AdminReceipts';
 import AdminKanban from './pages/admin/AdminKanban';
+import AdminObservability from './pages/admin/AdminObservability';
 import AgentLogin from './pages/AgentLogin';
 import AgentCRM from './pages/AgentCRM';
 import BalanceHistoryPage from './pages/BalanceHistoryPage';
@@ -95,6 +96,7 @@ export default function App() {
           <Route path="agents" element={<AdminAgents />} />
             <Route path="contracts" element={<AdminContracts />} />
             <Route path="kanban" element={<AdminKanban />} />
+            <Route path="observability" element={<AdminObservability />} />
         </Route>
 
         {/* Agent CRM — Área separada para agentes */}

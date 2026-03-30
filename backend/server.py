@@ -163,6 +163,45 @@ async def security_middleware(request: FastAPIRequest, call_next):
     return await call_next(request)
 
 # ── Middleware: Security Headers + remover cabeçalhos identificadores ───────
+import time as _time_mod
+import collections as _col_mod
+
+# ── Métricas em memória ───────────────────────────────────────────────────────
+_SERVER_START   = _time_mod.time()
+_req_log: _col_mod.deque = _col_mod.deque(maxlen=10_000)
+
+@app.middleware("http")
+async def metrics_middleware(request: FastAPIRequest, call_next):
+    """Regista latência, status e timestamp de cada request."""
+    t0 = _time_mod.perf_counter()
+    response = await call_next(request)
+    ms = round((_time_mod.perf_counter() - t0) * 1000, 1)
+    _req_log.append({
+        "ts":     _time_mod.time(),
+        "path":   request.url.path,
+        "status": response.status_code,
+        "ms":     ms,
+    })
+    return response
+
+
+def _build_timeseries(window_secs: int = 60, slots: int = 30):
+    now, data = _time_mod.time(), []
+    for i in range(slots - 1, -1, -1):
+        slot_end   = now - i * window_secs
+        slot_start = slot_end - window_secs
+        entries  = [r for r in _req_log if slot_start <= r["ts"] < slot_end]
+        errors   = [r for r in entries if r["status"] >= 400]
+        lats     = [r["ms"] for r in entries]
+        data.append({
+            "time":     _time_mod.strftime("%H:%M", _time_mod.localtime(slot_end)),
+            "latency":  round(sum(lats) / len(lats), 1) if lats else 0,
+            "errors":   len(errors),
+            "requests": len(entries),
+        })
+    return data
+
+
 @app.middleware("http")
 async def add_security_headers(request: FastAPIRequest, call_next):
     response = await call_next(request)
@@ -993,6 +1032,40 @@ async def get_lead_score(user_id: str, admin = Depends(get_admin_user)):
     return result
 
 
+@app.get("/api/admin/metrics")
+async def get_server_metrics(admin = Depends(get_admin_user)):
+    """Métricas de observabilidade em tempo real — latência, erros, uptime."""
+    now      = _time_mod.time()
+    uptime_s = int(now - _SERVER_START)
+    h, m, s  = uptime_s // 3600, (uptime_s % 3600) // 60, uptime_s % 60
+
+    recent = [r for r in _req_log if r["ts"] >= now - 60]
+    lats   = [r["ms"] for r in recent]
+    errs   = [r for r in recent if r["status"] >= 400]
+    slats  = sorted(lats)
+    p95    = slats[int(len(slats) * 0.95)] if slats else 0
+
+    return {
+        "uptime":  {"seconds": uptime_s, "human": f"{h:02d}h {m:02d}m {s:02d}s"},
+        "current": {
+            "avg_latency_ms":   round(sum(lats) / len(lats), 1) if lats else 0,
+            "p95_latency_ms":   round(p95, 1),
+            "errors_per_min":   len(errs),
+            "requests_per_min": len(recent),
+            "error_rate_pct":   round(len(errs) / len(recent) * 100, 1) if recent else 0,
+        },
+        "timeseries":     _build_timeseries(window_secs=60, slots=30),
+        "total_requests": len(_req_log),
+    }
+    """Endpoint dedicado para consultar o AI score de um lead."""
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        raise HTTPException(status_code=404, detail="Lead não encontrado")
+    result = ml_score(user)
+    result["user_id"] = user_id
+    return result
+
+
 @app.post("/api/admin/ml/train")
 async def train_ml_model(admin = Depends(get_admin_user)):
     """
@@ -1031,13 +1104,19 @@ async def get_ml_info(admin = Depends(get_admin_user)):
 async def health_check():
     """Health check endpoint — useful for monitoring and CI/CD."""
     try:
-        # Check MongoDB
         await db.command("ping")
         db_status = "healthy"
     except Exception:
         db_status = "unhealthy"
 
-    ml_info = get_model_info()
+    ml_info  = get_model_info()
+    uptime_s = int(_time_mod.time() - _SERVER_START)
+    uptime_h = uptime_s // 3600
+    uptime_m = (uptime_s % 3600) // 60
+
+    now    = _time_mod.time()
+    recent = [r for r in _req_log if r["ts"] >= now - 60]
+    lats   = [r["ms"] for r in recent]
 
     return {
         "status":    "healthy" if db_status == "healthy" else "degraded",
@@ -1045,10 +1124,16 @@ async def health_check():
         "database":  db_status,
         "ml_model":  "loaded" if ml_info["model_loaded"] else "not_trained",
         "timestamp": datetime.utcnow().isoformat(),
+        "uptime":    f"{uptime_h:02d}h {uptime_m:02d}m",
         "services": {
             "api":      "up",
             "honeypot": "active",
             "scoring":  "ml" if ml_info["model_loaded"] else "rule_based",
+        },
+        "metrics": {
+            "avg_latency_ms":   round(sum(lats) / len(lats), 1) if lats else 0,
+            "requests_per_min": len(recent),
+            "errors_per_min":   len([r for r in recent if r["status"] >= 400]),
         }
     }
 
