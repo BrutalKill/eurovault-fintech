@@ -55,8 +55,9 @@ Plataforma de investimentos profissional focada no mercado europeu (€), usada 
 │   ├── receipts.py    # /api/admin/generate-receipt*
 │   └── agent_router.py     # /api/agent/*, /api/admin/agents/*
 │
-├── services/          # Lógica de negócio (V em MVC = "Service Layer")
-│   └── ml_scoring.py  # RandomForestClassifier para Lead Scoring
+├── services/          # Lógica de negócio (Service Layer)
+│   ├── ml_scoring.py  # RandomForest explícito (joblib, StratifiedKFold, ROC-AUC, F1)
+│   └── user_service.py # apply_daily_profit, process_deposit, execute_order, etc.
 │
 └── tests/             # Pytest suite (57 testes, 100% pass)
 ```

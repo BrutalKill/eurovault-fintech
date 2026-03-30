@@ -8,7 +8,7 @@ from bson import ObjectId
 import base64, os
 
 from core.database  import db, serialize_doc
-from core.security  import get_admin_user, pwd_context, log_admin_action, manager
+from core.security  import get_admin_user, pwd_context, manager
 from core.config    import SECRET_KEY, ALGORITHM
 from models.user         import (UpdateBalanceRequest, UpdateStatusRequest,
                                   UpdateDailyRateRequest, UpdateTagsRequest,
@@ -17,6 +17,7 @@ from models.user         import (UpdateBalanceRequest, UpdateStatusRequest,
 from models.financial    import WithdrawalReviewRequest
 from models.communication import ChatMessageRequest, EmailRequest, GenericEmailRequest
 from services.ml_scoring  import ml_score
+from services.user_service import log_admin_action
 
 router = APIRouter()
 
