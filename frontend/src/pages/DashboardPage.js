@@ -4,6 +4,7 @@ import {
   TrendingUp, CreditCard, ArrowDownToLine, Clock,
   Target, Star, ArrowRight, Activity, ShieldCheck,
   Zap, BarChart2, Users, ChevronRight, Bell, X,
+  PieChart,
 } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 import { useLang } from '../context/LangContext';
@@ -37,6 +38,65 @@ function Sparkline({ data, color = '#3A86FF', height = 56 }) {
   );
 }
 
+/* Portfolio Heatmap */
+function PortfolioHeatmap({ orders }) {
+  if (!orders || orders.length === 0) return null;
+
+  // Calcular posições abertas por categoria
+  const positions = {};
+  for (const o of orders) {
+    const cat = o.category || 'Outros';
+    if (!positions[cat]) positions[cat] = { bought: 0, sold: 0, label: cat };
+    if (o.side === 'comprar') positions[cat].bought += parseFloat(o.amount || 0);
+    if (o.side === 'vender')  positions[cat].sold   += parseFloat(o.amount || 0);
+  }
+
+  const openPositions = Object.values(positions)
+    .map(p => ({ ...p, open: Math.max(0, p.bought - p.sold) }))
+    .filter(p => p.open > 0)
+    .sort((a, b) => b.open - a.open);
+
+  if (openPositions.length === 0) return null;
+
+  const total = openPositions.reduce((s, p) => s + p.open, 0);
+  const COLORS = ['#3A86FF', '#22c58b', '#FFBE0B', '#F59E0B', '#a855f7', '#ef4444'];
+
+  return (
+    <div style={{ background: 'hsl(240,26%,8%)', border: '1px solid hsl(240,16%,18%)', borderRadius: 16, padding: '18px 20px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+        <PieChart size={15} color="#3A86FF" />
+        <span style={{ fontSize: 13, fontWeight: 700, color: '#f3f5ff' }}>Portfolio — Posições Abertas</span>
+      </div>
+      {/* Barra stacked */}
+      <div style={{ display: 'flex', height: 12, borderRadius: 6, overflow: 'hidden', marginBottom: 12, gap: 1 }}>
+        {openPositions.map((p, i) => (
+          <div key={p.label} title={`${p.label}: ${fmt(p.open)}`}
+            style={{ flex: p.open, background: COLORS[i % COLORS.length], minWidth: 4 }} />
+        ))}
+      </div>
+      {/* Legendas */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {openPositions.map((p, i) => {
+          const pct = total > 0 ? Math.round(p.open / total * 100) : 0;
+          const color = COLORS[i % COLORS.length];
+          return (
+            <div key={p.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 10, height: 10, borderRadius: 2, background: color, flexShrink: 0 }} />
+              <span style={{ fontSize: 12, color: '#e8eaf6', flex: 1 }}>{p.label}</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color }}>{pct}%</span>
+              <span className="numeric" style={{ fontSize: 12, color: '#7a8299', minWidth: 70, textAlign: 'right' }}>{fmt(p.open)}</span>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid hsl(240,16%,14%)', display: 'flex', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: 11, color: '#4a5068' }}>Total investido</span>
+        <span className="numeric" style={{ fontSize: 12, fontWeight: 700, color: '#3A86FF' }}>{fmt(total)}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { user, notifPermission, requestNotifPermission } = useUser();
   const { t, lang }    = useLang();
@@ -44,6 +104,7 @@ export default function DashboardPage() {
   const [history, setHistory]       = useState([]);
   const [referral, setReferral]     = useState(null);
   const [activities, setActivities] = useState([]);
+  const [orders, setOrders]         = useState([]);
   const [notifDismissed, setNotifDismissed] = useState(() => localStorage.getItem('notif_dismissed') === '1');
 
   const handleEnableNotif = async () => {
@@ -74,6 +135,8 @@ export default function DashboardPage() {
       .then(r => r.ok ? r.json() : null).then(setReferral).catch(() => {});
     fetch(`${BACKEND_URL}/api/me/activity`, { headers: h })
       .then(r => r.ok ? r.json() : []).then(setActivities).catch(() => {});
+    fetch(`${BACKEND_URL}/api/orders`, { headers: h })
+      .then(r => r.ok ? r.json() : []).then(setOrders).catch(() => {});
   }, []);
 
   const hour = new Date().getHours();
@@ -308,6 +371,9 @@ export default function DashboardPage() {
           <ArrowRight size={18} color="#3A86FF" />
         </div>
       </button>
+
+      {/* ── Portfolio Heatmap ── */}
+      <PortfolioHeatmap orders={orders} />
     </div>
   );
 }

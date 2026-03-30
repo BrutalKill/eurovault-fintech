@@ -1,0 +1,88 @@
+{
+  "summary": "Full testing of EuroVault refactored codebase: backend server.py split into routers, AdminDashboard.js split with LeadDrawer extracted, and new ML visual features (Revenue Forecasting, Agent Performance Matrix, Portfolio Heatmap). All 57 backend tests pass (26 existing + 31 new). All frontend features verified via Playwright.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "DashboardPage - Portfolio Heatmap title",
+        "issue": "Title 'Portfolio — Posições Abertas' hardcoded in Portuguese in DashboardPage.js (line 68). Visible in EN/ES mode.",
+        "priority": "MEDIUM"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Admin Analytics - Revenue Forecasting",
+        "issues": ["Labels 'Previsão de Receita — 30 dias', 'Crescendo/Declinando/Estável', 'Histórico', 'Previsão ML' are hardcoded in Portuguese. Not translated via t() keys."]
+      },
+      {
+        "screen": "Admin Analytics - Agent Performance Matrix",
+        "issues": ["Labels 'Leads', 'Convertidos', 'AI Score', 'Taxa de Conversão', 'Capital Gerido' and section subtitle are hardcoded in Portuguese. Not translated via t() keys."]
+      }
+    ]
+  },
+  "api_verification": {
+    "GET /api/health": "200 OK - structure validated",
+    "GET /api/admin/analytics": "200 OK - KPIs validated (28 total_users, 6 deposited, 21.4% conversion, €10,541.29 capital)",
+    "GET /api/admin/ml/info": "200 OK - model_loaded:true, dataset validated",
+    "GET /api/admin/analytics/revenue-forecast": "200 OK - historical+forecast+trend validated",
+    "GET /api/admin/analytics/agent-performance": "200 OK - agents list with conversion matrix validated",
+    "GET /api/admin/users": "200 OK - all users include ai_score field",
+    "PUT /api/admin/users/{id}/notes": "200 OK - notes persist correctly",
+    "POST /api/admin/users/{id}/notes/timeline": "200 OK - timeline entries work"
+  },
+  "frontend_verification": {
+    "admin_login": "PASS - Login at /adm/login with brokereurope/Europeinvest works, redirects to /adm",
+    "admin_dashboard": "PASS - Leads Dashboard loads with 28 leads, AI Score column visible, all action buttons present",
+    "lead_drawer": "PASS - Opens when clicking View button, shows DADOS PESSOAIS, ESTADO, Financial/Tags/Notes/Deposits/KYC/Follow-up/History tabs",
+    "admin_notes": "PASS - Notes tab shows textarea with + button, timeline entries visible and saved from backend tests",
+    "admin_analytics": "PASS - Revenue Forecasting chart visible (4 historical points, 30-day forecast), Agent Performance Matrix shows 2 agents (Jorge, TEST_CRM_Agent)",
+    "client_dashboard": "PASS - Dashboard loads with sparkline, balance display, recent activity, quick action cards",
+    "portfolio_heatmap": "PASS - Shows 'Portfolio — Posições Abertas' with Forex 98% (€6,550) and Cripto 2% (€100) stacked bar"
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_eurovault_full.py",
+    "/app/backend/tests/test_new_features.py",
+    "/app/test_reports/pytest/eurovault_full_results.xml",
+    "/app/test_reports/pytest/new_features_results.xml"
+  ],
+  "action_items": [
+    "AdminAnalytics.js: Translate hardcoded PT labels in RevenueForecastChart (Previsão de Receita, Crescendo, Declinando, Estável, Histórico, Previsão ML) and AgentMatrix (Leads, Convertidos, AI Score, Taxa de Conversão, Capital Gerido) using t() keys",
+    "DashboardPage.js: Translate 'Portfolio — Posições Abertas' (line 68) using t() key",
+    "Minor: WebSocket console warning for '/ws/admin' connection failing - investigate if websocket server handles reconnect gracefully"
+  ],
+  "critical_code_review_comments": [
+    "Refactoring quality: server.py (224 lines) correctly splits into 8 routers, all imports work. AdminDashboard.js (676 lines) + LeadDrawer.js (740 lines) is a clean split.",
+    "New ML features: Revenue Forecasting uses numpy linear regression correctly with NaN/Inf safety checks. Agent Performance Matrix aggregates per-agent stats correctly.",
+    "Revenue forecast shows 'Declining' trend (-€1,084/day) - this is because few data points exist in a narrow window, not a bug.",
+    "AdminAnalytics.js: The entire RevenueForecastChart and AgentMatrix components have hardcoded Portuguese text (not using t() translation keys). Low priority since these are new features but should be translated.",
+    "LeadDrawer.js and AdminDashboard.js have duplicated constants (STATUS_OPTIONS, STATUS_STYLES, STATUS_KEY_MAP, fmt, fmtDate) - consider moving to a shared utils file."
+  ],
+  "mocked_apis": {
+    "email_sending": "MOCKED - logs to DB only (smtp_error or logged_only status)",
+    "asset_prices": "MOCKED - static/hardcoded values"
+  },
+  "updated_files": [
+    "/app/backend/tests/test_new_features.py"
+  ],
+  "success_rate": {
+    "backend": "100% (57/57 tests passed: 26 existing + 31 new)",
+    "frontend": "95% (all core flows work, minor PT translation issues in new ML components)"
+  },
+  "test_credentials": {
+    "admin": "brokereurope / Europeinvest at /adm/login",
+    "client_test": "recruiter@test.com (balance=50€, has orders, portfolio heatmap visible)",
+    "client_prev": "test_ev_030ba149@test.com / TestPass123! (from iteration 7)"
+  },
+  "seed_data_creation": "No new seed data created. Backend tests reused existing data.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Major refactoring tested and verified: backend split into 8 routers all working, AdminDashboard + LeadDrawer split working, new ML features (Revenue Forecasting, Agent Performance Matrix, Portfolio Heatmap) all working. Backend 100% (57/57 tests). Frontend core flows all verified. Remaining action items: translate hardcoded PT strings in new ML components (AdminAnalytics.js RevenueForecastChart/AgentMatrix). Previous iteration 7 issues (translation leaks in AdminKanban, AdminAgents, etc.) are still outstanding if not fixed by E1.",
+  "rca_of_issues": {
+    "hardcoded_pt_in_new_ml_components": "RevenueForecastChart and AgentMatrix in AdminAnalytics.js were added as new visual features but the developer hardcoded Portuguese labels instead of using the existing t() translation system. Fix: add t() translation keys for all UI strings in these components.",
+    "duplicate_constants": "LeadDrawer.js was extracted from AdminDashboard.js but the constants (STATUS_OPTIONS, STATUS_STYLES, fmt, etc.) were copied rather than extracted to a shared module. This is a code quality issue but not a functional bug."
+  }
+}
