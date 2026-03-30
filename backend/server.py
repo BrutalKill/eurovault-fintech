@@ -41,15 +41,68 @@ app.add_middleware(
     expose_headers=[],
 )
 
-# ── Middleware: Honeypot — captura URLs suspeitas que chegam ao backend ──────
-# Padrões que nunca devem aparecer em rotas legítimas
+# ── IP Whitelist (admins autenticados) & Ban List (atacantes) ─────────────────
+_WHITELIST_TTL_HOURS = 24
+_BANNED_IPS: set = set()          # em memória (carregado da DB no startup)
+_WHITELISTED_IPS: dict = {}       # {ip: expires_at}  (cache em memória)
+
+def _get_client_ip(request: FastAPIRequest) -> str:
+    forwarded = request.headers.get("X-Forwarded-For", "")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+async def _load_security_lists():
+    """Carrega whitelist e ban list da DB para memória no startup."""
+    now = datetime.utcnow()
+    # Whitelist — apenas entradas ainda válidas
+    async for entry in db.ip_whitelist.find({"expires_at": {"$gt": now}}, {"_id": 0}):
+        _WHITELISTED_IPS[entry["ip"]] = entry.get("expires_at")
+    # Ban list — permanente
+    async for entry in db.ip_banlist.find({}, {"_id": 0, "ip": 1}):
+        _BANNED_IPS.add(entry["ip"])
+
+async def whitelist_admin_ip(ip: str):
+    """Adiciona o IP do admin à whitelist por 24 horas após login bem-sucedido."""
+    if ip == "unknown":
+        return
+    expires_at = datetime.utcnow() + timedelta(hours=_WHITELIST_TTL_HOURS)
+    _WHITELISTED_IPS[ip] = expires_at
+    await db.ip_whitelist.update_one(
+        {"ip": ip},
+        {"$set": {"ip": ip, "added_at": datetime.utcnow(), "expires_at": expires_at, "source": "admin_login"}},
+        upsert=True,
+    )
+
+def is_whitelisted(ip: str) -> bool:
+    """Verifica se o IP está na whitelist e ainda não expirou."""
+    expires = _WHITELISTED_IPS.get(ip)
+    if expires is None:
+        return False
+    if datetime.utcnow() > expires:
+        _WHITELISTED_IPS.pop(ip, None)
+        return False
+    return True
+
+async def ban_ip(ip: str, reason: str = "critical_attack"):
+    """Bane um IP permanentemente — persiste na DB."""
+    if ip in ("unknown", "127.0.0.1", "::1"):
+        return
+    _BANNED_IPS.add(ip)
+    await db.ip_banlist.update_one(
+        {"ip": ip},
+        {"$set": {"ip": ip, "banned_at": datetime.utcnow(), "reason": reason}},
+        upsert=True,
+    )
+
+# ── Middleware: Ban + Whitelist + Honeypot ────────────────────────────────────
 _HONEYPOT_BACKEND_PATTERNS = {
     '.env', 'wp-admin', 'wp-login', 'phpmyadmin', 'database.sql',
     'backup.sql', 'dump.sql', '.git/config', 'config.php',
     'xmlrpc', 'shell.php', 'eval-stdin', '.htaccess',
     'etc/passwd', 'proc/self', 'db.sqlite', 'schema.sql',
 }
-# Prefixos a ignorar (rotas legítimas da aplicação)
+_CRITICAL_PATTERNS = {'.env', '.git/config', 'passwd', 'proc/self', 'phpmyadmin'}
 _HONEYPOT_SAFE_PREFIXES = (
     '/api/auth/', '/api/me', '/api/admin/', '/api/agent/', '/api/contract/',
     '/api/withdrawal', '/api/orders', '/api/kyc', '/api/news',
@@ -57,29 +110,53 @@ _HONEYPOT_SAFE_PREFIXES = (
 )
 
 @app.middleware("http")
-async def honeypot_catch_all(request: FastAPIRequest, call_next):
-    """Intercepta requests suspeitos ao backend antes do routing."""
+async def security_middleware(request: FastAPIRequest, call_next):
+    """
+    Camada de segurança unificada:
+    1. Bloqueia IPs banidos imediatamente (403)
+    2. IPs whitelistados passam sem verificação
+    3. Detecta padrões suspeitos e loga/bane
+    """
+    ip = _get_client_ip(request)
     path = request.url.path
     path_lower = path.lower()
-    # Não processar rotas legítimas
+
+    # ── 1. Bloquear IPs banidos ───────────────────────────────────────────────
+    if ip in _BANNED_IPS:
+        return JSONResponse(
+            {"detail": "Access denied"},
+            status_code=403,
+            headers={"Server": "nginx/1.24.0"},
+        )
+
+    # ── 2. Whitelist: admins autenticados passam directo ─────────────────────
+    if is_whitelisted(ip):
+        return await call_next(request)
+
+    # ── 3. Rotas legítimas da app passam sem verificação honeypot ─────────────
     if path_lower.startswith(_HONEYPOT_SAFE_PREFIXES):
         return await call_next(request)
-    # Verificar se o path contém padrão suspeito
+
+    # ── 4. Detectar padrões suspeitos ─────────────────────────────────────────
     if any(p in path_lower for p in _HONEYPOT_BACKEND_PATTERNS):
+        is_critical = any(p in path_lower for p in _CRITICAL_PATTERNS)
         try:
-            ip = request.headers.get("X-Forwarded-For", request.client.host if request.client else "unknown")
             entry = {
-                "ts": datetime.utcnow().isoformat(),
-                "path": path,
-                "ip": ip.split(",")[0].strip(),
+                "ts":         datetime.utcnow().isoformat(),
+                "path":       path,
+                "ip":         ip,
                 "user_agent": request.headers.get("user-agent", ""),
-                "method": request.method,
-                "source": "middleware",
+                "method":     request.method,
+                "source":     "middleware",
             }
             _honeypot_log.append(entry)
             await db.honeypot_logs.insert_one(entry)
+            # Banir automaticamente ataques críticos
+            if is_critical:
+                await ban_ip(ip, reason=f"critical_attack:{path}")
         except Exception:
             pass
+
     return await call_next(request)
 
 # ── Middleware: Security Headers + remover cabeçalhos identificadores ───────
@@ -425,11 +502,14 @@ async def login(req: LoginRequest, request: FastAPIRequest = None):
     }
 
 @app.post("/api/admin/login")
-async def admin_login(req: AdminLoginRequest):
+async def admin_login(req: AdminLoginRequest, request: FastAPIRequest):
     if req.username != ADMIN_USERNAME or req.password != ADMIN_PASSWORD:
         raise HTTPException(status_code=401, detail="Credenciais de administrador inválidas")
+    ip = _get_client_ip(request)
+    # Adicionar IP à whitelist por 24 horas
+    await whitelist_admin_ip(ip)
     token = create_token({"sub": "admin", "username": req.username}, role="admin")
-    return {"token": token, "role": "admin"}
+    return {"token": token, "role": "admin", "whitelisted_ip": ip}
 
 # --- Client Routes ---
 @app.get("/api/me")
@@ -2335,12 +2415,57 @@ async def get_honeypot_logs(admin = Depends(get_admin_user)):
     logs = []
     async for entry in db.honeypot_logs.find({}, {"_id": 0}).sort("ts", -1).limit(200):
         logs.append(entry)
-    # Também incluir as da memória que ainda não foram à DB (race condition)
     seen_ts = {e.get("ts") for e in logs}
     for e in reversed(_honeypot_log):
         if e.get("ts") not in seen_ts:
             logs.insert(0, e)
     return logs[:100]
+
+
+@app.get("/api/admin/security/whitelist")
+async def get_whitelist(admin = Depends(get_admin_user)):
+    """Lista de IPs na whitelist (admins com login recente)."""
+    now = datetime.utcnow()
+    entries = []
+    async for e in db.ip_whitelist.find({}, {"_id": 0}).sort("added_at", -1):
+        expires = e.get("expires_at")
+        if expires and expires > now:
+            remaining_h = round((expires - now).total_seconds() / 3600, 1)
+            entries.append({**e, "expires_in_hours": remaining_h,
+                            "added_at": e["added_at"].isoformat() if hasattr(e.get("added_at"), "isoformat") else str(e.get("added_at","")),
+                            "expires_at": expires.isoformat() if hasattr(expires, "isoformat") else str(expires)})
+    return entries
+
+
+@app.get("/api/admin/security/banlist")
+async def get_banlist(admin = Depends(get_admin_user)):
+    """Lista de IPs permanentemente banidos."""
+    entries = []
+    async for e in db.ip_banlist.find({}, {"_id": 0}).sort("banned_at", -1).limit(200):
+        entries.append({
+            "ip": e.get("ip"),
+            "reason": e.get("reason", ""),
+            "banned_at": e["banned_at"].isoformat() if hasattr(e.get("banned_at"), "isoformat") else str(e.get("banned_at", ""))
+        })
+    return entries
+
+
+@app.delete("/api/admin/security/banlist/{ip_addr}")
+async def unban_ip(ip_addr: str, admin = Depends(get_admin_user)):
+    """Remove um IP da ban list."""
+    _BANNED_IPS.discard(ip_addr)
+    await db.ip_banlist.delete_one({"ip": ip_addr})
+    return {"success": True, "message": f"IP {ip_addr} removed from ban list"}
+
+
+@app.post("/api/admin/security/ban")
+async def manual_ban(request_body: dict, admin = Depends(get_admin_user)):
+    """Bane manualmente um IP."""
+    ip_addr = request_body.get("ip", "")
+    if not ip_addr:
+        raise HTTPException(status_code=400, detail="IP required")
+    await ban_ip(ip_addr, reason="manual_ban")
+    return {"success": True, "message": f"IP {ip_addr} banned"}
 
 
 class HoneypotReportRequest(BaseModel):
@@ -2351,11 +2476,13 @@ class HoneypotReportRequest(BaseModel):
 @app.post("/api/honeypot/report")
 async def report_honeypot_from_frontend(req: HoneypotReportRequest, request: FastAPIRequest):
     """Frontend reporta URLs suspeitas que chegaram ao React (sem prefixo /api)."""
-    ip = request.headers.get("X-Forwarded-For", request.client.host if request.client else "unknown")
+    ip = _get_client_ip(request)
+    path_lower = req.path.lower()
+    is_critical = any(p in path_lower for p in _CRITICAL_PATTERNS)
     entry = {
         "ts": datetime.utcnow().isoformat(),
         "path": req.path,
-        "ip": ip.split(",")[0].strip(),
+        "ip": ip,
         "user_agent": request.headers.get("user-agent", ""),
         "method": req.method,
         "source": "frontend_404",
@@ -2363,6 +2490,8 @@ async def report_honeypot_from_frontend(req: HoneypotReportRequest, request: Fas
     _honeypot_log.append(entry)
     try:
         await db.honeypot_logs.insert_one(entry)
+        if is_critical:
+            await ban_ip(ip, reason=f"frontend_critical:{req.path}")
     except Exception:
         pass
     return {"ok": True}
@@ -3314,6 +3443,11 @@ async def submit_public_contract(token: str, req: ContractSubmitRequest, request
     return {"success": True}
 
 # ── Seed default template on startup
+@app.on_event("startup")
+async def startup_security():
+    """Carrega whitelist e ban list da DB para memória no arranque."""
+    await _load_security_lists()
+
 @app.on_event("startup")
 async def seed_default_template():
     count = await db.contract_templates.count_documents({})
